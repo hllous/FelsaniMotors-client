@@ -29,9 +29,9 @@ const SearchBar = () => {
     };
 
     return (
-    <form onSubmit={handleSubmit} className="bg-paleta1-cream rounded-b-full flex justify-center items-center h-12
+    <form onSubmit={handleSubmit} className="bg-paleta1-cream rounded-b-full flex justify-center items-center h-14
     transition-all duration-300 ease-in-out
-    hover:h-14
+    hover:h-20
     ">
 
         {/** Componente Filter */}

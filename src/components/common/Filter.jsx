@@ -124,7 +124,7 @@ const Filter = () => {
       {/* Botón de Filtros */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors  hover:cursor-pointer"
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-full hover:bg-gray-100 transition-colors hover:cursor-pointer"
       >
         <svg 
           className="w-5 h-5 text-gray-700" 
@@ -140,7 +140,7 @@ const Filter = () => {
           />
         </svg>
         {activeFiltersCount > 0 && (
-          <span className="bg-white text-paleta1-blue rounded-full px-2 py-0.5 text-xs font-bold">
+          <span className="bg-white text-gray-700 rounded-full px-2 py-0.5 text-xs font-bold">
             {activeFiltersCount}
           </span>
         )}

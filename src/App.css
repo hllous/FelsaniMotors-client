@@ -1,4 +1,10 @@
 @import "tailwindcss";
+@theme {
+  --color-paleta1-cream-light: #F5EFE6;
+  --color-paleta1-cream: #E8DFCA;
+  --color-paleta1-blue: #6D94C5;
+  --color-paleta1-blue-light: #CBDCEB;
+}
 
 /*#root {
   max-width: 1280px;

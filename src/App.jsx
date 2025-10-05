@@ -12,6 +12,9 @@ function App() {
       {/*<ComponentsDemo />*/}
       {/* <TailwindMockTest /> */}
       <Navbar />
+      <main>
+        .
+      </main>
       <Footer />
 
     </>
