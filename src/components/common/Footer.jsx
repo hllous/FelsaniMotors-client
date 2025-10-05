@@ -11,9 +11,9 @@ const Footer = () => {
           {/* Sección: Sobre Felsani Motors */}
           <div className="col-span-1 md:col-span-1">
             <h3 className="text-paleta1-blue text-lg font-bold mb-4">Felsani Motors</h3>
-            <p className="text-gray-800 text-sm leading-relaxed mb-4">
+            <p className="text-gray-800 text-sm leading-relaxed mb-4 text-">
               Tu marketplace de confianza para la compra y venta de autos. 
-              Conectamos compradores y vendedores de manera segura y eficiente.
+              Conectamos compradores y vendedores de manera segura, fácil y eficiente.
             </p>
             <div className="flex space-x-4">
               <a 
