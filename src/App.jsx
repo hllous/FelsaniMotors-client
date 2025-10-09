@@ -2,6 +2,7 @@ import React from 'react'
 import './App.css'
 import Footer from './components/common/Footer'
 import Navbar from './components/common/Navbar'
+import PublicacionList from './components/publicaciones/PublicacionList'
 // import TailwindMockTest from './views/TailwindMockTest'
 
 function App() {
@@ -11,9 +12,7 @@ function App() {
       {/*<ComponentsDemo />*/}
       {/* <TailwindMockTest /> */}
       <Navbar />
-      <main>
-        .
-      </main>
+      <PublicacionList />
       <Footer />
 
     </>

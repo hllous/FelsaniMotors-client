@@ -1,14 +1,25 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import PublicacionCard from "./PublicacionCard";
 
-const [publicaciones, setPublicaciones] = useState([]);
-const URL = "http://localhost:4002/api/publicaciones";
+
+
 
 const PublicacionList = () => {
+
+    const [publicaciones, setPublicaciones] = useState([]);
+    const URL = "http://localhost:4002/api/publicaciones";
+    
+    useEffect(()=>
+        {fetch(URL)
+            .then((response)=> response.json())
+            .then((data)=> { setPublicaciones(data) })
+            .catch((error)=>console.error("Error al obtener datos",error))
+        },[]);
+    
     return(
-        <div>
+        <div className="text-center">
             Publicaciones
-            <ul>
+            <ul className="grid grid-cols-3 bg-paleta1-blue-light gap-5">
                 {publicaciones.map(
                     (publicacion)=>(<PublicacionCard key={publicacion.idPublicacion}
                     idPublicacion={publicacion.idPublicacion}
