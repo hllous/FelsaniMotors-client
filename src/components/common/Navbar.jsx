@@ -1,7 +1,23 @@
 //Nico
 import SearchBar from './SearchBar';
+import { useState } from 'react';
+import LogInPopup from './usuario/LogInPopup';
+import SignInPopup from './usuario/SignInPopup';
 
 const Navbar = () => {
+
+    const [visibleLogIn, setVisibleLogIn] = useState(false)
+    const [visibleSignIn, setVisibleSignIn] = useState(false)
+
+    const openSignIn = () => {
+        setVisibleLogIn(false)
+        setVisibleSignIn(true)
+    }
+
+    const openLogIn = () => {
+        setVisibleSignIn(false)
+        setVisibleLogIn(true)
+    }
 
     return(
         <header className="bg-paleta1-blue">
@@ -71,7 +87,9 @@ const Navbar = () => {
                     </div>
 
                     {/** Perfil */}
-                    <div className="relative group">
+                    <div className="relative group"
+                    onClick={() => {setVisibleLogIn(true)}}
+                    >
                         <div className="flex items-center justify-center rounded-full size-8 hover:bg-blue-300 transition-all duration-200 ease-in-out">
                             <button className="text-white hover:cursor-pointer">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
@@ -79,6 +97,16 @@ const Navbar = () => {
                                 </svg>
                             </button>
                         </div>
+                        {visibleLogIn && <LogInPopup 
+                                            close={() => {setVisibleLogIn(false)}} 
+                                            openSignIn={() => {openSignIn()}}
+                                            />
+                        }
+                        {visibleSignIn && <SignInPopup 
+                                            close={() => {setVisibleSignIn(false)}}
+                                            openLogIn={() => {openLogIn()}}
+                                            />
+                        }
                         {/* Tooltip */}
                         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-gray-800 text-white text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
                             Perfil
