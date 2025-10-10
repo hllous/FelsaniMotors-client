@@ -1,8 +1,8 @@
 //Nico
 import SearchBar from './SearchBar';
 import { useState } from 'react';
-import LogInPopup from './usuario/LogInPopup';
-import SignInPopup from './usuario/SignInPopup';
+import LogInPopup from '../usuario/LogInPopup';
+import SignInPopup from '../usuario/SignInPopup';
 
 const Navbar = () => {
 
