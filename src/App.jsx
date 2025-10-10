@@ -3,6 +3,7 @@ import './App.css'
 import Footer from './components/common/Footer'
 import Navbar from './components/common/Navbar'
 import PublicacionList from './components/publicaciones/PublicacionList'
+import PublicacionForm from './components/publicaciones/PublicacionForm'
 // import TailwindMockTest from './views/TailwindMockTest'
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
       {/* <TailwindMockTest /> */}
       <Navbar />
       <PublicacionList />
+      <PublicacionForm />
       <Footer />
 
     </>

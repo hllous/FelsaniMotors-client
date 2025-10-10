@@ -31,7 +31,6 @@ const PublicacionList = () => {
                     estado={publicacion.estado}
                     marcaAuto={publicacion.marcaAuto}
                     modeloAuto={publicacion.modeloAuto}
-                    imagenPrincipal={publicacion.imagenPrincipal}
                     />)
                     
                     
