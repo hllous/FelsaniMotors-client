@@ -29,7 +29,11 @@ const PublicacionForm = () => {
     const AUTO_URL = "http://localhost:4002/api/autos";
     const PUBLICACION_URL = "http://localhost:4002/api/publicaciones";
     
+    // TODO: Este ID debería venir del sistema de autenticacion
     const USUARIO_ID = 1; // ID fijo para test
+    
+    // TODO: Este token debería venir del sistema de autenticacion (login)
+    const BEARER_TOKEN = "";
 
     const handleAutoChange = (e) => {
         const { name, value } = e.target;
@@ -64,11 +68,13 @@ const PublicacionForm = () => {
         setIsSubmitting(true);
         
         try {
+            // 1. Crear el Auto
             console.log("1. Creando auto...");
             const autoResponse = await fetch(AUTO_URL, {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${BEARER_TOKEN}`
                 },
                 body: JSON.stringify(autoData)
             });
@@ -78,6 +84,7 @@ const PublicacionForm = () => {
             const createdAuto = await autoResponse.json();
             console.log("Auto creado:", createdAuto);
             
+            // 2. Crear la Publicación
             console.log("2. Creando publicación...");
             const publicacionPayload = {
                 ...publicacionData,
@@ -88,7 +95,8 @@ const PublicacionForm = () => {
             const publicacionResponse = await fetch(PUBLICACION_URL, {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${BEARER_TOKEN}`
                 },
                 body: JSON.stringify(publicacionPayload)
             });
@@ -98,6 +106,7 @@ const PublicacionForm = () => {
             const createdPublicacion = await publicacionResponse.json();
             console.log("Publicación creada:", createdPublicacion);
             
+            // 3. Subir las fotos
             if (fotos.length > 0) {
                 console.log("3. Subiendo fotos...");
                 const FOTOS_URL = `http://localhost:4002/api/publicaciones/${createdPublicacion.idPublicacion}/fotos`;
@@ -110,6 +119,9 @@ const PublicacionForm = () => {
                     
                     const fotoResponse = await fetch(FOTOS_URL, {
                         method: "POST",
+                        headers: {
+                            "Authorization": `Bearer ${BEARER_TOKEN}`
+                        },
                         body: formData
                     });
                     
