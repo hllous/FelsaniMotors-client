@@ -1,6 +1,13 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
+import { AuthContext } from "../../context/AuthContext";
+import authService from "../../services/authService";
 
 const PublicacionForm = () => {
+
+    const { user } = useContext(AuthContext);
+
+    // Estructura JSON de los endpoints
+
     const [autoData, setAutoData] = useState({
         marca: "",
         modelo: "",
@@ -22,18 +29,20 @@ const PublicacionForm = () => {
         metodoDePago: ""
     });
 
+    // States
+
     const [fotos, setFotos] = useState([]);
     const [fotoPrincipalIndex, setFotoPrincipalIndex] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // Conexion a Back, con Bearer Token
+
     const AUTO_URL = "http://localhost:4002/api/autos";
     const PUBLICACION_URL = "http://localhost:4002/api/publicaciones";
     
-    // TODO: Este ID debería venir del sistema de autenticacion
-    const USUARIO_ID = 1; // ID fijo para test
-    
-    // TODO: Este token debería venir del sistema de autenticacion (login)
-    const BEARER_TOKEN = "";
+    // El ID del usuario ahora viene del contexto de autenticación
+    // Si user no está disponible aún, usar un valor por defecto (esto no debería pasar si el componente está protegido)
+    const USUARIO_ID = user?.id || 1;
 
     const handleAutoChange = (e) => {
         const { name, value } = e.target;
@@ -63,25 +72,27 @@ const PublicacionForm = () => {
         setFotoPrincipalIndex(parseInt(e.target.value));
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
         setIsSubmitting(true);
         
-        try {
-            // 1. Crear el Auto
-            console.log("1. Creando auto...");
-            const autoResponse = await fetch(AUTO_URL, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${BEARER_TOKEN}`
-                },
-                body: JSON.stringify(autoData)
-            });
-            
+        // 1. Crear el Auto
+        console.log("1. Creando auto...");
+        const token = authService.getToken();
+        const headers = new Headers();
+        headers.append('Content-Type', 'application/json');
+        headers.append('Authorization', `Bearer ${token}`);
+        
+        fetch(AUTO_URL, {
+            method: "POST",
+            headers: headers,
+            body: JSON.stringify(autoData)
+        })
+        .then((autoResponse) => {
             if (!autoResponse.ok) throw new Error("Error al crear el auto");
-            
-            const createdAuto = await autoResponse.json();
+            return autoResponse.json();
+        })
+        .then((createdAuto) => {
             console.log("Auto creado:", createdAuto);
             
             // 2. Crear la Publicación
@@ -92,18 +103,21 @@ const PublicacionForm = () => {
                 idAuto: createdAuto.idAuto
             };
             
-            const publicacionResponse = await fetch(PUBLICACION_URL, {
+            const token2 = authService.getToken();
+            const headers2 = new Headers();
+            headers2.append('Content-Type', 'application/json');
+            headers2.append('Authorization', `Bearer ${token2}`);
+            
+            return fetch(PUBLICACION_URL, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${BEARER_TOKEN}`
-                },
+                headers: headers2,
                 body: JSON.stringify(publicacionPayload)
+            }).then((publicacionResponse) => {
+                if (!publicacionResponse.ok) throw new Error("Error al crear la publicación");
+                return publicacionResponse.json();
             });
-            
-            if (!publicacionResponse.ok) throw new Error("Error al crear la publicación");
-            
-            const createdPublicacion = await publicacionResponse.json();
+        })
+        .then((createdPublicacion) => {
             console.log("Publicación creada:", createdPublicacion);
             
             // 3. Subir las fotos
@@ -111,29 +125,50 @@ const PublicacionForm = () => {
                 console.log("3. Subiendo fotos...");
                 const FOTOS_URL = `http://localhost:4002/api/publicaciones/${createdPublicacion.idPublicacion}/fotos`;
                 
+                const uploadPromises = [];
+                
                 for (let i = 0; i < fotos.length; i++) {
                     const formData = new FormData();
                     formData.append("file", fotos[i]);
                     formData.append("esPrincipal", i === fotoPrincipalIndex ? "true" : "false");
                     formData.append("orden", i.toString());
                     
-                    const fotoResponse = await fetch(FOTOS_URL, {
+                    // Para FormData, necesitamos crear headers sin Content-Type
+                    // ya que el navegador lo agrega automáticamente con el boundary correcto
+                    const headersForFormData = new Headers();
+                    const tokenFoto = authService.getToken();
+                    if (tokenFoto) {
+                        headersForFormData.append("Authorization", `Bearer ${tokenFoto}`);
+                    }
+                    
+                    const uploadPromise = fetch(FOTOS_URL, {
                         method: "POST",
-                        headers: {
-                            "Authorization": `Bearer ${BEARER_TOKEN}`
-                        },
+                        headers: headersForFormData,
                         body: formData
+                    })
+                    .then((fotoResponse) => {
+                        if (!fotoResponse.ok) {
+                            console.error(`Error al subir foto ${i + 1}`);
+                            return null;
+                        }
+                        return fotoResponse.json();
+                    })
+                    .then((fotoData) => {
+                        if (fotoData) {
+                            console.log(`Foto ${i + 1} subida:`, fotoData);
+                        }
+                    })
+                    .catch((error) => {
+                        console.error(`Error al subir foto ${i + 1}:`, error);
                     });
                     
-                    if (!fotoResponse.ok) {
-                        console.error(`Error al subir foto ${i + 1}`);
-                    } else {
-                        const fotoData = await fotoResponse.json();
-                        console.log(`Foto ${i + 1} subida:`, fotoData);
-                    }
+                    uploadPromises.push(uploadPromise);
                 }
+                
+                return Promise.all(uploadPromises);
             }
-            
+        })
+        .then(() => {
             alert("Publicacion creada exitosamente");
             
             setAutoData({
@@ -162,13 +197,14 @@ const PublicacionForm = () => {
             
             const fileInput = document.querySelector('input[type="file"]');
             if (fileInput) fileInput.value = "";
-            
-        } catch (error) {
+        })
+        .catch((error) => {
             console.error("Error al crear publicación:", error);
             alert("Error al crear la publicación. Por favor, intenta de nuevo.");
-        } finally {
+        })
+        .finally(() => {
             setIsSubmitting(false);
-        }
+        });
     };
 
     return (

@@ -1,13 +1,15 @@
 //Nico
 import SearchBar from './SearchBar';
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import LogInPopup from '../usuario/LogInPopup';
 import SignInPopup from '../usuario/SignInPopup';
+import { AuthContext } from '../../context/AuthContext';
 
 const Navbar = () => {
 
     const [visibleLogIn, setVisibleLogIn] = useState(false)
     const [visibleSignIn, setVisibleSignIn] = useState(false)
+    const { isAuthenticated, user, logout } = useContext(AuthContext);
 
     const openSignIn = () => {
         setVisibleLogIn(false)
@@ -17,6 +19,10 @@ const Navbar = () => {
     const openLogIn = () => {
         setVisibleSignIn(false)
         setVisibleLogIn(true)
+    }
+
+    const handleLogout = () => {
+        logout();
     }
 
     return(
@@ -87,32 +93,59 @@ const Navbar = () => {
                     </div>
 
                     {/** Perfil */}
-                    <div className="relative group"
-                    onClick={() => {setVisibleLogIn(true)}}
-                    >
-                        <div className="flex items-center justify-center rounded-full size-8 hover:bg-blue-300 transition-all duration-200 ease-in-out">
-                            <button className="text-white hover:cursor-pointer">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-                                </svg>
-                            </button>
+                    {!isAuthenticated ? (
+                        // Si NO está autenticado, mostrar botón de login
+                        <div className="relative group"
+                        onClick={() => {setVisibleLogIn(true)}}
+                        >
+                            <div className="flex items-center justify-center rounded-full size-8 hover:bg-blue-300 transition-all duration-200 ease-in-out">
+                                <button className="text-white hover:cursor-pointer">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                                    </svg>
+                                </button>
+                            </div>
+                            {visibleLogIn && <LogInPopup 
+                                                close={() => {setVisibleLogIn(false)}} 
+                                                openSignIn={() => {openSignIn()}}
+                                                />
+                            }
+                            {visibleSignIn && <SignInPopup 
+                                                close={() => {setVisibleSignIn(false)}}
+                                                openLogIn={() => {openLogIn()}}
+                                                />
+                            }
+                            {/* Tooltip */}
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-gray-800 text-white text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
+                                Iniciar Sesión
+                                <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-800"></div>
+                            </div>
                         </div>
-                        {visibleLogIn && <LogInPopup 
-                                            close={() => {setVisibleLogIn(false)}} 
-                                            openSignIn={() => {openSignIn()}}
-                                            />
-                        }
-                        {visibleSignIn && <SignInPopup 
-                                            close={() => {setVisibleSignIn(false)}}
-                                            openLogIn={() => {openLogIn()}}
-                                            />
-                        }
-                        {/* Tooltip */}
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-gray-800 text-white text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
-                            Perfil
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-800"></div>
+                    ) : (
+                        // Si SÍ está autenticado, mostrar nombre y logout
+                        <div className="flex items-center gap-3">
+                            <span className="text-white text-sm">
+                                Hola, {user?.firstname || user?.email}
+                            </span>
+                            <div className="relative group">
+                                <div className="flex items-center justify-center rounded-full size-8 hover:bg-blue-300 transition-all duration-200 ease-in-out">
+                                    <button 
+                                        className="text-white hover:cursor-pointer"
+                                        onClick={handleLogout}
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                {/* Tooltip */}
+                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-gray-800 text-white text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
+                                    Cerrar Sesión
+                                    <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-800"></div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                 </div>
             </nav>

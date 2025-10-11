@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
+import { AuthContext } from '../../context/AuthContext';
 
 const SignInPopup = ({ close, openLogIn }) => {
   const [visible, setVisible] = useState(false);
@@ -9,6 +10,8 @@ const SignInPopup = ({ close, openLogIn }) => {
     password: '',
     telefono: '',
   });
+  
+  const { register } = useContext(AuthContext);
 
   useEffect(() => {
     setVisible(true);
@@ -26,9 +29,26 @@ const SignInPopup = ({ close, openLogIn }) => {
     setTimeout(close, 200);
   };
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    register(
+      formData.email,
+      formData.password,
+      formData.nombre,
+      formData.apellido,
+      parseInt(formData.telefono),
+      'USER'
+    )
+      .then((result) => {
+        if (result.success) {
+          handleClose();
+        }
+      });
+  };
+
   return (
-    <>
-      {/* Fondo translúcido */}
+    <div>
       <div
         className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300 ${
           visible ? 'opacity-100' : 'opacity-0'
@@ -58,7 +78,7 @@ const SignInPopup = ({ close, openLogIn }) => {
           </h2>
 
           {/* Formulario */}
-          <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="flex gap-3">
               <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -156,7 +176,7 @@ const SignInPopup = ({ close, openLogIn }) => {
           </button>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

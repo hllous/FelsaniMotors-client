@@ -1,9 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
+import { AuthContext } from '../../context/AuthContext';
 
 const LogInPopup = ({ close, openSignIn }) => {
   const [visible, setVisible] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  
+  const { login } = useContext(AuthContext);
 
   useEffect(() => {
     setVisible(true);
@@ -16,7 +19,13 @@ const LogInPopup = ({ close, openSignIn }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    handleClose();
+
+    login(email, password)
+      .then((result) => {
+        if (result.success) {
+          handleClose();
+        }
+      });
   };
 
   return (

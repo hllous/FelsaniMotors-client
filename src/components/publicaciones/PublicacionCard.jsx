@@ -11,9 +11,9 @@ const PublicacionCard = ({idPublicacion,idUsuario,idAuto,titulo,ubicacion,precio
             if (!response.ok) { 
                 throw new Error('No se encontraron imágenes')
             }
-            return response.json();})
+            return response.json() })
         .then(data => { setImage(`data:image/jpeg;base64,${data[0].file}`) })
-        .catch(error => { console.error('Error cargando imagen:', error); });
+        .catch(error => { console.error('Error cargando imagen:', error) });
     }, [idPublicacion]);
 
     return(
