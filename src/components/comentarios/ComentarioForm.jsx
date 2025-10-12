@@ -11,7 +11,7 @@ const ComentarioForm = ({
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
         
         if (!texto.trim()) {
@@ -27,14 +27,15 @@ const ComentarioForm = ({
         setIsSubmitting(true);
         setError(null);
 
-        try {
-            await onSubmit(texto);
-            setTexto('');
-        } catch (err) {
-            setError(err.message || 'Error al enviar el comentario');
-        } finally {
-            setIsSubmitting(false);
-        }
+        onSubmit(texto)
+            .then(() => {
+                setTexto('');
+                setIsSubmitting(false);
+            })
+            .catch((err) => {
+                setError(err.message || 'Error al enviar el comentario');
+                setIsSubmitting(false);
+            });
     };
 
     const handleCancel = () => {

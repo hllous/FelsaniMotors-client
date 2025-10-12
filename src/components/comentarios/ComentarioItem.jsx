@@ -4,45 +4,46 @@ import ComentarioForm from './ComentarioForm';
 const ComentarioItem = ({ 
     comentario, 
     currentUserId = null,
-    onEdit, 
-    onDelete, 
-    onReply,
-    showReplyButton = true 
+    currentUserRole = null,
+    isAuthenticated = false,
+    handleEditarComentario, 
+    handleEliminarComentario, 
+    handleResponder
 }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [isReplying, setIsReplying] = useState(false);
-    const [isDeleting, setIsDeleting] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     const isOwner = currentUserId && comentario.usuario?.idUsuario === currentUserId;
+    const isAdmin = currentUserRole === 'ADMIN';
+    const canEdit = isAuthenticated && isOwner;
+    const canDelete = isAuthenticated && (isOwner || isAdmin);
+    const canReply = isAuthenticated;
 
-    const handleEdit = async (nuevoTexto) => {
-        try {
-            await onEdit(comentario.idComentario, nuevoTexto);
-            setIsEditing(false);
-        } catch (error) {
-            throw error;
-        }
+    const handleEdit = (nuevoTexto) => {
+        return handleEditarComentario(comentario.idComentario, nuevoTexto)
+            .then(() => setIsEditing(false))
+            .catch((error) => alert('Error al editar: ' + error.message));
     };
 
-    const handleDelete = async () => {
-        if (window.confirm('¿Estás seguro de eliminar este comentario?')) {
-            setIsDeleting(true);
-            try {
-                await onDelete(comentario.idComentario);
-            } catch (error) {
-                alert('Error al eliminar: ' + error.message);
-                setIsDeleting(false);
-            }
-        }
+    const handleDeleteClick = () => {
+        setShowDeleteConfirm(true);
     };
 
-    const handleReply = async (textoRespuesta) => {
-        try {
-            await onReply(comentario.idComentario, textoRespuesta);
-            setIsReplying(false);
-        } catch (error) {
-            throw error;
-        }
+    const handleConfirmDelete = () => {
+        setShowDeleteConfirm(false);
+        handleEliminarComentario(comentario.idComentario)
+            .catch((error) => alert('Error al eliminar: ' + error.message));
+    };
+
+    const handleCancelDelete = () => {
+        setShowDeleteConfirm(false);
+    };
+
+    const handleReply = (textoRespuesta) => {
+        return handleResponder(comentario.idComentario, textoRespuesta)
+            .then(() => setIsReplying(false))
+            .catch((error) => alert('Error al responder: ' + error.message));
     };
 
     const formatearFecha = (fecha) => {
@@ -56,14 +57,6 @@ const ComentarioItem = ({
             minute: '2-digit'
         });
     };
-
-    if (isDeleting) {
-        return (
-            <div className="animate-pulse bg-gray-100 p-4 rounded-lg">
-                <p className="text-gray-500">Eliminando...</p>
-            </div>
-        );
-    }
 
     return (
         <div className="bg-[#e8decb] p-4 rounded shadow-sm border border-gray-200">
@@ -87,20 +80,24 @@ const ComentarioItem = ({
                 </div>
 
                 {/* Botones de acción */}
-                {isOwner && !isEditing && (
+                {!isEditing && (canEdit || canDelete) && (
                     <div className="flex gap-2">
-                        <button
-                            onClick={() => setIsEditing(true)}
-                            className="text-[#6c94c4] hover:text-[#5a7da8] text-sm font-medium"
-                        >
-                            Editar
-                        </button>
-                        <button
-                            onClick={handleDelete}
-                            className="text-red-600 hover:text-red-800 text-sm font-medium"
-                        >
-                            Eliminar
-                        </button>
+                        {canEdit && (
+                            <button
+                                onClick={() => setIsEditing(true)}
+                                className="text-[#6c94c4] hover:text-[#5a7da8] text-sm font-medium"
+                            >
+                                Editar
+                            </button>
+                        )}
+                        {canDelete && (
+                            <button
+                                onClick={handleDeleteClick}
+                                className="text-red-600 hover:text-red-800 text-sm font-medium"
+                            >
+                                Eliminar
+                            </button>
+                        )}
                     </div>
                 )}
             </div>
@@ -120,7 +117,7 @@ const ComentarioItem = ({
                         {comentario.texto}
                     </p>
 
-                    {showReplyButton && onReply && (
+                    {canReply && handleResponder && (
                         <button
                             onClick={() => setIsReplying(!isReplying)}
                             className="text-[#6c94c4] hover:text-[#5a7da8] text-sm font-medium"
@@ -140,6 +137,34 @@ const ComentarioItem = ({
                         </div>
                     )}
                 </>
+            )}
+
+            {/* Confirmación de eliminación */}
+            {showDeleteConfirm && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                            ¿Eliminar comentario?
+                        </h3>
+                        <p className="text-gray-600 mb-6">
+                            ¿Estás seguro de que deseas eliminar este comentario?
+                        </p>
+                        <div className="flex gap-3 justify-end">
+                            <button
+                                onClick={handleCancelDelete}
+                                className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleConfirmDelete}
+                                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                            >
+                                Eliminar
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

@@ -5,201 +5,161 @@ import { AuthContext } from '../../context/AuthContext';
 import authService from '../../services/authService';
 
 const ComentarioList = ({ idPublicacion }) => {
+
     const [comentarios, setComentarios] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     
-    // Obtener contexto de autenticación - con manejo de errores
-    let isAuthenticated = false;
-    let user = null;
-    
-    try {
-        const authContext = useContext(AuthContext);
-        isAuthenticated = authContext?.isAuthenticated || false;
-        user = authContext?.user || null;
-    } catch (authError) {
-        console.warn('AuthContext no disponible, ejecutando en modo público');
-    }
-    
+    const { isAuthenticated = false, user = null } = useContext(AuthContext);
     const API_URL = `http://localhost:4002/api/publicaciones/${idPublicacion}/comentarios`;
 
-    // Función auxiliar para crear headers con Bearer token
+    // Creacion de headers para Bearer token
     const createAuthHeaders = () => {
         const headers = new Headers();
         headers.append('Content-Type', 'application/json');
-        
-        // Solo agregar Bearer token si el usuario está autenticado
-        if (isAuthenticated) {
-            const token = authService?.getToken();
-            if (token) {
-                headers.append('Authorization', `Bearer ${token}`);
-            }
-        }
-        
+        headers.append('Authorization', `Bearer ${authService.getToken()}`);
         return headers;
     };
 
-    // Cargar comentarios al montar
+    // Cargar comentarios con useEffect - GET es público, no requiere Bearer token
     useEffect(() => {
-        cargarComentarios();
-    }, [idPublicacion]);
-
-    const cargarComentarios = async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            console.log('Solicitando comentarios desde:', API_URL);
-            // GET comentarios es público - NO requiere Bearer token
-            const response = await fetch(API_URL);
-            
+        fetch(API_URL)
+        .then((response) => {
             if (!response.ok) {
                 throw new Error(`Error HTTP ${response.status}: ${response.statusText}`);
             }
-            
-            // Obtener el texto de la respuesta primero
-            const responseText = await response.text();
-            console.log('Respuesta del servidor:', responseText);
-            
-            // Intentar parsear como JSON
-            let data;
-            try {
-                data = JSON.parse(responseText);
-            } catch (parseError) {
-                console.error('Error al parsear JSON:', parseError);
-                console.error('Respuesta recibida:', responseText);
-                throw new Error(`JSON inválido recibido del servidor. Error: ${parseError.message}. Respuesta: ${responseText.substring(0, 200)}...`);
-            }
-            
-            setComentarios(Array.isArray(data) ? data : []);
-        } catch (err) {
-            console.error('Error en cargarComentarios:', err);
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
 
-    const handleCrearComentario = async (texto) => {
-        if (!isAuthenticated) {
-            throw new Error('Debes iniciar sesión para comentar');
-        }
+            return response.json();})
+        .then((data) => { setComentarios(data) })
+        .catch((e) => {
+            console.error('Error al obtener los comentarios:', e);
+            setError(e.message) })
+    }, [API_URL]);
 
-        // POST comentarios requiere Bearer token
-        const headers = createAuthHeaders();
-        const response = await fetch(API_URL, {
+    // Crear comentario - POST requiere Bearer token
+    const handleCrearComentario = (texto) => {
+        return fetch(API_URL, {
             method: 'POST',
-            headers: headers,
-            body: JSON.stringify({ idUsuario: user?.id, texto })
-        });
-
-        if (!response.ok) {
-            if (response.status === 401) {
-                throw new Error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
-            }
-            throw new Error(`Error ${response.status}: ${response.statusText}`);
-        }
-        
-        const nuevoComentario = await response.json();
-        setComentarios([nuevoComentario, ...comentarios]);
+            headers: createAuthHeaders(),
+            body: JSON.stringify({ 
+                idUsuario: user.idUsuario, 
+                texto 
+            })
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error(`Error ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then((nuevoComentario) => {
+                setComentarios([nuevoComentario, ...comentarios]);
+                return nuevoComentario;
+            })
+            .catch((error) => {
+                console.error('Error al crear comentario:', error);
+                throw error;
+            });
     };
 
-    const handleEditarComentario = async (idComentario, nuevoTexto) => {
-        if (!isAuthenticated) {
-            throw new Error('Debes iniciar sesión para editar comentarios');
-        }
-
-        // PUT comentarios requiere Bearer token
-        const headers = createAuthHeaders();
-        const response = await fetch(`${API_URL}/${idComentario}/texto`, {
+    // Editar comentario - PUT requiere Bearer token
+    const handleEditarComentario = (idComentario, nuevoTexto) => {
+        return fetch(`${API_URL}/${idComentario}/texto`, {
             method: 'PUT',
-            headers: headers,
+            headers: createAuthHeaders(),
             body: JSON.stringify({ texto: nuevoTexto })
-        });
-
-        if (!response.ok) {
-            if (response.status === 401) {
-                throw new Error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
-            }
-            if (response.status === 403) {
-                throw new Error('No tienes permisos para editar este comentario.');
-            }
-            throw new Error(`Error ${response.status}: ${response.statusText}`);
-        }
-        
-        const actualizado = await response.json();
-        setComentarios(comentarios.map(c => 
-            c.idComentario === idComentario ? actualizado : c
-        ));
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error(`Error ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then((actualizado) => {
+                setComentarios(comentarios.map(c => 
+                    c.idComentario === idComentario ? actualizado : c
+                ));
+                return actualizado;
+            })
+            .catch((error) => {
+                console.error('Error al editar comentario:', error);
+                throw error;
+            });
     };
 
-    const handleEliminarComentario = async (idComentario) => {
-        if (!isAuthenticated) {
-            throw new Error('Debes iniciar sesión para eliminar comentarios');
-        }
-
-        // DELETE comentarios requiere Bearer token
-        const headers = createAuthHeaders();
-        const response = await fetch(`${API_URL}/${idComentario}`, {
+    // Eliminar comentario - DELETE requiere Bearer token
+    const handleEliminarComentario = (idComentario) => {
+        return fetch(`${API_URL}/${idComentario}`, {
             method: 'DELETE',
-            headers: headers
-        });
-
-        if (!response.ok) {
-            if (response.status === 401) {
-                throw new Error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
-            }
-            if (response.status === 403) {
-                throw new Error('No tienes permisos para eliminar este comentario.');
-            }
-            throw new Error(`Error ${response.status}: ${response.statusText}`);
-        }
-        
-        setComentarios(comentarios.filter(c => c.idComentario !== idComentario));
+            headers: createAuthHeaders()
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error(`Error ${response.status}: ${response.statusText}`);
+                }
+            })
+            .then(() => {
+                setComentarios(comentarios.filter(c => c.idComentario !== idComentario));
+            })
+            .catch((error) => {
+                console.error('Error al eliminar comentario:', error);
+                throw error;
+            });
     };
 
-    const handleResponder = async (idComentarioPadre, textoRespuesta) => {
-        if (!isAuthenticated) {
-            throw new Error('Debes iniciar sesión para responder');
-        }
-
-        // POST respuestas requiere Bearer token
-        const headers = createAuthHeaders();
-        const response = await fetch(`${API_URL}/${idComentarioPadre}/respuestas`, {
+    // Responder comentario - POST requiere Bearer token
+    const handleResponder = (idComentarioPadre, textoRespuesta) => {
+        return fetch(`${API_URL}/${idComentarioPadre}/respuestas`, {
             method: 'POST',
-            headers: headers,
-            body: JSON.stringify({ idUsuario: user?.id, texto: textoRespuesta })
-        });
-
-        if (!response.ok) {
-            if (response.status === 401) {
-                throw new Error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
-            }
-            throw new Error(`Error ${response.status}: ${response.statusText}`);
-        }
-
-        // Recargar comentarios para mostrar la respuesta
-        cargarComentarios();
+            headers: createAuthHeaders(),
+            body: JSON.stringify({ 
+                idUsuario: user.idUsuario, 
+                texto: textoRespuesta 
+            })
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error(`Error ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .catch((error) => {
+                console.error('Error al responder comentario:', error);
+                throw error;
+            });
     };
 
-    if (loading) {
+    // Renderizar un comentario con sus respuestas anidadas
+    const renderComentarioConRespuestas = (comentario) => {
+        const tieneRespuestas = comentario.respuestas?.length > 0;
+        
         return (
-            <div className="flex justify-center py-8">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6c94c4]"></div>
+            <div key={comentario.idComentario} className="space-y-3">
+                <ComentarioItem
+                    comentario={comentario}
+                    currentUserId={user?.idUsuario}
+                    currentUserRole={user?.rol}
+                    isAuthenticated={isAuthenticated}
+                    handleEditarComentario={handleEditarComentario}
+                    handleEliminarComentario={handleEliminarComentario}
+                    handleResponder={handleResponder}
+                />
+
+                {tieneRespuestas && (
+                    <div className="ml-8 pl-4 border-l-2 border-gray-300 space-y-3">
+                        {comentario.respuestas.map(respuesta => 
+                            renderComentarioConRespuestas(respuesta)
+                        )}
+                    </div>
+                )}
             </div>
         );
-    }
+    };
 
     if (error) {
         return (
             <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded">
                 <p className="font-semibold">Error al cargar comentarios</p>
                 <p className="text-sm">{error}</p>
-                <button 
-                    onClick={cargarComentarios}
-                    className="mt-2 text-sm underline hover:no-underline"
-                >
-                    Reintentar
-                </button>
             </div>
         );
     }
@@ -247,7 +207,7 @@ const ComentarioList = ({ idPublicacion }) => {
                 )}
             </div>
 
-            {/* Lista */}
+            {/* Lista de comentarios */}
             <div>
                 <h3 className="text-lg font-semibold mb-3 text-[#6c94c4]">
                     Comentarios ({comentarios.length})
@@ -259,16 +219,9 @@ const ComentarioList = ({ idPublicacion }) => {
                     </p>
                 ) : (
                     <div className="space-y-4">
-                        {comentarios.map(comentario => (
-                            <ComentarioItem
-                                key={comentario.idComentario}
-                                comentario={comentario}
-                                currentUserId={user?.id}
-                                onEdit={handleEditarComentario}
-                                onDelete={handleEliminarComentario}
-                                onReply={handleResponder}
-                            />
-                        ))}
+                        {comentarios
+                            .filter(c => !c.idComentarioPadre) // Solo mostrar comentarios principales
+                            .map(comentario => renderComentarioConRespuestas(comentario))}
                     </div>
                 )}
             </div>
