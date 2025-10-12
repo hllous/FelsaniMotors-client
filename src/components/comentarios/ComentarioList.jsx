@@ -145,7 +145,7 @@ const ComentarioList = ({ idPublicacion }) => {
                 />
 
                 {tieneRespuestas && (
-                    <div className="ml-8 pl-4 border-l-2 border-gray-300 space-y-3">
+                    <div className="ml-8 pl-6 border-l-4 border-paleta1-blue-light space-y-4 mt-6">
                         {comentario.respuestas.map(respuesta => 
                             renderComentarioConRespuestas(respuesta)
                         )}
@@ -157,70 +157,147 @@ const ComentarioList = ({ idPublicacion }) => {
 
     if (error) {
         return (
-            <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded">
-                <p className="font-semibold">Error al cargar comentarios</p>
-                <p className="text-sm">{error}</p>
+            <div className="bg-red-50 border-l-4 border-red-500 p-6 rounded-lg shadow-sm">
+                <div className="flex items-center gap-3">
+                    <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                        <p className="font-semibold text-red-800">Error al cargar comentarios</p>
+                        <p className="text-sm text-red-700 mt-1">{error}</p>
+                    </div>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="space-y-6">
-            {/* Header informativo */}
-            <div className="bg-gray-50 border border-gray-200 p-4 rounded">
-                <h2 className="text-xl font-bold text-gray-800 mb-2">
-                    💬 Comentarios de la Publicación #{idPublicacion}
-                </h2>
-                <div className="text-sm text-gray-600">
-                    <p>
-                        📡 <strong>Estado de conexión:</strong> {isAuthenticated ? '🟢 Autenticado' : '🔵 Modo público'}
-                        {isAuthenticated && user && (
-                            <span className="ml-2">
-                                | 👤 Usuario: <strong>{user.email}</strong>
+        <div className="space-y-8">
+            {/* Header moderno y elegante sin beige */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-paleta1-blue-light p-8 rounded-2xl shadow-sm">
+                <div className="flex items-center gap-4 mb-6">
+                    <div className="w-12 h-12 bg-gradient-to-br from-paleta1-blue to-paleta1-blue/80 rounded-xl flex items-center justify-center shadow-lg">
+                        <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                    </div>
+                    <h2 className="text-3xl font-bold text-paleta1-blue">
+                        Comentarios
+                        <span className="text-lg font-normal text-gray-600 ml-2">
+                            Publicación #{idPublicacion}
+                        </span>
+                    </h2>
+                </div>
+                
+                <div className="grid md:grid-cols-2 gap-6">
+                    <div className="bg-white/70 backdrop-blur-sm p-4 rounded-xl border border-paleta1-blue-light/50">
+                        <div className="flex items-center gap-3 mb-3">
+                            {isAuthenticated ? (
+                                <div className="w-4 h-4 bg-green-500 rounded-full shadow-sm"></div>
+                            ) : (
+                                <div className="w-4 h-4 bg-paleta1-blue rounded-full shadow-sm"></div>
+                            )}
+                            <span className="font-bold text-paleta1-blue">
+                                {isAuthenticated ? 'Conectado' : 'Modo público'}
                             </span>
+                        </div>
+                        {isAuthenticated && user && (
+                            <p className="text-gray-700 text-sm">
+                                <span className="font-medium">Usuario:</span> {user.email}
+                            </p>
                         )}
-                    </p>
-                    <p className="mt-1">
-                        🔓 <strong>Lectura:</strong> Pública (sin autenticación) | 
-                        🔒 <strong>Escritura:</strong> Requiere autenticación
-                    </p>
+                    </div>
+                    
+                    <div className="bg-white/70 backdrop-blur-sm p-4 rounded-xl border border-paleta1-blue-light/50">
+                        <div className="space-y-1 text-sm">
+                            <p className="text-gray-700">
+                                <span className="font-bold text-green-600">Lectura:</span> Libre acceso
+                            </p>
+                            <p className="text-gray-700">
+                                <span className="font-bold text-paleta1-blue">Escritura:</span> Requiere cuenta
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            {/* Formulario */}
-            <div>
-                <h3 className="text-lg font-semibold mb-3 text-[#6c94c4]">Dejar un comentario</h3>
+            {/* Sección de formulario moderna */}
+            <div className="bg-white border border-paleta1-blue-light rounded-2xl p-8 shadow-lg">
+                <div className="flex items-center gap-4 mb-8">
+                    <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-md">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                    </div>
+                    <h3 className="text-2xl font-bold text-paleta1-blue">Dejar un comentario</h3>
+                </div>
+                
                 {isAuthenticated ? (
                     <ComentarioForm 
                         onSubmit={handleCrearComentario}
-                        placeholder="Escribe tu comentario sobre esta publicación..."
+                        placeholder="Comparte tu opinión sobre esta publicación..."
+                        submitLabel="Publicar comentario"
                     />
                 ) : (
-                    <div className="bg-blue-50 border border-blue-200 text-blue-700 p-4 rounded">
-                        <p className="text-sm">
-                            📖 <strong>Modo público:</strong> Puedes ver todos los comentarios, pero necesitas <strong>iniciar sesión</strong> para escribir, editar o eliminar comentarios.
-                        </p>
-                        <p className="text-xs mt-2 text-blue-600">
-                            💡 Los comentarios se cargan automáticamente sin necesidad de autenticación según la configuración del servidor.
-                        </p>
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-paleta1-blue-light p-6 rounded-xl">
+                        <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                                <svg className="w-6 h-6 text-paleta1-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 className="text-lg font-bold text-paleta1-blue mb-2">
+                                    Modo público activado
+                                </h4>
+                                <p className="text-gray-700 leading-relaxed">
+                                    Puedes ver todos los comentarios, pero necesitas <strong>iniciar sesión</strong> para escribir, editar o eliminar comentarios.
+                                </p>
+                                <p className="text-sm mt-3 text-paleta1-blue font-medium">
+                                    💡 Los comentarios se cargan automáticamente sin necesidad de autenticación.
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>
 
-            {/* Lista de comentarios */}
-            <div>
-                <h3 className="text-lg font-semibold mb-3 text-[#6c94c4]">
-                    Comentarios ({comentarios.length})
-                </h3>
+            {/* Lista de comentarios mejorada */}
+            <div className="bg-white border border-paleta1-blue-light rounded-2xl p-8 shadow-lg">
+                <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 bg-gradient-to-br from-paleta1-blue to-paleta1-blue/80 rounded-xl flex items-center justify-center shadow-md">
+                            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a2 2 0 01-2-2v-6a2 2 0 012-2h8z" />
+                            </svg>
+                        </div>
+                        <h3 className="text-2xl font-bold text-paleta1-blue">
+                            Todos los comentarios
+                        </h3>
+                    </div>
+                    <div className="bg-gradient-to-r from-paleta1-blue to-paleta1-blue/90 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md">
+                        {comentarios.length} comentarios
+                    </div>
+                </div>
 
                 {comentarios.length === 0 ? (
-                    <p className="text-gray-500 text-center py-8">
-                        No hay comentarios aún. ¡Sé el primero en comentar!
-                    </p>
+                    <div className="text-center py-16">
+                        <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <svg className="w-10 h-10 text-paleta1-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                            </svg>
+                        </div>
+                        <h4 className="text-xl font-bold text-paleta1-blue mb-3">
+                            ¡Sé el primero en comentar!
+                        </h4>
+                        <p className="text-gray-600 text-lg">
+                            No hay comentarios aún. Comparte tu opinión sobre esta publicación.
+                        </p>
+                    </div>
                 ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                         {comentarios
-                            .filter(c => !c.idComentarioPadre) // Solo mostrar comentarios principales
+                            .filter(c => !c.idComentarioPadre)
                             .map(comentario => renderComentarioConRespuestas(comentario))}
                     </div>
                 )}
