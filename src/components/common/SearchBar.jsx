@@ -1,5 +1,6 @@
 //Sant
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Filter from './Filter';
 
 const mensajes = [
@@ -12,6 +13,7 @@ const mensajes = [
 
 const SearchBar = () => {
     const [searchValue, setSearchValue] = useState('');
+    const navigate = useNavigate();
     
     // Random placeholder que se genera una vez cuando se monta el componente
     const randomPlaceholder = useMemo(() => {
@@ -23,9 +25,15 @@ const SearchBar = () => {
     };
 
     const handleSubmit = (e) => {
-        // El prevent default hace que no se congele la pag. Cada vez q ingresaba un texto, se actualizaba la pag automaticamente
         e.preventDefault();
-        console.log('Buscando:', searchValue);
+        
+        if (searchValue.trim()) {
+            // Navegar a PublicacionList con el query de búsqueda
+            navigate(`/publicaciones?q=${encodeURIComponent(searchValue.trim())}`);
+        } else {
+            // Si está vacío, mostrar todas las publicaciones
+            navigate('/publicaciones');
+        }
     };
 
     return (

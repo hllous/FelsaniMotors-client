@@ -13,6 +13,8 @@ const ComentarioItem = ({
     const [isEditing, setIsEditing] = useState(false);
     const [isReplying, setIsReplying] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
 
     const isOwner = currentUserId && comentario.usuario?.idUsuario === currentUserId;
     const isAdmin = currentUserRole === 'ADMIN';
@@ -23,7 +25,10 @@ const ComentarioItem = ({
     const handleEdit = (nuevoTexto) => {
         return handleEditarComentario(comentario.idComentario, nuevoTexto)
             .then(() => setIsEditing(false))
-            .catch((error) => alert('Error al editar: ' + error.message));
+            .catch((error) => {
+                setErrorMessage('Error al editar: ' + error.message);
+                setShowErrorModal(true);
+            });
     };
 
     const handleDeleteClick = () => {
@@ -33,7 +38,10 @@ const ComentarioItem = ({
     const handleConfirmDelete = () => {
         setShowDeleteConfirm(false);
         handleEliminarComentario(comentario.idComentario)
-            .catch((error) => alert('Error al eliminar: ' + error.message));
+            .catch((error) => {
+                setErrorMessage('Error al eliminar: ' + error.message);
+                setShowErrorModal(true);
+            });
     };
 
     const handleCancelDelete = () => {
@@ -43,7 +51,10 @@ const ComentarioItem = ({
     const handleReply = (textoRespuesta) => {
         return handleResponder(comentario.idComentario, textoRespuesta)
             .then(() => setIsReplying(false))
-            .catch((error) => alert('Error al responder: ' + error.message));
+            .catch((error) => {
+                setErrorMessage('Error al responder: ' + error.message);
+                setShowErrorModal(true);
+            });
     };
 
     const formatearFecha = (fecha) => {
@@ -161,6 +172,25 @@ const ComentarioItem = ({
                                 className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
                             >
                                 Eliminar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Error */}
+            {showErrorModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-sm mx-4">
+                        <div className="text-center">
+                            <div className="text-red-500 text-5xl mb-4">✕</div>
+                            <h3 className="text-xl font-bold text-gray-800 mb-2">Error</h3>
+                            <p className="text-gray-600 mb-4">{errorMessage}</p>
+                            <button
+                                onClick={() => setShowErrorModal(false)}
+                                className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
+                            >
+                                Cerrar
                             </button>
                         </div>
                     </div>
