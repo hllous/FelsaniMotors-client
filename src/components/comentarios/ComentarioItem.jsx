@@ -59,21 +59,24 @@ const ComentarioItem = ({
     };
 
     return (
-        <div className="bg-[#e8decb] p-4 rounded shadow-sm border border-gray-200">
+        <div className="bg-white p-6 rounded-xl shadow-lg border border-paleta1-blue-light hover:shadow-xl transition-all duration-300">
             {/* Header del comentario */}
-            <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center gap-2">
-                    {/* Avatar */}
-                    <div className="w-10 h-10 bg-[#6c94c4] rounded-full flex items-center justify-center text-white font-semibold">
+            <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-4">
+                    {/* Avatar moderno */}
+                    <div className="w-14 h-14 bg-gradient-to-br from-paleta1-blue to-paleta1-blue/80 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-md ring-4 ring-paleta1-blue-light/30">
                         {comentario.usuario?.nombre?.[0]?.toUpperCase() || '?'}
                     </div>
                     
                     {/* Info del usuario */}
                     <div>
-                        <p className="font-semibold text-gray-800">
+                        <p className="font-bold text-gray-900 text-lg">
                             {comentario.usuario?.nombre} {comentario.usuario?.apellido}
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-500 flex items-center gap-2">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
                             {formatearFecha(comentario.fecha)}
                         </p>
                     </div>
@@ -85,16 +88,22 @@ const ComentarioItem = ({
                         {canEdit && (
                             <button
                                 onClick={() => setIsEditing(true)}
-                                className="text-[#6c94c4] hover:text-[#5a7da8] text-sm font-medium"
+                                className="px-4 py-2 bg-blue-50 text-paleta1-blue hover:bg-blue-100 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 border border-paleta1-blue-light"
                             >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
                                 Editar
                             </button>
                         )}
                         {canDelete && (
                             <button
                                 onClick={handleDeleteClick}
-                                className="text-red-600 hover:text-red-800 text-sm font-medium"
+                                className="px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 border border-red-200"
                             >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
                                 Eliminar
                             </button>
                         )}
@@ -104,34 +113,53 @@ const ComentarioItem = ({
 
             {/* Contenido */}
             {isEditing ? (
-                <ComentarioForm
-                    initialValue={comentario.texto}
-                    onSubmit={handleEdit}
-                    onCancel={() => setIsEditing(false)}
-                    submitLabel="Guardar"
-                    placeholder="Edita tu comentario..."
-                />
+                <div className="ml-18">
+                    <ComentarioForm
+                        initialValue={comentario.texto}
+                        onSubmit={handleEdit}
+                        onCancel={() => setIsEditing(false)}
+                        submitLabel="Guardar cambios"
+                        placeholder="Edita tu comentario..."
+                    />
+                </div>
             ) : (
                 <>
-                    <p className="text-gray-700 mb-3 whitespace-pre-wrap">
-                        {comentario.texto}
-                    </p>
+                    <div className="ml-18 mb-5">
+                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+                                {comentario.texto}
+                            </p>
+                        </div>
+                    </div>
 
                     {canReply && handleResponder && (
-                        <button
-                            onClick={() => setIsReplying(!isReplying)}
-                            className="text-[#6c94c4] hover:text-[#5a7da8] text-sm font-medium"
-                        >
-                            {isReplying ? 'Cancelar' : 'Responder'}
-                        </button>
+                        <div className="ml-18">
+                            <button
+                                onClick={() => setIsReplying(!isReplying)}
+                                className="inline-flex items-center gap-2 text-paleta1-blue hover:bg-blue-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-paleta1-blue-light"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                                </svg>
+                                {isReplying ? 'Cancelar respuesta' : 'Responder'}
+                            </button>
+                        </div>
                     )}
 
                     {isReplying && (
-                        <div className="mt-3 pl-4 border-l-2 border-[#6c94c4]">
+                        <div className="mt-6 ml-18 p-4 bg-blue-50 rounded-lg border-l-4 border-paleta1-blue">
+                            <div className="mb-3">
+                                <p className="text-sm font-semibold text-paleta1-blue flex items-center gap-2">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                    </svg>
+                                    Respondiendo a {comentario.usuario?.nombre}
+                                </p>
+                            </div>
                             <ComentarioForm
                                 onSubmit={handleReply}
                                 onCancel={() => setIsReplying(false)}
-                                submitLabel="Responder"
+                                submitLabel="Enviar respuesta"
                                 placeholder="Escribe tu respuesta..."
                             />
                         </div>
@@ -139,28 +167,40 @@ const ComentarioItem = ({
                 </>
             )}
 
-            {/* Confirmación de eliminación */}
+            {/* Modal de confirmación de eliminación */}
             {showDeleteConfirm && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                            ¿Eliminar comentario?
-                        </h3>
-                        <p className="text-gray-600 mb-6">
-                            ¿Estás seguro de que deseas eliminar este comentario?
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 border border-paleta1-blue-light">
+                        <div className="flex items-center gap-4 mb-6">
+                            <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center">
+                                <svg className="w-7 h-7 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-gray-900">
+                                    ¿Eliminar comentario?
+                                </h3>
+                                <p className="text-sm text-gray-600">
+                                    Esta acción no se puede deshacer
+                                </p>
+                            </div>
+                        </div>
+                        <p className="text-gray-700 mb-8 leading-relaxed">
+                            ¿Estás seguro de que deseas eliminar este comentario? Se eliminará permanentemente y no podrás recuperarlo.
                         </p>
                         <div className="flex gap-3 justify-end">
                             <button
                                 onClick={handleCancelDelete}
-                                className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
+                                className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium border border-gray-300"
                             >
                                 Cancelar
                             </button>
                             <button
                                 onClick={handleConfirmDelete}
-                                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                                className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium shadow-md"
                             >
-                                Eliminar
+                                Eliminar comentario
                             </button>
                         </div>
                     </div>
