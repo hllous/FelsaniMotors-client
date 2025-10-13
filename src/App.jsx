@@ -5,6 +5,7 @@ import Footer from './components/common/Footer'
 import Navbar from './components/common/Navbar'
 import PublicacionList from './components/publicaciones/PublicacionList'
 import PublicacionForm from './components/publicaciones/PublicacionForm'
+import Publicacion from './components/publicaciones/Publicacion'
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
       <Routes>
         <Route path="/" element={<PublicacionList />} />
         <Route path="/publicaciones" element={<PublicacionList />} />
+        <Route path="/publicacion/:id" element={<Publicacion />} />
         <Route path="/crear-publicacion" element={<PublicacionForm />} />
       </Routes>
       <Footer />

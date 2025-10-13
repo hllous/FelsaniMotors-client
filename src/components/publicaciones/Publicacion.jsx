@@ -1,6 +1,10 @@
 import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 
-const Publicacion = ({ idPublicacion, mostrarCompleta = false }) => {
+const Publicacion = () => {
+    const { id } = useParams();
+    const idPublicacion = parseInt(id);
+    
     const [publicacion, setPublicacion] = useState(null);
     const [imagenes, setImagenes] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -79,11 +83,10 @@ const Publicacion = ({ idPublicacion, mostrarCompleta = false }) => {
         );
     }
 
-    // Vista completa de la publicación (para página de detalle)
-    if (mostrarCompleta) {
-        return (
-            <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
-                {/* Header de la publicación */}
+    // Vista completa de la publicación
+    return (
+        <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
+            {/* Header de la publicación */}
                 <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6">
                     <h1 className="text-3xl font-bold mb-2">{publicacion.titulo}</h1>
                     <div className="flex items-center justify-between">
@@ -166,28 +169,6 @@ const Publicacion = ({ idPublicacion, mostrarCompleta = false }) => {
                 </div>
             </div>
         );
-    }
-
-    // Vista resumida (para listados)
-    return (
-        <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
-            {imagenes.length > 0 && (
-                <img 
-                    src={imagenes[0]} 
-                    alt={publicacion.titulo}
-                    className="w-full h-48 object-cover"
-                />
-            )}
-            <div className="p-4">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">{publicacion.titulo}</h3>
-                <p className="text-2xl font-bold text-green-600 mb-2">
-                    ${publicacion.precio?.toLocaleString()} ARS
-                </p>
-                <p className="text-gray-600">{publicacion.marcaAuto} {publicacion.modeloAuto}</p>
-                <p className="text-sm text-gray-500">{publicacion.ubicacion}</p>
-            </div>
-        </div>
-    );
 };
 
 export default Publicacion;

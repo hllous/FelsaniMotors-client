@@ -44,7 +44,10 @@ const Navbar = () => {
             <nav className="flex gap-5 px-8">
 
                 {/** Logo */}
-                <div className='hover:cursor-pointer self-center '>
+                <div 
+                    className='hover:cursor-pointer self-center'
+                    onClick={() => navigate('/')}
+                >
                     <img src='/src/assets/Logo_Felsani_Motors_Page.png' className="h-28"/>
                 </div>
 

@@ -1,15 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
-/**
- * Componente Filter - Sistema de filtros avanzado para búsqueda de vehículos
- * Utiliza la paleta de colores: paleta1-blue, paleta1-blue-light, paleta1-cream
- * Funcionalidades: filtros múltiples, dropdown expandible, contador de filtros activos
- */
 const Filter = () => {
-  // Estado para controlar la visibilidad del modal de filtros
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
   
-  // Estado principal de filtros - contiene todas las categorías de filtrado
   const [filters, setFilters] = useState({
     marca: [],
     modelo: [],
@@ -22,62 +18,39 @@ const Filter = () => {
     motor: []
   });
 
-  // === CONFIGURACIÓN DE DATOS DE FILTROS ===
-  
-  // Marcas de vehículos disponibles en el sistema
-  const marcas = ['Toyota', 'Ford', 'Chevrolet', 'Honda', 'Volkswagen', 'Nissan', 'Hyundai', 'Fiat', 'Renault', 'Peugeot'];
-  
-  // Mapeo de modelos por marca - permite filtrado dependiente entre marca y modelo
-  const modelosPorMarca = {
-    'Toyota': ['Corolla', 'Etios', 'Hilux', 'SW4', 'RAV4', 'Yaris', 'Camry'],
-    'Ford': ['Focus', 'Fiesta', 'Ranger', 'EcoSport', 'Ka', 'Mondeo', 'Territory'],
-    'Chevrolet': ['Cruze', 'Onix', 'Tracker', 'S10', 'Spin', 'Prisma', 'Montana'],
-    'Honda': ['Civic', 'City', 'HR-V', 'CR-V', 'Fit', 'Accord'],
-    'Volkswagen': ['Gol', 'Polo', 'Vento', 'Amarok', 'T-Cross', 'Tiguan', 'Passat'],
-    'Nissan': ['Versa', 'Sentra', 'Kicks', 'Frontier', 'X-Trail', 'March'],
-    'Hyundai': ['HB20', 'Creta', 'Tucson', 'Elantra', 'i30', 'Santa Fe'],
-    'Fiat': ['Argo', 'Cronos', 'Toro', 'Strada', 'Pulse', 'Mobi', 'Fastback'],
-    'Renault': ['Sandero', 'Logan', 'Duster', 'Kangoo', 'Alaskan', 'Captur'],
-    'Peugeot': ['208', '2008', '3008', '308', '408', '5008', 'Partner']
-  };
-
-  /**
-   * Función para obtener modelos disponibles según las marcas seleccionadas
-   * Implementa filtrado dependiente: solo muestra modelos de marcas activas
-   * @returns {Array} Array de modelos disponibles
-   */
-  const getModelosDisponibles = () => {
-    if (filters.marca.length === 0) {
-      // Si no hay marcas seleccionadas, mostrar todos los modelos disponibles
-      return Object.values(modelosPorMarca).flat();
-    }
-    // Filtrar modelos solo de las marcas seleccionadas
-    return filters.marca.flatMap(marca => modelosPorMarca[marca] || []);
-  };
-
-  // Configuración completa de opciones para cada tipo de filtro
-  const filterOptions = {
-    marca: marcas,
-    modelo: getModelosDisponibles(), // Dinámico basado en marcas seleccionadas
-    anio: ['2024', '2023', '2022', '2021', '2020', '2019', '2018', '2017', '2016', '2015', '2014', '2013', '2012', '2011', '2010'],
-    estado: ['Nuevo', 'Usado', 'Seminuevo'],
+  const [filterOptions, setFilterOptions] = useState({
+    marca: [],
+    modelo: [],
+    anio: [],
+    estado: [],
     kilometraje: ['0-50000', '50000-100000', '100000-150000', '150000-200000', '200000+'],
-    combustible: ['Nafta', 'Diesel', 'GNC', 'Eléctrico', 'Híbrido'],
-    tipoCategoria: ['Sedán', 'SUV', 'Hatchback', 'Pickup', 'Coupé', 'Minivan', 'Deportivo'],
-    tipoCaja: ['Manual', 'Automática', 'CVT', 'Secuencial'],
-    motor: ['1.0', '1.4', '1.6', '1.8', '2.0', '2.4', '3.0', '3.5', '4.0']
-  };
+    combustible: [],
+    tipoCategoria: [],
+    tipoCaja: [],
+    motor: []
+  });
 
-  // Estado para controlar qué dropdown está abierto (solo uno a la vez)
+  useEffect(() => {
+    fetch('http://localhost:4002/api/publicaciones/filtros/opciones')
+      .then(response => response.json())
+      .then(data => {
+        setFilterOptions({
+          marca: data.marcas || [],
+          modelo: data.modelos || [],
+          anio: data.anios?.map(String) || [],
+          estado: data.estados || [],
+          kilometraje: ['0-50000', '50000-100000', '100000-150000', '150000-200000', '200000+'],
+          combustible: data.combustibles || [],
+          tipoCategoria: data.tipoCategorias || [],
+          tipoCaja: data.tipoCajas || [],
+          motor: data.motores || []
+        });
+      })
+      .catch(error => console.error('Error cargando opciones de filtros:', error));
+  }, []);
+
   const [openDropdowns, setOpenDropdowns] = useState({});
 
-  // === FUNCIONES DE MANEJO DE ESTADO ===
-
-  /**
-   * Controla la apertura/cierre de dropdowns de filtros
-   * Permite múltiples dropdowns abiertos simultáneamente
-   * @param {string} filterName - Nombre del filtro a toggle
-   */
   const toggleDropdown = (filterName) => {
     setOpenDropdowns(prev => ({
       ...prev,
@@ -85,18 +58,12 @@ const Filter = () => {
     }));
   };
 
-  /**
-   * Maneja la selección/deselección de opciones en los filtros
-   * Permite múltiples selecciones por categoría
-   * @param {string} filterName - Nombre de la categoría de filtro
-   * @param {string} value - Valor a agregar/quitar del filtro
-   */
   const handleCheckboxChange = (filterName, value) => {
     setFilters(prev => {
       const currentValues = prev[filterName];
       const newValues = currentValues.includes(value)
-        ? currentValues.filter(v => v !== value) // Quitar si ya está seleccionado
-        : [...currentValues, value]; // Agregar si no está seleccionado
+        ? currentValues.filter(v => v !== value)
+        : [...currentValues, value];
       
       return {
         ...prev,
@@ -105,10 +72,6 @@ const Filter = () => {
     });
   };
 
-  /**
-   * Limpia todos los filtros activos
-   * Resetea el estado a valores iniciales
-   */
   const clearFilters = () => {
     setFilters({
       marca: [],
@@ -123,21 +86,24 @@ const Filter = () => {
     });
   };
 
-  /**
-   * Aplica los filtros seleccionados
-   * En el futuro se conectará con la lógica de filtrado de vehículos
-   */
   const applyFilters = () => {
-    console.log('Filtros aplicados:', filters);
-    // TODO: Implementar lógica de filtrado de vehículos
+    const params = new URLSearchParams();
+    
+    const textoBusqueda = searchParams.get('q');
+    if (textoBusqueda) {
+      params.append('q', textoBusqueda);
+    }
+    
+    Object.entries(filters).forEach(([key, values]) => {
+      values.forEach(value => {
+        params.append(key, value);
+      });
+    });
+    
+    navigate(`/publicaciones?${params.toString()}`);
     setIsOpen(false);
   };
 
-  /**
-   * Convierte las claves de filtros en etiquetas amigables para el usuario
-   * @param {string} key - Clave del filtro
-   * @returns {string} Etiqueta formateada
-   */
   const getFilterLabel = (key) => {
     const labels = {
       marca: 'Marca',
@@ -153,18 +119,14 @@ const Filter = () => {
     return labels[key] || key;
   };
 
-  // Calcula el número total de filtros activos para mostrar en el badge
   const activeFiltersCount = Object.values(filters).reduce((acc, arr) => acc + arr.length, 0);
 
   return (
     <div className="relative">
-      {/* === BOTÓN PRINCIPAL DE FILTROS === */}
-      {/* Usa paleta1-blue para elementos interactivos y gray para estados neutros */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="inline-flex items-center gap-2 px-4 py-2 rounded-full hover:bg-gray-100 transition-colors hover:cursor-pointer"
       >
-        {/* Icono de filtro SVG */}
         <svg 
           className="w-5 h-5 text-gray-700" 
           fill="none" 

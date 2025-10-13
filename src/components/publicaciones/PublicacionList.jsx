@@ -1,40 +1,80 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import PublicacionCard from "./PublicacionCard";
 import PublicacionDestacada from "./PublicacionDestacada";
 
 const PublicacionList = () => {
     const [publicaciones, setPublicaciones] = useState([]);
+    const [publicacionDestacada, setPublicacionDestacada] = useState(null);
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     
-    // Extraer parametros de URL (despues de busqueda en searchbar)
     const consultaBusqueda = searchParams.get('q') || '';
     const userId = searchParams.get('userId');
+    
+    const paramsString = useMemo(() => searchParams.toString(), [searchParams]);
+    
+    const hasFiltros = useMemo(() => {
+        const params = new URLSearchParams(paramsString);
+        params.delete('q');
+        params.delete('userId');
+        return params.toString().length > 0;
+    }, [paramsString]);
 
-    const publicacionDestacada = publicaciones[Math.floor(Math.random() * publicaciones.length)];
     const publicacionesRestantes = publicaciones.filter(p => p.idPublicacion !== publicacionDestacada?.idPublicacion);
 
     useEffect(() => {
-
         let url = "http://localhost:4002/api/publicaciones";
         
+        // Caso 1: Filtrar por usuario específico
         if (userId) {
-
             url = `http://localhost:4002/api/publicaciones/usuario/${userId}`;
-        } else if (consultaBusqueda.trim() !== '') {
-
-            url = `http://localhost:4002/api/publicaciones/buscar?busqueda=${encodeURIComponent(consultaBusqueda)}`;
+        } 
+        // Caso 2: Búsqueda de texto y/o filtros
+        else if (consultaBusqueda.trim() !== '' || hasFiltros) {
+            const params = new URLSearchParams();
+            
+            // Agregar búsqueda de texto si existe
+            if (consultaBusqueda.trim() !== '') {
+                params.append('busqueda', consultaBusqueda);
+            }
+            
+            // Agregar todos los filtros activos
+            searchParams.forEach((value, key) => {
+                if (key !== 'q' && key !== 'userId') {
+                    params.append(key, value);
+                }
+            });
+            
+            url = `http://localhost:4002/api/publicaciones/filtrar?${params.toString()}`;
         }
 
         fetch(url)
         .then((response) => {
             if (response.status === 204) { return []; }
-            return response.json() })
-        .then((data) => setPublicaciones(data))
+            return response.json();
+        })
+        .then((data) => {
+            // Si la respuesta tiene estructura paginada, extraer content
+            if (data.content) {
+                setPublicaciones(data.content);
+            } else {
+                setPublicaciones(data);
+            }
+        })
         .catch((error) => console.error("Error al obtener datos", error));
 
-    }, [consultaBusqueda, userId]);
+    }, [userId, consultaBusqueda, hasFiltros, searchParams]);
+
+    // Actualizar publicación destacada cuando cambian las publicaciones
+    useEffect(() => {
+        if (publicaciones.length > 0) {
+            const randomIndex = Math.floor(Math.random() * publicaciones.length);
+            setPublicacionDestacada(publicaciones[randomIndex]);
+        } else {
+            setPublicacionDestacada(null);
+        }
+    }, [publicaciones]);
 
 
 
@@ -43,7 +83,7 @@ const PublicacionList = () => {
             <div className="container mx-auto px-4 py-6">
                 
                 {/* Publicación Destacada */}
-                {publicacionDestacada && (
+                {publicacionDestacada && !consultaBusqueda && !userId && !hasFiltros && (
                     <PublicacionDestacada publicacion={publicacionDestacada} />
                 )}
 
@@ -52,18 +92,20 @@ const PublicacionList = () => {
                     <h2 className="text-2xl font-bold text-gray-800 mb-2">
                         {userId ? 'Mis Publicaciones' : 
                          consultaBusqueda ? `Resultados para "${consultaBusqueda}"` : 
+                         hasFiltros ? 'Resultados filtrados' :
                          'Todas las publicaciones'}
                     </h2>
                     <p className="text-gray-600">
-                        {publicacionesRestantes.length} vehículos disponibles
+                        {consultaBusqueda || userId || hasFiltros ? publicaciones.length : publicacionesRestantes.length} vehículos disponibles
                         {userId && ' de tus publicaciones'}
                         {consultaBusqueda && ` que coinciden con "${consultaBusqueda}"`}
+                        {hasFiltros && ' según los filtros aplicados'}
                     </p>
                     
                     {/* Botón para limpiar filtros */}
-                    {(userId || consultaBusqueda) && (
+                    {(userId || consultaBusqueda || hasFiltros) && (
                         <button 
-                            onClick={() => navigate(window.location.pathname)}
+                            onClick={() => navigate('/publicaciones')}
                             className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
                         >
                             Mostrar todas las publicaciones
@@ -71,14 +113,12 @@ const PublicacionList = () => {
                     )}
                 </div>
 
-                {/* Grid de publicaciones estilo MercadoLibre */}
+                {/* Grid de publicaciones */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                    {publicacionesRestantes.map((publicacion) => (
+                    {(consultaBusqueda || userId || hasFiltros ? publicaciones : publicacionesRestantes).map((publicacion) => (
                         <PublicacionCard 
                             key={publicacion.idPublicacion}
                             idPublicacion={publicacion.idPublicacion}
-                            idUsuario={publicacion.idUsuario}
-                            idAuto={publicacion.idAuto}
                             titulo={publicacion.titulo}
                             ubicacion={publicacion.ubicacion}
                             precio={publicacion.precio}
@@ -109,4 +149,5 @@ const PublicacionList = () => {
         </div>
     );
 };
+
 export default PublicacionList;
