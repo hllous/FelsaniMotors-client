@@ -39,11 +39,7 @@ const PublicacionDestacada = ({ publicacion }) => {
     return(
         <div 
             className="bg-white rounded-lg shadow-lg overflow-hidden mb-8 mx-4 cursor-pointer hover:shadow-xl transition-shadow duration-300"
-            onClick={handleClick}
-        >
-            <div className="bg-yellow-400 text-black text-center py-2 font-bold">
-                🌟 PUBLICACIÓN DESTACADA 🌟
-            </div>
+            onClick={handleClick}>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
                 {/* Imagen */}
