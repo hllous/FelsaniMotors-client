@@ -14,28 +14,30 @@ function App() {
   return (
     <>
       <Navbar />
-      <Routes>
-        <Route path="/" element={<PublicacionList />} />
-        <Route path="/publicaciones" element={<PublicacionList />} />
-        <Route path="/publicacion/:id" element={<Publicacion />} />
-        <Route path="/crear-publicacion" element={<PublicacionForm />} />
-        <Route 
-          path="/comprar/:id" 
-          element={
-            <ProtectedRoute>
-              <TransaccionForm />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/mis-transacciones" 
-          element={
-            <ProtectedRoute>
-              <TransaccionList />
-            </ProtectedRoute>
-          } 
-        />
-      </Routes>
+      <main className="min-h-screen pb-16">
+        <Routes>
+          <Route path="/" element={<PublicacionList />} />
+          <Route path="/publicaciones" element={<PublicacionList />} />
+          <Route path="/publicacion/:id" element={<Publicacion />} />
+          <Route path="/crear-publicacion" element={<PublicacionForm />} />
+          <Route 
+            path="/comprar/:id" 
+            element={
+              <ProtectedRoute>
+                <TransaccionForm />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/mis-transacciones" 
+            element={
+              <ProtectedRoute>
+                <TransaccionList />
+              </ProtectedRoute>
+            } 
+          />
+        </Routes>
+      </main>
       <Footer />
     </>
   )
