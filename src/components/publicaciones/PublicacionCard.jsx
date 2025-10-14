@@ -50,7 +50,7 @@ const PublicacionCard = ({ idPublicacion, titulo, ubicacion, precio, estado, mar
 
     return(
         <div 
-            className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden cursor-pointer border border-gray-200"
+            className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden cursor-pointer border border-paleta1-cream"
             onClick={handleClick}
         >
             {/* Imagen */}
@@ -60,8 +60,8 @@ const PublicacionCard = ({ idPublicacion, titulo, ubicacion, precio, estado, mar
                     alt={titulo} 
                     className="w-full h-48 object-cover"
                 />
-                <div className="absolute top-2 right-2 bg-white rounded-full p-1 shadow-md">
-                    <svg className="w-5 h-5 text-gray-400 hover:text-red-500 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="absolute top-2 right-2 bg-white rounded-full p-1 shadow-md border border-paleta1-cream">
+                    <svg className="w-5 h-5 text-gray-400 hover:text-paleta1-blue transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                     </svg>
                 </div>
@@ -78,7 +78,7 @@ const PublicacionCard = ({ idPublicacion, titulo, ubicacion, precio, estado, mar
                 </div>
 
                 {/* Título */}
-                <h3 className="text-lg font-semibold text-gray-800 mb-2 line-clamp-2 hover:text-blue-600 transition-colors duration-200">
+                <h3 className="text-lg font-semibold text-paleta1-blue mb-2 line-clamp-2 hover:text-gray-800 transition-colors duration-200">
                     {titulo}
                 </h3>
 
@@ -103,7 +103,7 @@ const PublicacionCard = ({ idPublicacion, titulo, ubicacion, precio, estado, mar
                 </div>
 
                 {/* Envío gratis simulado (estilo ML) */}
-                <div className="mt-3 pt-3 border-t border-gray-100">
+                <div className="mt-3 pt-3 border-t border-paleta1-cream-light">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center text-green-600 text-sm">
                             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -113,7 +113,7 @@ const PublicacionCard = ({ idPublicacion, titulo, ubicacion, precio, estado, mar
                         </div>
                         <button
                             onClick={handleComprar}
-                            className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors duration-200 flex items-center gap-1"
+                            className="bg-paleta1-blue hover:bg-paleta1-blue-light text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors duration-200 flex items-center gap-1"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-4">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
