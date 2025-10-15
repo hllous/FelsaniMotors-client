@@ -9,6 +9,11 @@ import Publicacion from './components/publicaciones/Publicacion'
 import TransaccionForm from './components/transacciones/TransaccionForm'
 import TransaccionList from './components/transacciones/TransaccionList'
 import ProtectedRoute from './components/common/ProtectedRoute'
+import UsuarioPerfil from './components/usuario/UsuarioPerfil'
+import UsuarioActualizacion from './components/usuario/UsuarioActualizacion'
+import CambioContraseña from './components/usuario/CambioContraseña'
+import UsuarioPublicaciones from './components/usuario/UsuarioPublicaciones'
+import UsuarioTransacciones from './components/usuario/UsuarioTransacciones'
 
 function App() {
   return (
@@ -29,10 +34,58 @@ function App() {
             } 
           />
           <Route 
+            path="/comprar-carrito" 
+            element={
+              <ProtectedRoute>
+                <TransaccionForm />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
             path="/mis-transacciones" 
             element={
               <ProtectedRoute>
                 <TransaccionList />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/perfil" 
+            element={
+              <ProtectedRoute>
+                <UsuarioPerfil />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/perfil/actualizar" 
+            element={
+              <ProtectedRoute>
+                <UsuarioActualizacion />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/perfil/cambiar-contraseña" 
+            element={
+              <ProtectedRoute>
+                <CambioContraseña />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/perfil/publicaciones" 
+            element={
+              <ProtectedRoute>
+                <UsuarioPublicaciones />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/perfil/transacciones" 
+            element={
+              <ProtectedRoute>
+                <UsuarioTransacciones />
               </ProtectedRoute>
             } 
           />

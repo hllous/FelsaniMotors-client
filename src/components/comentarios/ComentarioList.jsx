@@ -37,6 +37,12 @@ const ComentarioList = ({ idPublicacion }) => {
 
     // Crear comentario - POST requiere Bearer token
     const handleCrearComentario = (texto) => {
+        // Validar si el usuario está activo
+        if (!user?.activo) {
+            alert('Tu cuenta está inactiva. No puedes comentar.');
+            return;
+        }
+        
         return fetch(API_URL, {
             method: 'POST',
             headers: createAuthHeaders(),
@@ -63,6 +69,12 @@ const ComentarioList = ({ idPublicacion }) => {
 
     // Editar comentario - PUT requiere Bearer token
     const handleEditarComentario = (idComentario, nuevoTexto) => {
+        // Validar si el usuario está activo
+        if (!user?.activo) {
+            alert('Tu cuenta está inactiva. No puedes editar comentarios.');
+            return;
+        }
+        
         return fetch(`${API_URL}/${idComentario}/texto`, {
             method: 'PUT',
             headers: createAuthHeaders(),
@@ -88,6 +100,12 @@ const ComentarioList = ({ idPublicacion }) => {
 
     // Eliminar comentario - DELETE requiere Bearer token
     const handleEliminarComentario = (idComentario) => {
+        // Validar si el usuario está activo
+        if (!user?.activo) {
+            alert('Tu cuenta está inactiva. No puedes eliminar comentarios.');
+            return;
+        }
+        
         return fetch(`${API_URL}/${idComentario}`, {
             method: 'DELETE',
             headers: createAuthHeaders()
@@ -108,6 +126,12 @@ const ComentarioList = ({ idPublicacion }) => {
 
     // Responder comentario - POST requiere Bearer token
     const handleResponder = (idComentarioPadre, textoRespuesta) => {
+        // Validar si el usuario está activo
+        if (!user?.activo) {
+            alert('Tu cuenta está inactiva. No puedes responder comentarios.');
+            return;
+        }
+        
         return fetch(`${API_URL}/${idComentarioPadre}/respuestas`, {
             method: 'POST',
             headers: createAuthHeaders(),
@@ -121,6 +145,31 @@ const ComentarioList = ({ idPublicacion }) => {
                     throw new Error(`Error ${response.status}: ${response.statusText}`);
                 }
                 return response.json();
+            })
+            .then((nuevaRespuesta) => {
+                // Actualizar el estado agregando la nueva respuesta al comentario padre
+                const actualizarComentarios = (comentariosList) => {
+                    return comentariosList.map(comentario => {
+                        if (comentario.idComentario === idComentarioPadre) {
+                            // Encontramos el comentario padre, agregamos la respuesta
+                            return {
+                                ...comentario,
+                                respuestas: [...(comentario.respuestas || []), nuevaRespuesta]
+                            };
+                        }
+                        // Si tiene respuestas anidadas, buscar recursivamente
+                        if (comentario.respuestas?.length > 0) {
+                            return {
+                                ...comentario,
+                                respuestas: actualizarComentarios(comentario.respuestas)
+                            };
+                        }
+                        return comentario;
+                    });
+                };
+                
+                setComentarios(actualizarComentarios(comentarios));
+                return nuevaRespuesta;
             })
             .catch((error) => {
                 console.error('Error al responder comentario:', error);

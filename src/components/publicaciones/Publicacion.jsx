@@ -2,19 +2,20 @@ import { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import ComentarioList from "../comentarios/ComentarioList";
+import carritoService from "../../services/carritoService";
 
 const Publicacion = () => {
     const { id } = useParams();
     const idPublicacion = parseInt(id);
     const navigate = useNavigate();
-    const { isAuthenticated } = useContext(AuthContext);
+    const { isAuthenticated, user } = useContext(AuthContext);
     
     const [publicacion, setPublicacion] = useState(null);
     const [imagenes, setImagenes] = useState([]);
     const [imagenSeleccionada, setImagenSeleccionada] = useState(0);
     const [mostrarModal, setMostrarModal] = useState(false);
-    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [isInCart, setIsInCart] = useState(false);
 
     const formatearEstado = (estado) => {
         const estadosMap = {
@@ -35,10 +36,45 @@ const Publicacion = () => {
         });
     };
 
+    const handleAddToCart = () => {
+        if (!isAuthenticated) {
+            alert("Debes iniciar sesión para agregar al carrito");
+            return;
+        }
+        if (!user?.activo) {
+            alert("Tu cuenta está inactiva. Contacta al administrador para activarla.");
+            return;
+        }
+        if (publicacion?.estado === 'V') {
+            alert("Esta publicación ya fue vendida.");
+            return;
+        }
+
+        const item = {
+            idPublicacion: publicacion.idPublicacion,
+            idVendedor: publicacion.idUsuario,
+            titulo: publicacion.titulo,
+            ubicacion: publicacion.ubicacion,
+            precio: publicacion.precio,
+            estado: publicacion.estado,
+            marcaAuto: publicacion.marcaAuto,
+            modeloAuto: publicacion.modeloAuto,
+            imagen: imagenes.length > 0 ? imagenes[0] : "https://via.placeholder.com/300x200?text=No+Image"
+        };
+
+        const result = carritoService.addToCart(item);
+        if (result.success) {
+            setIsInCart(true);
+            alert("✅ Auto agregado al carrito");
+        } else {
+            alert(result.message);
+        }
+    };
+
     useEffect(() => {
         if (!idPublicacion) return;
 
-        setLoading(true);
+        let publicacionData = null;
 
         // Obtener datos de la publicación
         fetch(`http://localhost:4002/api/publicaciones/${idPublicacion}`)
@@ -47,24 +83,44 @@ const Publicacion = () => {
                 return response.json();
             })
             .then((data) => {
-                console.log("🚀 Datos actualizados del backend:", data);
-                console.log("📋 Campos del auto disponibles:", {
-                    anio: data.anio,
-                    kilometraje: data.kilometraje,
-                    combustible: data.combustible,
-                    motor: data.motor,
-                    tipoCaja: data.tipoCaja,
-                    capacidadTanque: data.capacidadTanque,
-                    tipoCategoria: data.tipoCategoria,
-                    estadoAuto: data.estadoAuto
-                });
-                setPublicacion(data);
+                publicacionData = data;
+                
+                // Si hay idAuto, obtener datos del auto
+                if (data.idAuto) {
+                    return fetch(`http://localhost:4002/api/autos/${data.idAuto}`);
+                }
+                return null;
+            })
+            .then((autoResponse) => {
+                if (autoResponse && autoResponse.ok) {
+                    return autoResponse.json();
+                }
+                return null;
+            })
+            .then((autoData) => {
+                // Combinar datos de publicación con datos del auto
+                if (autoData) {
+                    publicacionData = {
+                        ...publicacionData,
+                        // Datos del auto
+                        anio: autoData.anio,
+                        kilometraje: autoData.kilometraje,
+                        combustible: autoData.combustible,
+                        motor: autoData.motor,
+                        tipoCaja: autoData.tipoCaja,
+                        capacidadTanque: autoData.capacidadTanque,
+                        tipoCategoria: autoData.tipoCategoria,
+                        estadoAuto: autoData.estado
+                    };
+                }
+                
+                setPublicacion(publicacionData);
 
                 // Obtener imágenes de la publicación
                 return fetch(`http://localhost:4002/api/publicaciones/${idPublicacion}/fotos-contenido`);
             })
             .then((fotosResponse) => {
-                if (fotosResponse.ok) {
+                if (fotosResponse && fotosResponse.ok) {
                     return fotosResponse.json();
                 }
                 return null;
@@ -76,11 +132,16 @@ const Publicacion = () => {
                 }
             })
             .catch((err) => {
+                console.error("❌ Error:", err);
                 setError(err.message);
-            })
-            .finally(() => {
-                setLoading(false);
             });
+    }, [idPublicacion]);
+
+    // Verificar si el item está en el carrito
+    useEffect(() => {
+        if (idPublicacion) {
+            setIsInCart(carritoService.isInCart(idPublicacion));
+        }
     }, [idPublicacion]);
 
     // Navegación con teclado en el modal
@@ -100,14 +161,6 @@ const Publicacion = () => {
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [mostrarModal, imagenSeleccionada, imagenes.length]);
-
-    if (loading) {
-        return (
-            <div className="flex justify-center items-center min-h-64 bg-paleta1-cream-light">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-paleta1-blue"></div>
-            </div>
-        );
-    }
 
     if (error) {
         return (
@@ -251,21 +304,57 @@ const Publicacion = () => {
 
                         {/* Botones de acción */}
                         <div className="space-y-3">
-                            <button 
-                                onClick={() => {
-                                    if (!isAuthenticated) {
-                                        alert("Debes iniciar sesión para comprar");
-                                        return;
-                                    }
-                                    navigate(`/comprar/${idPublicacion}`);
-                                }}
-                                className="w-full bg-paleta1-blue hover:bg-paleta1-blue-light text-white font-bold py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 text-sm"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-5">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
-                                </svg>
-                                Comprar Ahora
-                            </button>
+                            {/* Mostrar estado VENDIDO si la publicación está vendida */}
+                            {publicacion.estado === 'V' ? (
+                                <div className="w-full bg-red-100 border-2 border-red-500 text-red-700 font-bold py-3 px-4 rounded-xl text-center text-sm">
+                                    <div className="flex items-center justify-center gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                        </svg>
+                                        <span>VENDIDO - No disponible</span>
+                                    </div>
+                                </div>
+                            ) : (
+                                <>
+                                    {/* Botón Agregar al Carrito */}
+                                    <button
+                                        onClick={handleAddToCart}
+                                        className={`w-full ${
+                                            isInCart
+                                                ? 'bg-paleta1-cream text-paleta1-blue border-2 border-paleta1-blue cursor-not-allowed'
+                                                : 'bg-paleta1-cream hover:bg-paleta1-cream-light text-paleta1-blue border-2 border-paleta1-blue hover:border-paleta1-blue-light cursor-pointer'
+                                        } font-bold py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-md hover:shadow-xl transform hover:scale-105 text-sm`}
+                                        disabled={isInCart}
+                                        title={isInCart ? 'Ya está en el carrito' : 'Agregar al carrito'}
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-5">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                        </svg>
+                                        {isInCart ? 'En el Carrito' : 'Agregar al Carrito'}
+                                    </button>
+
+                                    {/* Botón Comprar Ahora */}
+                                    <button 
+                                        onClick={() => {
+                                            if (!isAuthenticated) {
+                                                alert("Debes iniciar sesión para comprar");
+                                                return;
+                                            }
+                                            if (!user?.activo) {
+                                                alert("Tu cuenta está inactiva. Contacta al administrador para activarla.");
+                                                return;
+                                            }
+                                            navigate(`/comprar/${idPublicacion}`);
+                                        }}
+                                        className="w-full bg-paleta1-blue hover:bg-paleta1-blue-light text-white font-bold py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 cursor-pointer text-sm"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-5">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+                                        </svg>
+                                        Comprar Ahora
+                                    </button>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
