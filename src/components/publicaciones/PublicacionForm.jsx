@@ -136,22 +136,19 @@ const PublicacionForm = () => {
         e.preventDefault();
         setIsSubmitting(true);
         
-        // Validar campos requeridos
         if (!autoData.marca || !autoData.modelo || !publicacionData.titulo || !publicacionData.precio) {
             alert("Por favor completa todos los campos obligatorios");
             setIsSubmitting(false);
             return;
         }
 
-        // Validar longitud de descripción
         if (publicacionData.descripcion && publicacionData.descripcion.length > 255) {
             alert("La descripción no puede superar los 255 caracteres");
             setIsSubmitting(false);
             return;
         }
         
-        // Preparar datos del auto con conversión de tipos
-        const autoData = {
+        const autoDataRequest = {
             marca: autoData.marca,
             modelo: autoData.modelo,
             anio: autoData.anio ? parseInt(autoData.anio) : null,
@@ -164,11 +161,11 @@ const PublicacionForm = () => {
             motor: autoData.motor || null
         };
         
-        // 1. Crear el Auto
+        //Crear el Auto
         fetch(AUTO_URL, {
             method: "POST",
             headers: createAuthHeaders(),
-            body: JSON.stringify(autoData)
+            body: JSON.stringify(autoDataRequest)
         })
         .then((autoResponse) => {
             if (!autoResponse.ok) {
@@ -179,8 +176,8 @@ const PublicacionForm = () => {
             return autoResponse.json();
         })
         .then((createdAuto) => {
-            // 2. Crear la Publicación
-            const publicacionData = {
+            //Crear la Publicación
+            const publicacionDataRequest = {
                 titulo: publicacionData.titulo,
                 descripcion: publicacionData.descripcion || null,
                 ubicacion: publicacionData.ubicacion || null,
@@ -194,7 +191,7 @@ const PublicacionForm = () => {
             return fetch(PUBLICACION_URL, {
                 method: "POST",
                 headers: createAuthHeaders(),
-                body: JSON.stringify(publicacionData)
+                body: JSON.stringify(publicacionDataRequest)
             }).then((publicacionResponse) => {
                 if (!publicacionResponse.ok) {
                     return publicacionResponse.text().then(text => {

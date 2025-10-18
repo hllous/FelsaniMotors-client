@@ -113,7 +113,6 @@ const TransaccionCard = ({transaccion}) => {
 
     return (
         <div className="bg-white border border-gray-200 mb-6 max-w-5xl mx-auto">
-            {/* Header con información principal */}
             <div className="bg-blue-50 border-b border-gray-200 p-6">
                 <div className="flex justify-between items-start mb-4">
                     <div className="flex-1">
@@ -121,7 +120,6 @@ const TransaccionCard = ({transaccion}) => {
                             <h3 className="text-xl font-semibold text-gray-800">
                                 Transacción #{transaccion.idTransaccion || 'Cargando...'}
                             </h3>
-                            {/* Badge indicando rol del usuario */}
                             {esComprador && (
                                 <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
                                     TÚ COMPRASTE
@@ -156,7 +154,7 @@ const TransaccionCard = ({transaccion}) => {
                 </div>
             </div>
 
-            {/* Productos / Selección */}
+            {/* Productos */}
             <div className="border-b border-gray-200 p-6">
                 <h4 className="text-base font-semibold text-gray-800 mb-4">Productos</h4>
                 

@@ -26,20 +26,16 @@ const PublicacionList = () => {
     useEffect(() => {
         let url = "http://localhost:4002/api/publicaciones";
         
-        // Caso 1: Filtrar por usuario específico
         if (userId) {
             url = `http://localhost:4002/api/publicaciones/usuario/${userId}`;
         } 
-        // Caso 2: Búsqueda de texto y/o filtros
         else if (consultaBusqueda.trim() !== '' || hasFiltros) {
             const params = new URLSearchParams();
             
-            // Agregar búsqueda de texto si existe
             if (consultaBusqueda.trim() !== '') {
                 params.append('busqueda', consultaBusqueda);
             }
             
-            // Agregar todos los filtros activos
             searchParams.forEach((value, key) => {
                 if (key !== 'q' && key !== 'userId') {
                     params.append(key, value);
@@ -55,7 +51,6 @@ const PublicacionList = () => {
             return response.json();
         })
         .then((data) => {
-            // Si la respuesta tiene estructura paginada, extraer content
             if (data.content) {
                 setPublicaciones(data.content);
             } else {

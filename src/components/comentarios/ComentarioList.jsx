@@ -41,7 +41,6 @@ const ComentarioList = ({ idPublicacion }) => {
     // POST comentario
     const handleCrearComentario = (texto) => {
 
-        // Validar si el usuario está activo
         if (!user?.activo) {
             alert('Tu cuenta está inactiva. No puedes comentar.');
             return;
@@ -74,7 +73,6 @@ const ComentarioList = ({ idPublicacion }) => {
     // PUT comentario
     const handleEditarComentario = (idComentario, nuevoTexto) => {
 
-        // Validar si el usuario está activo
         if (!user?.activo) {
             alert('Tu cuenta está inactiva. No puedes editar comentarios.');
             return;
@@ -106,7 +104,6 @@ const ComentarioList = ({ idPublicacion }) => {
     // DELETE comentario
     const handleEliminarComentario = (idComentario) => {
 
-        // Validar si el usuario está activo
         if (!user?.activo) {
             alert('Tu cuenta está inactiva. No puedes eliminar comentarios.');
             return;
@@ -132,7 +129,6 @@ const ComentarioList = ({ idPublicacion }) => {
 
     // Responder comentario
     const handleResponder = (idComentarioPadre, textoRespuesta) => {
-        // Validar si el usuario está activo
         if (!user?.activo) {
             alert('Tu cuenta está inactiva. No puedes responder comentarios.');
             return;
@@ -153,17 +149,14 @@ const ComentarioList = ({ idPublicacion }) => {
                 return response.json();
             })
             .then((nuevaRespuesta) => {
-                // Actualizar el estado agregando la nueva respuesta al comentario padre
                 const actualizarComentarios = (comentariosList) => {
                     return comentariosList.map(comentario => {
                         if (comentario.idComentario === idComentarioPadre) {
-                            // Encontramos el comentario padre, agregamos la respuesta
                             return {
                                 ...comentario,
                                 respuestas: [...(comentario.respuestas || []), nuevaRespuesta]
                             };
                         }
-                        // Si tiene respuestas anidadas, buscar recursivamente
                         if (comentario.respuestas?.length > 0) {
                             return {
                                 ...comentario,
