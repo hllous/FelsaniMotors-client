@@ -22,6 +22,7 @@ import PublicacionesAdmin from './components/admin/PublicacionesAdmin'
 import TransaccionesAdmin from './components/admin/TransaccionesAdmin'
 import AutosAdmin from './components/admin/AutosAdmin'
 import ComentariosAdmin from './components/admin/ComentariosAdmin'
+import FAQ from './components/common/FAQ'
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
           <Route path="/publicaciones" element={<PublicacionList />} />
           <Route path="/publicacion/:id" element={<Publicacion />} />
           <Route path="/crear-publicacion" element={<PublicacionForm />} />
+          <Route path="/faq" element={<FAQ />} />
           <Route 
             path="/editar-publicacion/:id" 
             element={

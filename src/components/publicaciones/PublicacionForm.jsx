@@ -151,7 +151,7 @@ const PublicacionForm = () => {
         }
         
         // Preparar datos del auto con conversión de tipos
-        const autoData = {
+        const autoDataRequest = {
             marca: autoData.marca,
             modelo: autoData.modelo,
             anio: autoData.anio ? parseInt(autoData.anio) : null,
@@ -168,7 +168,7 @@ const PublicacionForm = () => {
         fetch(AUTO_URL, {
             method: "POST",
             headers: createAuthHeaders(),
-            body: JSON.stringify(autoData)
+            body: JSON.stringify(autoDataRequest)
         })
         .then((autoResponse) => {
             if (!autoResponse.ok) {
@@ -180,7 +180,7 @@ const PublicacionForm = () => {
         })
         .then((createdAuto) => {
             // 2. Crear la Publicación
-            const publicacionData = {
+            const publicacionDataRequest = {
                 titulo: publicacionData.titulo,
                 descripcion: publicacionData.descripcion || null,
                 ubicacion: publicacionData.ubicacion || null,
@@ -194,7 +194,7 @@ const PublicacionForm = () => {
             return fetch(PUBLICACION_URL, {
                 method: "POST",
                 headers: createAuthHeaders(),
-                body: JSON.stringify(publicacionData)
+                body: JSON.stringify(publicacionDataRequest)
             }).then((publicacionResponse) => {
                 if (!publicacionResponse.ok) {
                     return publicacionResponse.text().then(text => {
