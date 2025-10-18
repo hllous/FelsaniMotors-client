@@ -524,14 +524,13 @@ const Publicacion = () => {
 
             {/* Sección de Comentarios */}
             <div className="max-w-[95vw] mx-auto mt-12 px-6 lg:px-12">
-                <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                <div className="bg-white rounded-xl border border-gray-200 p-6">
                     <h3 className="text-2xl font-bold text-gray-900 mb-6 border-b border-gray-200 pb-4 text-left">
-                        Comentarios y Reseñas
+                        Comentarios
                     </h3>
                     <div className="text-left">
                         <ComentarioList 
                             idPublicacion={idPublicacion}
-                            tipoObjeto="publicacion"
                         />
                     </div>
                 </div>

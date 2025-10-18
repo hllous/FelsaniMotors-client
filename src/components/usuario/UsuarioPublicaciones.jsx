@@ -30,7 +30,7 @@ const UsuarioPublicaciones = () => {
   };
 
   return (
-    <div className="bg-[#f5efe6] min-h-screen py-10 px-6">
+    <div className="bg-white min-h-screen py-10 px-6">
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-800">Mis Publicaciones</h2>
         <button

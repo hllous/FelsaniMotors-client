@@ -17,8 +17,8 @@ const TransaccionList = () => {
         headers.append('Content-Type', 'application/json');
         headers.append('Authorization', `Bearer ${token}`);
 
-        // Obtener todas las transacciones y filtrar por usuario
-        const URL_TRANSACCIONES = `http://localhost:4002/api/transacciones`;
+        // Obtener transacciones específicas del usuario
+        const URL_TRANSACCIONES = `http://localhost:4002/api/transacciones/usuario/${user.idUsuario}`;
 
         fetch(URL_TRANSACCIONES, {
             method: "GET",
@@ -35,12 +35,8 @@ const TransaccionList = () => {
         })
         .then((data) => {
             if (data) {
-                // Filtrar transacciones donde el usuario es comprador O vendedor
-                const misTransacciones = data.filter(
-                    (t) => t.idComprador === user.idUsuario || t.idVendedor === user.idUsuario
-                );
-                setTransacciones(misTransacciones);
-                console.log(`✅ Transacciones del usuario ${user.idUsuario}:`, misTransacciones);
+                setTransacciones(data);
+                console.log(`✅ Transacciones del usuario ${user.idUsuario}:`, data);
             }
         })
         .catch((error) => {

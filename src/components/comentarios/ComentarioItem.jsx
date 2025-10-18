@@ -1,11 +1,9 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import ComentarioForm from './ComentarioForm';
+import { AuthContext } from '../../context/AuthContext';
 
 const ComentarioItem = ({ 
     comentario, 
-    currentUserId = null,
-    currentUserRole = null,
-    isAuthenticated = false,
     handleEditarComentario, 
     handleEliminarComentario, 
     handleResponder
@@ -15,6 +13,11 @@ const ComentarioItem = ({
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
+    
+    // Obtener datos del usuario desde el contexto
+    const { isAuthenticated, user } = useContext(AuthContext);
+    const currentUserId = user?.idUsuario;
+    const currentUserRole = user?.rol;
 
     const isOwner = currentUserId && comentario.usuario?.idUsuario === currentUserId;
     const isAdmin = currentUserRole === 'ADMIN';
@@ -63,21 +66,19 @@ const ComentarioItem = ({
         return date.toLocaleDateString('es-AR', { 
             year: 'numeric', 
             month: 'short', 
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+            day: 'numeric'
         });
     };
 
     return (
-        <div className="bg-white p-6 rounded-xl shadow-lg border border-paleta1-blue-light hover:shadow-xl transition-all duration-300">
+        <div className="bg-white p-6 rounded-xl border border-paleta1-blue-light transition-all duration-300">
             
             {/* Header del comentario */}
             <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-4">
 
                     {/* Perfil */}
-                    <div className="w-14 h-14 bg-gradient-to-br from-paleta1-blue to-paleta1-blue/80 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-md ring-4 ring-paleta1-blue-light/30">
+                    <div className="w-14 h-14 bg-gradient-to-br from-paleta1-blue to-paleta1-blue/80 rounded-full flex items-center justify-center text-white font-bold text-xl ring-4 ring-paleta1-blue-light/30">
                         {comentario.usuario?.nombre?.[0]?.toUpperCase() || '?'}
                     </div>
                     
@@ -131,8 +132,6 @@ const ComentarioItem = ({
                         initialValue={comentario.texto}
                         onSubmit={handleEdit}
                         onCancel={() => setIsEditing(false)}
-                        submitLabel="Guardar cambios"
-                        placeholder="Edita tu comentario..."
                     />
                 </div>
             ) : (
@@ -172,8 +171,6 @@ const ComentarioItem = ({
                             <ComentarioForm
                                 onSubmit={handleReply}
                                 onCancel={() => setIsReplying(false)}
-                                submitLabel="Enviar respuesta"
-                                placeholder="Escribe tu respuesta..."
                             />
                         </div>
                     )}
@@ -183,7 +180,7 @@ const ComentarioItem = ({
             {/* Popup de confirmacion de eliminacion */}
             {showDeleteConfirm && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 border border-paleta1-blue-light">
+                    <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 border border-paleta1-blue-light">
                         <div className="flex items-center gap-4 mb-6">
                             <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center">
                                 <svg className="w-7 h-7 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -211,7 +208,7 @@ const ComentarioItem = ({
                             </button>
                             <button
                                 onClick={handleConfirmDelete}
-                                className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium shadow-md"
+                                className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
                             >
                                 Eliminar comentario
                             </button>
