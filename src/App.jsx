@@ -42,14 +42,6 @@ function App() {
             } 
           />
           <Route 
-            path="/comprar/:id" 
-            element={
-              <ProtectedRoute>
-                <TransaccionForm />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
             path="/comprar-carrito" 
             element={
               <ProtectedRoute>

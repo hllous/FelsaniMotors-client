@@ -21,50 +21,44 @@ const Carrito = ({ isOpen, onClose }) => {
     setTotal(carritoService.calculateTotal());
   };
 
+  // Handle de eliminar una publicacion en el carrito
   const handleRemove = (idPublicacion) => {
     carritoService.removeFromCart(idPublicacion);
     loadCart();
   };
 
+  // Handle de eliminar todas las publicaciones del carrito
   const handleClear = () => {
     carritoService.clearCart();
     setCartItems([]);
     setTotal(0);
   };
 
-  const handleCheckout = (idPublicacion) => {
-    // Validar si el usuario está loggeado
+  // Handle checkout
+  const handleCheckout = (idPublicacion = null) => {
+
+    // Validar si el usuario esta loggeado
     if (!user) {
       alert('Debes iniciar sesión para completar tu compra.\n\nPor favor, inicia sesión y vuelve a intentarlo.');
       onClose();
       return;
     }
 
-    // Validar si el usuario está activo
+    // Validar si el usuario esta activo
     if (!user.activo) {
-      alert('Tu cuenta está inactiva. No puedes realizar compras. Contacta al administrador.');
+      alert('Tu cuenta esta inactiva. No puedes realizar compras. Contacta al administrador.');
       onClose();
       return;
     }
 
-    // Navegar a la página de compra individual
-    navigate(`/comprar/${idPublicacion}`);
-    onClose();
-  };
-
-  const handleCheckoutAll = () => {
-    // Validar si el usuario está loggeado
-    if (!user) {
-      alert('Debes iniciar sesión para completar tu compra.\n\nPor favor, inicia sesión y vuelve a intentarlo.');
-      onClose();
-      return;
-    }
-
-    // Validar si el usuario está activo
-    if (!user.activo) {
-      alert('Tu cuenta está inactiva. No puedes realizar compras. Contacta al administrador.');
-      onClose();
-      return;
+    // Creacion de carrito (sea 1 publi o +)
+    if (idPublicacion) {
+      const item = cartItems.find(i => i.idPublicacion === idPublicacion);
+      if (item) {
+        
+        carritoService.clearCart();
+        carritoService.addToCart(item);
+      }
     }
 
     navigate('/comprar-carrito');
@@ -119,30 +113,39 @@ const Carrito = ({ isOpen, onClose }) => {
                   {/* Informacion */}
                   <div className="flex-1">
                     <h3 className="font-semibold text-lg text-paleta1-blue mb-1">
+
                       {item.titulo}
+
                     </h3>
                     <p className="text-sm text-gray-600 mb-2">
+
                       {item.marcaAuto} {item.modeloAuto}
+
                     </p>
                     <p className="text-xl font-bold text-gray-900">
+
                       ${item.precio?.toLocaleString()} <span className="text-sm font-normal text-gray-500">ARS</span>
+
                     </p>
                   </div>
 
-                  {/* Acciones */}
+                  {/* Botones por publi individual*/}
                   <div className="flex flex-col justify-between">
                     <button
                       onClick={() => handleRemove(item.idPublicacion)}
-                      className="text-red-500 hover:cursor-pointer hover:scale-110 transition-all duration-150 text-sm font-medium"
-                      title="Eliminar del carrito"
-                    >
+                      className="text-red-500 hover:cursor-pointer hover:scale-110 transition-all 
+                      duration-150 text-sm font-medium">
+
                       Eliminar
+
                     </button>
                     <button
                       onClick={() => handleCheckout(item.idPublicacion)}
-                      className="px-4 py-2 text-green-600 hover:cursor-pointer hover:scale-110 transition-all duration-150 rounded-lg text-sm font-medium"
-                    >
+                      className="px-4 py-2 text-green-600 hover:cursor-pointer hover:scale-110 transition-all 
+                      duration-150 rounded-lg text-sm font-medium">
+
                       Comprar
+
                     </button>
                   </div>
                 </div>
@@ -154,29 +157,37 @@ const Carrito = ({ isOpen, onClose }) => {
               <div className="flex justify-between items-center">
                 <span className="text-lg font-semibold text-gray-700">Total estimado:</span>
                 <span className="text-2xl font-bold text-paleta1-blue">
+
                   ${total.toLocaleString()} <span className="text-sm font-normal text-gray-500">ARS</span>
+
                 </span>
               </div>
 
               <div className="flex gap-3">
                 <button
                   onClick={handleClear}
-                  className="flex-1 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium cursor-pointer"
-                >
+                  className="flex-1 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600
+                  transition-colors font-medium cursor-pointer">
+
                   Vaciar Carrito
+
                 </button>
                 <button
-                  onClick={handleCheckoutAll}
-                  className="flex-1 py-3 bg-paleta1-blue hover:bg-paleta1-blue-light text-white rounded-lg transition-all duration-300 font-medium cursor-pointer"
-                >
+                  onClick={() => handleCheckout()}
+                  className="flex-1 py-3 bg-paleta1-blue hover:bg-paleta1-blue-light text-white rounded-lg
+                  transition-all duration-300 font-medium cursor-pointer">
+
                   Comprar Todo
+
                 </button>
               </div>
               <button
                 onClick={onClose}
-                className="w-full py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium cursor-pointer"
-              >
+                className="w-full py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300
+                transition-colors font-medium cursor-pointer">
+
                 Seguir Explorando
+
               </button>
             </div>
           </>

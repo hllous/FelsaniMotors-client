@@ -361,7 +361,21 @@ const Publicacion = () => {
                                                 alert("Tu cuenta está inactiva. Contacta al administrador para activarla.");
                                                 return;
                                             }
-                                            navigate(`/comprar/${idPublicacion}`);
+                                            
+                                            // Crear carrito de publicacion
+                                            carritoService.clearCart();
+                                            carritoService.addToCart({
+                                                idPublicacion: publicacion.idPublicacion,
+                                                titulo: publicacion.titulo,
+                                                precio: publicacion.precio,
+                                                marcaAuto: publicacion.marcaAuto,
+                                                modeloAuto: publicacion.modeloAuto,
+                                                ubicacion: publicacion.ubicacion,
+                                                imagen: imagenes[0]?.img,
+                                                estado: publicacion.estado
+                                            });
+                                            
+                                            navigate('/comprar-carrito');
                                         }}
                                         className="w-full bg-paleta1-blue hover:bg-paleta1-blue-light text-white font-bold py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 cursor-pointer text-sm"
                                     >

@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
+import carritoService from "../../services/carritoService";
 
 const PublicacionCard = ({ idPublicacion, titulo, ubicacion, precio, estado, marcaAuto, modeloAuto }) => {
 
@@ -28,7 +29,20 @@ const PublicacionCard = ({ idPublicacion, titulo, ubicacion, precio, estado, mar
             alert("Esta publicación ya fue vendida.");
             return;
         }
-        navigate(`/comprar/${idPublicacion}`);
+        
+        carritoService.clearCart();
+        carritoService.addToCart({
+            idPublicacion,
+            titulo,
+            precio,
+            marcaAuto,
+            modeloAuto,
+            ubicacion,
+            imagen: image,
+            estado
+        });
+        
+        navigate('/comprar-carrito');
     };
 
     const formatearEstado = (estado) => {

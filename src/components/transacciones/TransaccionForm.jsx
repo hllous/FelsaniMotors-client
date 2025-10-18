@@ -1,13 +1,11 @@
 import { useEffect, useState, useContext } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import MetodoPagoForm from "./MetodoPagoForm";
 import { AuthContext } from '../../context/AuthContext';
 import authService from '../../services/authService';
 import carritoService from '../../services/carritoService';
 
 const TransaccionForm = () => {
-    const { id } = useParams();
-    const location = useLocation();
     const navigate = useNavigate();
     const { user } = useContext(AuthContext);
 
@@ -48,119 +46,73 @@ const TransaccionForm = () => {
             return;
         }
 
-        // Determinar si viene del carrito o de una publicación individual
-        const isFromCart = location.pathname === '/comprar-carrito';
+        // Cargar publicaciones desde el carrito
+        const items = carritoService.getCart();
+        
+        if (items.length === 0) {
+            alert("El carrito está vacío");
+            navigate('/');
+            return;
+        }
 
-        if (isFromCart) {
-            // Cargar desde el carrito
-            const items = carritoService.getCart();
-            
-            if (items.length === 0) {
-                alert("El carrito está vacío");
-                navigate('/');
+        // Verificar que todas las publicaciones sigan disponibles
+        let publicacionesVerificadas = [];
+        let currentIndex = 0;
+
+        const verificarPublicacion = () => {
+            if (currentIndex >= items.length) {
+
+                // Verifico todas las publis
+                const vendidas = publicacionesVerificadas.filter(p => p.estado === 'V');
+                if (vendidas.length > 0) {
+                    alert(`Algunas publicaciones se vendieron. Por favor, actualiza tu carrito.`);
+                    navigate('/');
+                    return;
+                }
+                setPublicaciones(publicacionesVerificadas);
+                
+                // Calcular total con descuentos
+                const totalConDescuentos = publicacionesVerificadas.reduce((sum, p) => {
+                    const descuento = p.descuentoPorcentaje || 0;
+                    let precioFinal = p.precio;
+                    if (descuento > 0) {
+                        precioFinal = p.precio - (p.precio * descuento / 100);
+                    }
+                    return sum + precioFinal;
+                }, 0);
+                
+                setTotal(totalConDescuentos);
                 return;
             }
 
-            // Verificar que todas las publicaciones sigan disponibles
-            let pubsVerificadas = [];
-            let currentIndex = 0;
+            const item = items[currentIndex];
 
-            const verificarPublicacion = () => {
-                if (currentIndex >= items.length) {
-                    // Todas verificadas
-                    const vendidas = pubsVerificadas.filter(pub => pub.estado === 'V');
-                    if (vendidas.length > 0) {
-                        alert(`Algunas publicaciones ya fueron vendidas. Por favor, actualiza tu carrito.`);
-                        navigate('/');
-                        return;
-                    }
-                    setPublicaciones(pubsVerificadas);
-                    
-                    // Calcular total con descuentos
-                    const totalConDescuentos = pubsVerificadas.reduce((sum, pub) => {
-                        const descuento = pub.descuentoPorcentaje || 0;
-                        const precioFinal = descuento > 0 
-                            ? pub.precio - (pub.precio * descuento / 100)
-                            : pub.precio;
-                        return sum + precioFinal;
-                    }, 0);
-                    
-                    setTotal(totalConDescuentos);
-                    return;
-                }
-
-                const item = items[currentIndex];
-                fetch(`http://localhost:4002/api/publicaciones/${item.idPublicacion}`, {
-                    method: "GET",
-                    headers: headers
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        if (response.status === 403) {
-                            throw new Error('No tienes autorización. Por favor, inicia sesión nuevamente.');
-                        }
-                        throw new Error(`Error al cargar publicación ${item.idPublicacion}: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(pub => {
-                    pubsVerificadas.push(pub);
-                    currentIndex++;
-                    verificarPublicacion(); // Siguiente publicación
-                })
-                .catch(error => {
-                    alert(error.message || 'Error al cargar las publicaciones del carrito');
-                    navigate('/');
-                });
-            };
-
-            verificarPublicacion();
-
-        } else if (id) {
-            // Cargar una sola publicación
-            const idPublicacion = parseInt(id);
-            const URLPublicacion = `http://localhost:4002/api/publicaciones/${idPublicacion}`;
-            
-            fetch(URLPublicacion, {
+            fetch(`http://localhost:4002/api/publicaciones/${item.idPublicacion}`, {
                 method: "GET",
                 headers: headers
             })
-            .then((response) => {
+            .then(response => {
                 if (!response.ok) {
                     if (response.status === 403) {
-                        throw new Error('No tienes autorización para ver esta publicación. Por favor, inicia sesión nuevamente.');
+                        throw new Error('No tienes autorización. Por favor, inicia sesion nuevamente.');
                     }
-                    throw new Error(`Error al cargar la publicación: ${response.status}`);
+                    throw new Error(`Error al cargar publicación ${item.idPublicacion}: ${response.status}`);
                 }
                 return response.json();
             })
-            .then((data) => {
-                if (data.estado === 'V') {
-                    alert("Esta publicación está vendida.");
-                    navigate('/');
-                    return;
-                }
-                
-                // Guardar como array de 1 elemento
-                setPublicaciones([data]);
-                
-                // Calcular precio con descuento si existe
-                const descuentoPorcentaje = data.descuentoPorcentaje || 0;
-                const precioFinal = descuentoPorcentaje > 0
-                    ? data.precio - (data.precio * descuentoPorcentaje / 100)
-                    : data.precio;
-                
-                setTotal(precioFinal);
+            .then(pub => {
+                publicacionesVerificadas.push(pub);
+                currentIndex++;
+                verificarPublicacion();
             })
-            .catch((error) => {
-                alert(error.message || 'Error al cargar la publicación');
+            .catch(error => {
+                alert(error.message || 'Error al cargar las publicaciones del carrito');
                 navigate('/');
             });
-        } else {
-            alert("No se especificó qué comprar");
-            navigate('/');
-        }
-    }, [id, location.pathname, user, navigate]);
+        };
+
+        verificarPublicacion();
+    }, [user, navigate]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -217,9 +169,10 @@ const TransaccionForm = () => {
             
             // Calcular precio con descuento si existe
             const descuentoPorcentaje = p.descuentoPorcentaje || 0;
-            const precioFinal = descuentoPorcentaje > 0 
-                ? p.precio - (p.precio * descuentoPorcentaje / 100)
-                : p.precio;
+            let precioFinal = p.precio;
+            if (descuentoPorcentaje > 0) {
+                precioFinal = p.precio - (p.precio * descuentoPorcentaje / 100);
+            }
             
             const transaccionRequest = {
                 idPublicacion: p.idPublicacion,
@@ -298,10 +251,8 @@ const TransaccionForm = () => {
         };
 
         const finalizarCompra = () => {
-            // Si vino del carrito, limpiarlo
-            if (location.pathname === '/comprar-carrito') {
-                carritoService.clearCart();
-            }
+            // Limpiar carrito luego de comprarlo
+            carritoService.clearCart();
 
             const mensaje = transaccionesCreadas.length === 1 
                 ? "¡Transacción exitosa!"
@@ -344,9 +295,10 @@ const TransaccionForm = () => {
                     {publicaciones.map((p, index) => {
                         const descuentoPorcentaje = p.descuentoPorcentaje || 0;
                         const precioOriginal = p.precio;
-                        const precioFinal = descuentoPorcentaje > 0
-                            ? precioOriginal - (precioOriginal * descuentoPorcentaje / 100)
-                            : precioOriginal;
+                        let precioFinal = precioOriginal;
+                        if (descuentoPorcentaje > 0) {
+                            precioFinal = precioOriginal - (precioOriginal * descuentoPorcentaje / 100);
+                        }
                         
                         return (
                             <div key={p.idPublicacion} className="flex justify-between items-center py-2 border-b border-blue-200 last:border-b-0">
