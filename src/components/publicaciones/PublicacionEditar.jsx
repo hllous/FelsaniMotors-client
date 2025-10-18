@@ -407,7 +407,7 @@ const PublicacionEditar = () => {
   if(!publicacion) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F5EFE6]">
-        <p className="text-gray-600">Cargando...</p>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
       </div>
     )
   }
@@ -554,7 +554,7 @@ const PublicacionEditar = () => {
                 })}
               </div>
 
-              {/* Botones de navegación */}
+              {/* Botones de navegación de imagenes*/}
               {imagenActual > 0 && (
                 <button
                   onClick={anteriorImagen}

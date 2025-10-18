@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const PublicacionDestacada = ({ publicacion }) => {
-    const [image, setImage] = useState("https://via.placeholder.com/800x400?text=Loading...");
+    const [image, setImage] = useState("");
     const navigate = useNavigate();
 
     const handleClick = () => {
@@ -38,7 +38,7 @@ const PublicacionDestacada = ({ publicacion }) => {
 
     return(
         <div 
-            className="bg-white rounded-xl shadow-lg overflow-hidden mb-8 mx-4 cursor-pointer hover:shadow-xl transition-shadow duration-300 border border-paleta1-cream"
+            className="bg-white rounded-xl shadow-lg overflow-hidden mb-8 mx-4 cursor-pointer border border-paleta1-cream"
             onClick={handleClick}>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
@@ -92,7 +92,7 @@ const PublicacionDestacada = ({ publicacion }) => {
                             e.stopPropagation();
                             handleClick();
                         }}
-                        className="w-full bg-paleta1-blue hover:bg-paleta1-blue-light text-white font-bold py-3 px-6 rounded-lg transition duration-300 shadow-lg"
+                        className="w-full bg-paleta1-blue text-white font-bold py-3 px-6 rounded-lg shadow-lg"
                     >
                         Ver Detalles
                     </button>
