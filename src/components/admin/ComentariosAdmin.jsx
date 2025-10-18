@@ -4,7 +4,6 @@ import authService from '../../services/authService';
 
 const ComentariosAdmin = () => {
     const [comentarios, setComentarios] = useState([]);
-    const [filtroPublicacion, setFiltroPublicacion] = useState('');
     const [error, setError] = useState(null);
     const navigate = useNavigate();
 
@@ -97,10 +96,6 @@ const ComentariosAdmin = () => {
         });
     };
 
-    const comentariosFiltrados = filtroPublicacion
-        ? comentarios.filter(c => c.publicacion?.titulo?.toLowerCase().includes(filtroPublicacion.toLowerCase()))
-        : comentarios;
-
     return (
         <div className="min-h-screen bg-gray-100 py-8">
             <div className="container mx-auto px-4">
@@ -108,7 +103,7 @@ const ComentariosAdmin = () => {
                 <div className="mb-6 flex justify-between items-center">
                     <div>
                         <h1 className="text-3xl font-bold text-gray-800 mb-2">Gestion Comentarios</h1>
-                        <p className="text-gray-600">Total: {comentariosFiltrados.length} comentario(s)</p>
+                        <p className="text-gray-600">Total: {comentarios.length} comentario(s)</p>
                     </div>
                     <button
                         onClick={() => navigate('/admin')}
@@ -143,23 +138,9 @@ const ComentariosAdmin = () => {
                     </div>
                 )}
 
-                {/* Filtro */}
-                <div className="mb-6 bg-white p-4 rounded-lg shadow">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Filtrar por publicación:
-                    </label>
-                    <input
-                        type="text"
-                        value={filtroPublicacion}
-                        onChange={(e) => setFiltroPublicacion(e.target.value)}
-                        placeholder="Buscar por título de publicación..."
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    />
-                </div>
-
                 {/* Lista de comentarios */}
                 <div className="space-y-4">
-                    {comentariosFiltrados.map((comentario) => (
+                    {comentarios.map((comentario) => (
                         <div key={comentario.idComentario} className="bg-white rounded-lg shadow-md p-6">
                             <div className="flex justify-between items-start">
                                 <div className="flex-1">
@@ -243,13 +224,9 @@ const ComentariosAdmin = () => {
                     ))}
                 </div>
 
-                {comentariosFiltrados.length === 0 && (
+                {comentarios.length === 0 && (
                     <div className="text-center py-8 bg-white rounded-lg shadow">
-                        <p className="text-gray-500">
-                            {filtroPublicacion 
-                                ? 'No se encontraron comentarios con ese filtro' 
-                                : 'No hay comentarios en el sistema'}
-                        </p>
+                        <p className="text-gray-500">No hay comentarios en el sistema</p>
                     </div>
                 )}
             </div>

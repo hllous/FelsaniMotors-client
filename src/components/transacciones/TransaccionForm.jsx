@@ -260,7 +260,7 @@ const TransaccionForm = () => {
             
             alert(mensaje);
             setIsProcessing(false);
-            navigate('/mis-transacciones');
+            navigate('/');
         };
 
         crearTransaccion(); // Iniciar el proceso
