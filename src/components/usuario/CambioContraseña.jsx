@@ -65,7 +65,7 @@ const CambioContrasena = () => {
             <input
               name="contrasenaActual"
               type="password"
-              placeholder="..."
+              placeholder="Contraseña"
               value={contrasenaUpdate.contrasenaActual}
               onChange={handleChange}
               className="w-full border border-[#cbdceb] rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#cbdceb]"
@@ -79,7 +79,7 @@ const CambioContrasena = () => {
             <input
               name="nuevaContrasena"
               type="password"
-              placeholder="..."
+              placeholder="Nueva contraseña"
               value={contrasenaUpdate.nuevaContrasena}
               onChange={handleChange}
               className="w-full border border-[#cbdceb] rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#cbdceb]"

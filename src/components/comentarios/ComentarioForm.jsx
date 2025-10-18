@@ -57,7 +57,7 @@ const ComentarioForm = ({
                     className="w-full px-5 py-4 border-2 border-paleta1-blue-light bg-white rounded-xl focus:outline-none focus:ring-2 focus:ring-paleta1-blue focus:border-paleta1-blue resize-none disabled:bg-gray-50 disabled:cursor-not-allowed transition-all duration-200 placeholder-gray-400 text-gray-900"
                 />
                 
-                {/* Contador de caracteres estilizado */}
+                {/* Contador de caracteres */}
                 <div className="absolute bottom-4 right-4 bg-white/95 backdrop-blur-sm px-3 py-1 rounded-full border border-gray-200 shadow-sm">
                     <span className={`text-sm font-medium ${texto.length > 1800 ? 'text-red-600' : 'text-paleta1-blue'}`}>
                         {texto.length}
@@ -66,7 +66,7 @@ const ComentarioForm = ({
                 </div>
             </div>
 
-            {/* Mensaje de error mejorado */}
+            {/* Mensaje de error */}
             {error && (
                 <div className="flex items-start gap-3 text-red-700 text-sm bg-red-50 border border-red-200 p-4 rounded-xl">
                     <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -76,7 +76,7 @@ const ComentarioForm = ({
                 </div>
             )}
 
-            {/* Botones de acción modernos */}
+            {/* Botones */}
             <div className="flex gap-3 justify-end pt-2">
                 {onCancel && (
                     <button

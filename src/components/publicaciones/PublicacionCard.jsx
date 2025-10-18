@@ -5,6 +5,8 @@ import { AuthContext } from "../../context/AuthContext";
 const PublicacionCard = ({ idPublicacion, titulo, ubicacion, precio, estado, marcaAuto, modeloAuto }) => {
 
     const [image, setImage] = useState("https://via.placeholder.com/300x200?text=Loading...");
+    const [precioFinal, setPrecioFinal] = useState(precio);
+    const [descuentoAplicado, setDescuentoAplicado] = useState(0);
     const navigate = useNavigate();
     const { isAuthenticated, user } = useContext(AuthContext);
 
@@ -55,7 +57,23 @@ const PublicacionCard = ({ idPublicacion, titulo, ubicacion, precio, estado, mar
         .catch(error => { 
             console.error('Error cargando imagen:', error);
         });
-    }, [idPublicacion]);
+
+        // Obtener descuento desde el backend
+        fetch(`http://localhost:4002/api/publicaciones/${idPublicacion}`)
+        .then(response => response.json())
+        .then(data => {
+            // Obtener descuento desde la base de datos
+            const descuentoPorcentaje = data?.descuentoPorcentaje || 0;
+            const descuentoDecimal = descuentoPorcentaje / 100;
+            const nuevoPrecio = precio - (precio * descuentoDecimal);
+            setPrecioFinal(nuevoPrecio);
+            setDescuentoAplicado(descuentoDecimal);
+        })
+        .catch(() => {
+            setPrecioFinal(precio);
+            setDescuentoAplicado(0);
+        });
+    }, [idPublicacion, precio]);
 
     return(
         <div 
@@ -75,9 +93,23 @@ const PublicacionCard = ({ idPublicacion, titulo, ubicacion, precio, estado, mar
             <div className="p-4">
                 {/* Precio */}
                 <div className="mb-2">
-                    <span className="text-2xl font-bold text-gray-900">
-                        ${precio?.toLocaleString()}
-                    </span>
+                    {precioFinal !== precio ? (
+                        <>
+                            <span className="text-sm text-gray-500 line-through mr-2">
+                                ${precio?.toLocaleString()}
+                            </span>
+                            <span className="text-2xl font-bold text-green-700">
+                                ${precioFinal?.toLocaleString()}
+                            </span>
+                            <span className="text-xs text-green-600 ml-1 font-medium">
+                                (-{Math.round(descuentoAplicado * 100)}%)
+                            </span>
+                        </>
+                    ) : (
+                        <span className="text-2xl font-bold text-gray-900">
+                            ${precio?.toLocaleString()}
+                        </span>
+                    )}
                     <span className="text-sm text-gray-500 ml-1">ARS</span>
                 </div>
 

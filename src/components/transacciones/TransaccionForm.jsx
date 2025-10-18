@@ -13,6 +13,9 @@ const TransaccionForm = () => {
 
     const [transaccionData, setTransaccionData] = useState({
         metodoPago: "Visa",
+        numeroTarjeta: "",
+        fechaCaducidad: "",
+        codigoSeguridad: "",
         comentarios: ""
     });
     
@@ -24,13 +27,23 @@ const TransaccionForm = () => {
 
     useEffect(() => {
         const token = authService.getToken();
+        
         const headers = new Headers();
         headers.append('Content-Type', 'application/json');
-        headers.append('Authorization', `Bearer ${token}`);
+        if (token) {
+            headers.append('Authorization', `Bearer ${token}`);
+        }
+
+        // Validar si el usuario está loggeado
+        if (!user) {
+            alert('Debes iniciar sesión para completar tu compra.\n\nPor favor, inicia sesión y vuelve a intentarlo.');
+            navigate('/');
+            return;
+        }
 
         // Validar si el usuario está activo
         if (!user?.activo) {
-            alert("Tu cuenta está inactiva. No puedes realizar compras.");
+            alert("Tu cuenta está inactiva. No puedes realizar compras. Contacta al administrador.");
             navigate('/');
             return;
         }
@@ -49,31 +62,62 @@ const TransaccionForm = () => {
             }
 
             // Verificar que todas las publicaciones sigan disponibles
-            Promise.all(
-                items.map(item => 
-                    fetch(`http://localhost:4002/api/publicaciones/${item.idPublicacion}`, {
-                        method: "GET",
-                        headers: headers
-                    })
-                    .then(response => response.json())
-                )
-            )
-            .then(pubs => {
-                const vendidas = pubs.filter(pub => pub.estado === 'V');
-                if (vendidas.length > 0) {
-                    alert(`Algunas publicaciones ya fueron vendidas. Por favor, actualiza tu carrito.`);
-                    navigate('/');
+            let pubsVerificadas = [];
+            let currentIndex = 0;
+
+            const verificarPublicacion = () => {
+                if (currentIndex >= items.length) {
+                    // Todas verificadas
+                    const vendidas = pubsVerificadas.filter(pub => pub.estado === 'V');
+                    if (vendidas.length > 0) {
+                        alert(`Algunas publicaciones ya fueron vendidas. Por favor, actualiza tu carrito.`);
+                        navigate('/');
+                        return;
+                    }
+                    setPublicaciones(pubsVerificadas);
+                    
+                    // Calcular total con descuentos
+                    const totalConDescuentos = pubsVerificadas.reduce((sum, pub) => {
+                        const descuento = pub.descuentoPorcentaje || 0;
+                        const precioFinal = descuento > 0 
+                            ? pub.precio - (pub.precio * descuento / 100)
+                            : pub.precio;
+                        return sum + precioFinal;
+                    }, 0);
+                    
+                    setTotal(totalConDescuentos);
                     return;
                 }
-                setPublicaciones(pubs);
-                setTotal(pubs.reduce((sum, pub) => sum + pub.precio, 0));
-            })
-            .catch(error => {
-                console.error('Error al verificar publicaciones:', error);
-            });
+
+                const item = items[currentIndex];
+                fetch(`http://localhost:4002/api/publicaciones/${item.idPublicacion}`, {
+                    method: "GET",
+                    headers: headers
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        if (response.status === 403) {
+                            throw new Error('No tienes autorización. Por favor, inicia sesión nuevamente.');
+                        }
+                        throw new Error(`Error al cargar publicación ${item.idPublicacion}: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(pub => {
+                    pubsVerificadas.push(pub);
+                    currentIndex++;
+                    verificarPublicacion(); // Siguiente publicación
+                })
+                .catch(error => {
+                    alert(error.message || 'Error al cargar las publicaciones del carrito');
+                    navigate('/');
+                });
+            };
+
+            verificarPublicacion();
 
         } else if (id) {
-            // Cargar una sola publicación (pero la tratamos como array de 1)
+            // Cargar una sola publicación
             const idPublicacion = parseInt(id);
             const URLPublicacion = `http://localhost:4002/api/publicaciones/${idPublicacion}`;
             
@@ -81,7 +125,15 @@ const TransaccionForm = () => {
                 method: "GET",
                 headers: headers
             })
-            .then((response) => response.json())
+            .then((response) => {
+                if (!response.ok) {
+                    if (response.status === 403) {
+                        throw new Error('No tienes autorización para ver esta publicación. Por favor, inicia sesión nuevamente.');
+                    }
+                    throw new Error(`Error al cargar la publicación: ${response.status}`);
+                }
+                return response.json();
+            })
             .then((data) => {
                 if (data.estado === 'V') {
                     alert("Esta publicación está vendida.");
@@ -91,9 +143,19 @@ const TransaccionForm = () => {
                 
                 // Guardar como array de 1 elemento
                 setPublicaciones([data]);
-                setTotal(data.precio);
+                
+                // Calcular precio con descuento si existe
+                const descuentoPorcentaje = data.descuentoPorcentaje || 0;
+                const precioFinal = descuentoPorcentaje > 0
+                    ? data.precio - (data.precio * descuentoPorcentaje / 100)
+                    : data.precio;
+                
+                setTotal(precioFinal);
             })
-            .catch((error) => console.error('Error al buscar publicacion:', error));
+            .catch((error) => {
+                alert(error.message || 'Error al cargar la publicación');
+                navigate('/');
+            });
         } else {
             alert("No se especificó qué comprar");
             navigate('/');
@@ -111,7 +173,10 @@ const TransaccionForm = () => {
     const handleMetodoPagoChange = (metodoPagoData) => {
         setTransaccionData({
             ...transaccionData,
-            metodoPago: metodoPagoData.metodoPago
+            metodoPago: metodoPagoData.metodoPago,
+            numeroTarjeta: metodoPagoData.numeroTarjeta,
+            fechaCaducidad: metodoPagoData.fechaCaducidad,
+            codigoSeguridad: metodoPagoData.codigoSeguridad
         });
     };
 
@@ -121,7 +186,7 @@ const TransaccionForm = () => {
         return `REF-${primeraParte}-${segundaParte}`;
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
         setIsProcessing(true);
 
@@ -130,67 +195,124 @@ const TransaccionForm = () => {
         headers.append('Content-Type', 'application/json');
         headers.append('Authorization', `Bearer ${token}`);
 
-        try {
-            // Crear una transacción por cada publicación
-            const transacciones = publicaciones.map(p => ({
+        // Validar que se hayan ingresado los datos de pago
+        if (!transaccionData.numeroTarjeta || !transaccionData.fechaCaducidad || !transaccionData.codigoSeguridad) {
+            alert('Por favor, completa todos los datos de la tarjeta');
+            setIsProcessing(false);
+            return;
+        }
+
+        // Procesar cada publicación secuencialmente
+        let transaccionesCreadas = [];
+        let currentIndex = 0;
+
+        const crearTransaccion = () => {
+            if (currentIndex >= publicaciones.length) {
+                // Todas las transacciones creadas, ahora actualizar
+                actualizarTransacciones();
+                return;
+            }
+
+            const p = publicaciones[currentIndex];
+            
+            // Calcular precio con descuento si existe
+            const descuentoPorcentaje = p.descuentoPorcentaje || 0;
+            const precioFinal = descuentoPorcentaje > 0 
+                ? p.precio - (p.precio * descuentoPorcentaje / 100)
+                : p.precio;
+            
+            const transaccionRequest = {
                 idPublicacion: p.idPublicacion,
                 idComprador: user.idUsuario,
-                idVendedor: p.idUsuario,
-                monto: p.precio,
-                metodoPago: transaccionData.metodoPago,
+                monto: precioFinal,
+                metodoPago: `${transaccionData.metodoPago} **** ${transaccionData.numeroTarjeta.slice(-4)}`,
                 referenciaPago: generarReferenciaPago(),
-                comentarios: transaccionData.comentarios
-            }));
+                comentarios: transaccionData.comentarios || ''
+            };
 
-            // Procesar todas las transacciones en paralelo
-            const resultados = await Promise.all(
-                transacciones.map(transaccion =>
-                    fetch(URLTransaccion, {
-                        method: "POST",
-                        headers: headers,
-                        body: JSON.stringify(transaccion)
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            return response.text().then(text => {
-                                throw new Error(`Error ${response.status}: ${text}`);
-                            });
-                        }
-                        return response.json();
-                    })
-                )
-            );
-
-            // Actualizar el estado de todas las publicaciones a "Vendido" (V)
-            await Promise.all(
-                publicaciones.map(pub => {
-                    const URLActualizarPublicacion = `http://localhost:4002/api/publicaciones/${pub.idPublicacion}`;
-                    return fetch(URLActualizarPublicacion, {
-                        method: "PUT",
-                        headers: headers,
-                        body: JSON.stringify({ estado: 'V' })
+            fetch(URLTransaccion, {
+                method: "POST",
+                headers: headers,
+                body: JSON.stringify(transaccionRequest)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(`Error ${response.status}: ${text}`);
                     });
-                })
-            );
+                }
+                return response.json();
+            })
+            .then(data => {
+                transaccionesCreadas.push(data);
+                currentIndex++;
+                crearTransaccion(); // Siguiente publicación
+            })
+            .catch(() => {
+                alert("Hubo un error al procesar tu compra. Intenta nuevamente.");
+                setIsProcessing(false);
+            });
+        };
 
+        const actualizarTransacciones = () => {
+            let updateIndex = 0;
+
+            const actualizarSiguiente = () => {
+                if (updateIndex >= transaccionesCreadas.length) {
+                    // Todas actualizadas, finalizar
+                    finalizarCompra();
+                    return;
+                }
+
+                const transaccion = transaccionesCreadas[updateIndex];
+                const URLActualizarTransaccion = `http://localhost:4002/api/transacciones/${transaccion.idTransaccion}`;
+                
+                const updateRequest = {
+                    estado: 'COMPLETADA'
+                };
+
+                fetch(URLActualizarTransaccion, {
+                    method: "PUT",
+                    headers: headers,
+                    body: JSON.stringify(updateRequest)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            throw new Error(`Error al actualizar transacción ${transaccion.idTransaccion}: ${text}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(() => {
+                    updateIndex++;
+                    actualizarSiguiente(); // Siguiente transacción
+                })
+                .catch(() => {
+                    alert("Hubo un error al procesar tu compra. Intenta nuevamente.");
+                    setIsProcessing(false);
+                });
+            };
+
+            actualizarSiguiente();
+        };
+
+        const finalizarCompra = () => {
             // Si vino del carrito, limpiarlo
             if (location.pathname === '/comprar-carrito') {
                 carritoService.clearCart();
             }
 
-            const mensaje = resultados.length === 1 
+            const mensaje = transaccionesCreadas.length === 1 
                 ? "¡Transacción exitosa!"
-                : `¡Compra exitosa! Se procesaron ${resultados.length} transacciones.`;
+                : `¡Compra exitosa! Se procesaron ${transaccionesCreadas.length} transacciones.`;
             
             alert(mensaje);
-            navigate('/mis-transacciones');
-
-        } catch (error) {
-            console.error("Error al procesar las transacciones:", error);
-            alert("Hubo un error al procesar tu compra. Intenta nuevamente.");
-        } finally {
             setIsProcessing(false);
-        }
+            navigate('/mis-transacciones');
+        };
+
+        crearTransaccion(); // Iniciar el proceso
     };
 
     const formatearPrecio = (precio) => {
@@ -215,21 +337,49 @@ const TransaccionForm = () => {
             </div>
 
             {/* Resumen de compra - Siempre es un listado */}
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-6 mb-6 hover:shadow-lg transition-all duration-300 hover:border-blue-300">
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-6 mb-6">
                 <h3 className="text-xl font-bold text-gray-800 mb-4">Resumen de compra</h3>
                 
                 <div className={`space-y-3 ${esMultiple ? 'max-h-96 overflow-y-auto' : ''}`}>
-                    {publicaciones.map((pub, index) => (
-                        <div key={pub.idPublicacion} className="flex justify-between items-center py-2 border-b border-blue-200 last:border-b-0">
-                            <div className="flex-1">
-                                <span className="text-base font-medium text-gray-800">
-                                    {esMultiple ? `${index + 1}. ` : ''}{pub.titulo}
-                                </span>
-                                <p className="text-sm text-gray-600">{pub.marcaAuto} {pub.modeloAuto}</p>
+                    {publicaciones.map((p, index) => {
+                        const descuentoPorcentaje = p.descuentoPorcentaje || 0;
+                        const precioOriginal = p.precio;
+                        const precioFinal = descuentoPorcentaje > 0
+                            ? precioOriginal - (precioOriginal * descuentoPorcentaje / 100)
+                            : precioOriginal;
+                        
+                        return (
+                            <div key={p.idPublicacion} className="flex justify-between items-center py-2 border-b border-blue-200 last:border-b-0">
+                                <div className="flex-1">
+                                    <span className="text-base font-medium text-gray-800">
+                                        {esMultiple ? `${index + 1}. ` : ''}{p.titulo}
+                                    </span>
+                                    <p className="text-sm text-gray-600">{p.marcaAuto} {p.modeloAuto}</p>
+                                    {descuentoPorcentaje > 0 && (
+                                        <p className="text-xs text-green-600 font-semibold mt-1">
+                                            🏷️ {descuentoPorcentaje}% de descuento aplicado
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="ml-4 text-right">
+                                    {descuentoPorcentaje > 0 ? (
+                                        <>
+                                            <p className="text-sm text-gray-500 line-through">
+                                                {formatearPrecio(precioOriginal)}
+                                            </p>
+                                            <p className="text-lg font-semibold text-green-600">
+                                                {formatearPrecio(precioFinal)}
+                                            </p>
+                                        </>
+                                    ) : (
+                                        <span className="text-lg font-semibold text-gray-900">
+                                            {formatearPrecio(precioOriginal)}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
-                            <span className="text-lg font-semibold text-gray-900 ml-4">{formatearPrecio(pub.precio)}</span>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
                 
                 <div className={`${esMultiple ? 'border-t-2' : 'border-t'} border-blue-300 pt-4 mt-4`}>
@@ -244,7 +394,7 @@ const TransaccionForm = () => {
 
             <MetodoPagoForm onMetodoPagoChange={handleMetodoPagoChange} />
 
-            <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6 hover:shadow-lg transition-all duration-300 hover:border-blue-300">
+            <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6">
                 <label htmlFor="comentarios" className="block text-base font-semibold text-gray-700 mb-3">
                     Comentarios adicionales (opcional)
                 </label>
@@ -255,11 +405,11 @@ const TransaccionForm = () => {
                     onChange={handleChange}
                     placeholder="Agrega cualquier información adicional sobre tu compra..."
                     rows="4"
-                    className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none hover:border-blue-400 transition-colors"
+                    className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                 />
             </div>
 
-            <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all duration-300">
+            <div className="bg-white border border-gray-200 rounded-xl p-6">
                 <button 
                     onClick={handleSubmit}
                     disabled={isProcessing || publicaciones.length === 0}

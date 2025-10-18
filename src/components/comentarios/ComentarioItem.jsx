@@ -71,10 +71,12 @@ const ComentarioItem = ({
 
     return (
         <div className="bg-white p-6 rounded-xl shadow-lg border border-paleta1-blue-light hover:shadow-xl transition-all duration-300">
+            
             {/* Header del comentario */}
             <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-4">
-                    {/* Avatar moderno */}
+
+                    {/* Perfil */}
                     <div className="w-14 h-14 bg-gradient-to-br from-paleta1-blue to-paleta1-blue/80 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-md ring-4 ring-paleta1-blue-light/30">
                         {comentario.usuario?.nombre?.[0]?.toUpperCase() || '?'}
                     </div>
@@ -93,7 +95,7 @@ const ComentarioItem = ({
                     </div>
                 </div>
 
-                {/* Botones de acción */}
+                {/* Botones */}
                 {!isEditing && (canEdit || canDelete) && (
                     <div className="flex gap-2">
                         {canEdit && (
@@ -122,7 +124,7 @@ const ComentarioItem = ({
                 )}
             </div>
 
-            {/* Contenido */}
+            {/* Contenido del comentario */}
             {isEditing ? (
                 <div className="ml-18">
                     <ComentarioForm
@@ -178,7 +180,7 @@ const ComentarioItem = ({
                 </>
             )}
 
-            {/* Modal de confirmación de eliminación */}
+            {/* Popup de confirmacion de eliminacion */}
             {showDeleteConfirm && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
                     <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 border border-paleta1-blue-light">
@@ -228,7 +230,7 @@ const ComentarioItem = ({
                             <p className="text-gray-600 mb-4">{errorMessage}</p>
                             <button
                                 onClick={() => setShowErrorModal(false)}
-                                className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
+                                className="bg-paleta1-blue hover:bg-paleta1-blue-light hover:text-gray-800 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
                             >
                                 Cerrar
                             </button>

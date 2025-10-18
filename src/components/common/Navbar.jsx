@@ -7,7 +7,6 @@ import LogInPopup from '../usuario/LogInPopup';
 import SignInPopup from '../usuario/SignInPopup';
 import { AuthContext } from '../../context/AuthContext';
 import carritoService from '../../services/carritoService';
-import { isAdmin } from '../../utils/roleUtils';
 
 const Navbar = () => {
 
@@ -153,7 +152,7 @@ const Navbar = () => {
                     />
 
                     {/** Panel de Admin (solo visible para administradores) */}
-                    {isAuthenticated && isAdmin(user) && (
+                    {isAuthenticated && user?.rol === 'ADMIN' && (
                         <div className="relative group">
                             <div className="flex items-center justify-center rounded-full size-8 hover:bg-yellow-400 transition-all duration-200 ease-in-out">
                                 <button 

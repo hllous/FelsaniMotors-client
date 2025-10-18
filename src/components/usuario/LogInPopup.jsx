@@ -20,6 +20,13 @@ const LogInPopup = ({ close, openSignIn }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    // Validación de formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      alert('Por favor, ingresa un email válido (ejemplo: usuario@gmail.com)');
+      return;
+    }
+
     login(email, password)
       .then((result) => {
         if (result.success) {
@@ -71,6 +78,7 @@ const LogInPopup = ({ close, openSignIn }) => {
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full border border-gray-300 bg-[#f2f5f6] rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#6c94c4]"
                 placeholder="ejemplo@gmail.com"
+                required
               />
             </div>
 
@@ -84,6 +92,7 @@ const LogInPopup = ({ close, openSignIn }) => {
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full border border-gray-300 bg-[#f2f5f6] rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#6c94c4]"
                 placeholder="contraseña"
+                required
               />
             </div>
 

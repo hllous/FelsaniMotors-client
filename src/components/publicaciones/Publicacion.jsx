@@ -16,6 +16,7 @@ const Publicacion = () => {
     const [mostrarModal, setMostrarModal] = useState(false);
     const [error, setError] = useState(null);
     const [isInCart, setIsInCart] = useState(false);
+    const [editarVisible, setEditarVisible] = useState(false);
 
     const formatearEstado = (estado) => {
         const estadosMap = {
@@ -85,6 +86,13 @@ const Publicacion = () => {
             .then((data) => {
                 publicacionData = data;
                 
+                // Verificar si el usuario es el dueño de la publicación
+                if(isAuthenticated && user && publicacionData) {
+                    if(user.idUsuario === publicacionData.idUsuario) {
+                        setEditarVisible(true);
+                    }
+                }
+                
                 // Si hay idAuto, obtener datos del auto
                 if (data.idAuto) {
                     return fetch(`http://localhost:4002/api/autos/${data.idAuto}`);
@@ -132,10 +140,9 @@ const Publicacion = () => {
                 }
             })
             .catch((err) => {
-                console.error("❌ Error:", err);
                 setError(err.message);
             });
-    }, [idPublicacion]);
+    }, [idPublicacion, isAuthenticated, user]);
 
     // Verificar si el item está en el carrito
     useEffect(() => {
@@ -164,10 +171,20 @@ const Publicacion = () => {
 
     if (error) {
         return (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center shadow-lg">
-                <div className="text-red-600 text-4xl mb-4">⚠️</div>
-                <h3 className="text-lg font-semibold text-red-800 mb-2">Error al cargar la publicación</h3>
-                <p className="text-red-600">{error}</p>
+            <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+                <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
+                    <div className="text-center">
+                        <div className="text-red-600 text-5xl mb-4">⚠️</div>
+                        <h3 className="text-xl font-bold text-gray-800 mb-2">Error al cargar la publicación</h3>
+                        <p className="text-gray-600 mb-6">{error}</p>
+                        <button 
+                            onClick={() => navigate('/')}
+                            className="px-6 py-2 bg-paleta1-blue text-white rounded-lg hover:bg-paleta1-blue-light hover:text-gray-800 transition-colors"
+                        >
+                            Volver al Inicio
+                        </button>
+                    </div>
+                </div>
             </div>
         );
     }
@@ -353,6 +370,25 @@ const Publicacion = () => {
                                         </svg>
                                         Comprar Ahora
                                     </button>
+
+                                    {/* Botón Editar Publicacion */}
+                                    { editarVisible &&
+                                        <button 
+                                            onClick={() => {
+                                                if (!isAuthenticated) {
+                                                    alert("Debes iniciar sesión para editar");
+                                                    return;
+                                                }
+                                                navigate(`/editar-publicacion/${idPublicacion}`);
+                                            }}
+                                            className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 cursor-pointer text-sm"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-5">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 18.07a4.5 4.5 0 0 1-1.897 1.13L6 20.5l1.09-3.413a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14.25H6a2.25 2.25 0 0 0-2.25 2.25v2.25a2.25 2.25 0 0 0 2.25 2.25h12a2.25 2.25 0 0 0 2.25-2.25v-2.25a2.25 2.25 0 0 0-2.25-2.25Z" />
+                                            </svg>
+                                            Editar Publicación
+                                        </button>
+                                     }
                                 </>
                             )}
                         </div>
@@ -469,24 +505,6 @@ const Publicacion = () => {
                             </div>
                         </div>
                     </div>
-
-                    {/* Sección de campos faltantes (solo mostrar si hay campos faltantes) */}
-                    {(!publicacion.anio || !publicacion.kilometraje || !publicacion.combustible || !publicacion.motor || !publicacion.tipoCaja || !publicacion.capacidadTanque || !publicacion.tipoCategoria) && (
-                        <div className="mt-8 pt-6 border-t border-gray-200">
-                            <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                                <h5 className="font-medium text-yellow-800 mb-2">⚠️ Información Adicional Disponible</h5>
-                                <p className="text-sm text-yellow-700">
-                                    Algunos campos técnicos pueden no estar completos en la base de datos. 
-                                    Los campos mostrados arriba contienen toda la información disponible para este vehículo.
-                                </p>
-                                {(!publicacion.anio || !publicacion.kilometraje || !publicacion.combustible) && (
-                                    <div className="mt-2 text-xs text-yellow-600">
-                                        <p>Campos que podrían estar disponibles: año, kilometraje, combustible, motor, tipo de caja, capacidad del tanque, categoría.</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
                 </div>
             </div>
 

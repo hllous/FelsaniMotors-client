@@ -12,7 +12,6 @@ const ComentarioList = ({ idPublicacion }) => {
     const { isAuthenticated = false, user = null } = useContext(AuthContext);
     const API_URL = `http://localhost:4002/api/publicaciones/${idPublicacion}/comentarios`;
 
-    // Creacion de headers para Bearer token
     const createAuthHeaders = () => {
         const headers = new Headers();
         headers.append('Content-Type', 'application/json');
@@ -20,7 +19,7 @@ const ComentarioList = ({ idPublicacion }) => {
         return headers;
     };
 
-    // Cargar comentarios con useEffect - GET es público, no requiere Bearer token
+    // GET comentarios
     useEffect(() => {
         fetch(API_URL)
         .then((response) => {
@@ -29,14 +28,19 @@ const ComentarioList = ({ idPublicacion }) => {
             }
 
             return response.json();})
-        .then((data) => { setComentarios(data) })
+        .then((data) => { 
+            setComentarios(data);
+            setError(null);
+        })
         .catch((e) => {
             console.error('Error al obtener los comentarios:', e);
-            setError(e.message) })
+            setError(e.message);
+        })
     }, [API_URL]);
 
-    // Crear comentario - POST requiere Bearer token
+    // POST comentario
     const handleCrearComentario = (texto) => {
+
         // Validar si el usuario está activo
         if (!user?.activo) {
             alert('Tu cuenta está inactiva. No puedes comentar.');
@@ -67,8 +71,9 @@ const ComentarioList = ({ idPublicacion }) => {
             });
     };
 
-    // Editar comentario - PUT requiere Bearer token
+    // PUT comentario
     const handleEditarComentario = (idComentario, nuevoTexto) => {
+
         // Validar si el usuario está activo
         if (!user?.activo) {
             alert('Tu cuenta está inactiva. No puedes editar comentarios.');
@@ -98,8 +103,9 @@ const ComentarioList = ({ idPublicacion }) => {
             });
     };
 
-    // Eliminar comentario - DELETE requiere Bearer token
+    // DELETE comentario
     const handleEliminarComentario = (idComentario) => {
+
         // Validar si el usuario está activo
         if (!user?.activo) {
             alert('Tu cuenta está inactiva. No puedes eliminar comentarios.');
@@ -124,7 +130,7 @@ const ComentarioList = ({ idPublicacion }) => {
             });
     };
 
-    // Responder comentario - POST requiere Bearer token
+    // Responder comentario
     const handleResponder = (idComentarioPadre, textoRespuesta) => {
         // Validar si el usuario está activo
         if (!user?.activo) {
@@ -177,7 +183,7 @@ const ComentarioList = ({ idPublicacion }) => {
             });
     };
 
-    // Renderizar un comentario con sus respuestas anidadas
+    // Renderizar un comentario con respuestas anteriores
     const renderComentarioConRespuestas = (comentario) => {
         const tieneRespuestas = comentario.respuestas?.length > 0;
         
@@ -222,7 +228,8 @@ const ComentarioList = ({ idPublicacion }) => {
 
     return (
         <div className="space-y-8 bg-paleta1-cream-light p-6 rounded-xl">
-            {/* Sección de formulario moderna */}
+
+            {/* Form comentario */}
             <div className="bg-white border border-paleta1-cream rounded-xl p-8 shadow-lg">
                 <div className="flex items-center gap-4 mb-8">
                     <div className="w-10 h-10 bg-paleta1-blue rounded-xl flex items-center justify-center shadow-md">
@@ -263,7 +270,7 @@ const ComentarioList = ({ idPublicacion }) => {
                 )}
             </div>
 
-            {/* Lista de comentarios mejorada */}
+            {/* Lista de comentarios */}
             <div className="bg-white border border-paleta1-cream rounded-xl p-8 shadow-lg">
                 <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-4">

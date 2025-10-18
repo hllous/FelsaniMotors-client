@@ -88,7 +88,7 @@ const UsuarioActualizacion = () => {
             <input
               name="nombre"
               type="text"
-              placeholder="..."
+              placeholder="Nombre"
               value={modUsuarioData.nombre}
               onChange={handleChange}
               className="w-full border border-[#cbdceb] rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#cbdceb]"
@@ -99,7 +99,7 @@ const UsuarioActualizacion = () => {
             <input
               name="apellido"
               type="text"
-              placeholder="..."
+              placeholder="Apellido"
               value={modUsuarioData.apellido}
               onChange={handleChange}
               className="w-full border border-[#cbdceb] rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#cbdceb]"
@@ -109,8 +109,8 @@ const UsuarioActualizacion = () => {
             <label className="block text-gray-700 mb-1">Teléfono</label>
             <input
               name="telefono"
-              type="text"
-              placeholder="..."
+              type="tel"
+              placeholder="1122334455"
               value={modUsuarioData.telefono}
               onChange={handleChange}
               className="w-full border border-[#cbdceb] rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#cbdceb]"

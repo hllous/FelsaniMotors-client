@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import carritoService from '../../services/carritoService';        
+import carritoService from '../../services/carritoService';
+import { AuthContext } from '../../context/AuthContext';        
 
 const Carrito = ({ isOpen, onClose }) => {
   const [cartItems, setCartItems] = useState([]);
   const [total, setTotal] = useState(0);
   const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
 
   useEffect(() => {
     if (isOpen) {
@@ -31,12 +33,40 @@ const Carrito = ({ isOpen, onClose }) => {
   };
 
   const handleCheckout = (idPublicacion) => {
+    // Validar si el usuario está loggeado
+    if (!user) {
+      alert('Debes iniciar sesión para completar tu compra.\n\nPor favor, inicia sesión y vuelve a intentarlo.');
+      onClose();
+      return;
+    }
+
+    // Validar si el usuario está activo
+    if (!user.activo) {
+      alert('Tu cuenta está inactiva. No puedes realizar compras. Contacta al administrador.');
+      onClose();
+      return;
+    }
+
     // Navegar a la página de compra individual
     navigate(`/comprar/${idPublicacion}`);
     onClose();
   };
 
   const handleCheckoutAll = () => {
+    // Validar si el usuario está loggeado
+    if (!user) {
+      alert('Debes iniciar sesión para completar tu compra.\n\nPor favor, inicia sesión y vuelve a intentarlo.');
+      onClose();
+      return;
+    }
+
+    // Validar si el usuario está activo
+    if (!user.activo) {
+      alert('Tu cuenta está inactiva. No puedes realizar compras. Contacta al administrador.');
+      onClose();
+      return;
+    }
+
     navigate('/comprar-carrito');
     onClose();
   };
@@ -86,7 +116,7 @@ const Carrito = ({ isOpen, onClose }) => {
                     />
                   </div>
 
-                  {/* Información */}
+                  {/* Informacion */}
                   <div className="flex-1">
                     <h3 className="font-semibold text-lg text-paleta1-blue mb-1">
                       {item.titulo}

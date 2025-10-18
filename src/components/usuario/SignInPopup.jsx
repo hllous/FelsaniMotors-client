@@ -32,6 +32,19 @@ const SignInPopup = ({ close, openLogIn }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    // Validación de formato de email
+    const emailValidation = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailValidation.test(formData.email)) {
+      alert('Por favor, ingresa un email válido (ejemplo: usuario@gmail.com)');
+      return;
+    }
+
+    // Validación de campos requeridos
+    if (!formData.nombre || !formData.apellido || !formData.password || !formData.telefono) {
+      alert('Por favor, completa todos los campos');
+      return;
+    }
+
     register(
       formData.email,
       formData.password,
@@ -90,7 +103,8 @@ const SignInPopup = ({ close, openLogIn }) => {
                   value={formData.nombre}
                   onChange={handleChange}
                   className="w-full border border-gray-300 bg-[#f2f5f6] rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#6c94c4]"
-                  placeholder="Juan"
+                  placeholder="Nombre"
+                  required
                 />
               </div>
 
@@ -104,7 +118,8 @@ const SignInPopup = ({ close, openLogIn }) => {
                   value={formData.apellido}
                   onChange={handleChange}
                   className="w-full border border-gray-300 bg-[#f2f5f6] rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#6c94c4]"
-                  placeholder="Pérez"
+                  placeholder="Apellido"
+                  required
                 />
               </div>
             </div>
@@ -120,6 +135,7 @@ const SignInPopup = ({ close, openLogIn }) => {
                 onChange={handleChange}
                 className="w-full border border-gray-300 bg-[#f2f5f6] rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#6c94c4]"
                 placeholder="ejemplo@gmail.com"
+                required
               />
             </div>
 
@@ -134,6 +150,8 @@ const SignInPopup = ({ close, openLogIn }) => {
                 onChange={handleChange}
                 className="w-full border border-gray-300 bg-[#f2f5f6] rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#6c94c4]"
                 placeholder="contraseña"
+                required
+                minLength="6"
               />
             </div>
 
@@ -148,6 +166,7 @@ const SignInPopup = ({ close, openLogIn }) => {
                 onChange={handleChange}
                 className="w-full border border-gray-300 bg-[#f2f5f6] rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#6c94c4]"
                 placeholder="1122334455"
+                required
               />
             </div>
 

@@ -1,7 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
-import { isAdmin } from '../../utils/roleUtils';
 
 /**
  * Componente para proteger rutas que requieren rol de ADMIN
@@ -16,7 +15,7 @@ const AdminRoute = ({ children }) => {
   }
 
   // Si está autenticado pero no es admin, redirigir al home
-  if (!isAdmin(user)) {
+  if (user?.rol !== 'ADMIN') {
     return <Navigate to="/" replace />;
   }
 

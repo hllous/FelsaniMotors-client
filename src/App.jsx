@@ -6,6 +6,7 @@ import Navbar from './components/common/Navbar'
 import PublicacionList from './components/publicaciones/PublicacionList'
 import PublicacionForm from './components/publicaciones/PublicacionForm'
 import Publicacion from './components/publicaciones/Publicacion'
+import PublicacionEditar from './components/publicaciones/PublicacionEditar'
 import TransaccionForm from './components/transacciones/TransaccionForm'
 import TransaccionList from './components/transacciones/TransaccionList'
 import ProtectedRoute from './components/common/ProtectedRoute'
@@ -15,7 +16,7 @@ import UsuarioActualizacion from './components/usuario/UsuarioActualizacion'
 import CambioContraseña from './components/usuario/CambioContraseña'
 import UsuarioPublicaciones from './components/usuario/UsuarioPublicaciones'
 import UsuarioTransacciones from './components/usuario/UsuarioTransacciones'
-import AdminDashboard from './views/AdminDashboard'
+import AdminDashboard from './components/admin/AdminDashboard'
 import UsuariosAdmin from './components/admin/UsuariosAdmin'
 import PublicacionesAdmin from './components/admin/PublicacionesAdmin'
 import TransaccionesAdmin from './components/admin/TransaccionesAdmin'
@@ -32,6 +33,14 @@ function App() {
           <Route path="/publicaciones" element={<PublicacionList />} />
           <Route path="/publicacion/:id" element={<Publicacion />} />
           <Route path="/crear-publicacion" element={<PublicacionForm />} />
+          <Route 
+            path="/editar-publicacion/:id" 
+            element={
+              <ProtectedRoute>
+                <PublicacionEditar />
+              </ProtectedRoute>
+            } 
+          />
           <Route 
             path="/comprar/:id" 
             element={

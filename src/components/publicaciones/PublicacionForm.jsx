@@ -9,20 +9,21 @@ const PublicacionForm = () => {
     const navigate = useNavigate();
     const fileInputRef = useRef(null);
 
-    // Opciones predefinidas para dropdowns
+    // Opciones para dropdowns
+
     const marcasDisponibles = [
         "Toyota", "Volkswagen", "Ford", "Chevrolet", "Honda", "Nissan", 
         "Renault", "Peugeot", "Fiat", "Mercedes-Benz", "BMW", "Audi",
-        "Hyundai", "Kia", "Mazda", "Jeep", "Citroën", "Suzuki", "Otra"
+        "Hyundai", "Kia", "Mazda", "Jeep", "Citroën", "Suzuki"
     ];
 
-    const estadosDisponibles = ["Nuevo", "Usado", "Certificado"];
+    const estadosDisponibles = ["Nuevo", "Usado"];
 
-    const combustiblesDisponibles = ["Nafta", "Diesel", "GNC", "Eléctrico", "Híbrido"];
+    const combustiblesDisponibles = ["Nafta", "Diesel", "GNC", "Eléctrico"];
 
     const tiposCajaDisponibles = ["Manual", "Automática", "Semiautomática"];
 
-    // Estructura JSON de los endpoints
+    // Estructura JSON de endpoints
 
     const [autoData, setAutoData] = useState({
         marca: "",
@@ -135,6 +136,34 @@ const PublicacionForm = () => {
         e.preventDefault();
         setIsSubmitting(true);
         
+        // Validar campos requeridos
+        if (!autoData.marca || !autoData.modelo || !publicacionData.titulo || !publicacionData.precio) {
+            alert("Por favor completa todos los campos obligatorios");
+            setIsSubmitting(false);
+            return;
+        }
+
+        // Validar longitud de descripción
+        if (publicacionData.descripcion && publicacionData.descripcion.length > 255) {
+            alert("La descripción no puede superar los 255 caracteres");
+            setIsSubmitting(false);
+            return;
+        }
+        
+        // Preparar datos del auto con conversión de tipos
+        const autoData = {
+            marca: autoData.marca,
+            modelo: autoData.modelo,
+            anio: autoData.anio ? parseInt(autoData.anio) : null,
+            estado: autoData.estado || null,
+            kilometraje: autoData.kilometraje ? parseInt(autoData.kilometraje) : null,
+            combustible: autoData.combustible || null,
+            tipoCategoria: autoData.tipoCategoria || null,
+            capacidadTanque: autoData.capacidadTanque ? parseFloat(autoData.capacidadTanque) : null,
+            tipoCaja: autoData.tipoCaja || null,
+            motor: autoData.motor || null
+        };
+        
         // 1. Crear el Auto
         fetch(AUTO_URL, {
             method: "POST",
@@ -142,23 +171,36 @@ const PublicacionForm = () => {
             body: JSON.stringify(autoData)
         })
         .then((autoResponse) => {
-            if (!autoResponse.ok) throw new Error("Error al crear el auto");
+            if (!autoResponse.ok) {
+                return autoResponse.text().then(text => {
+                    throw new Error(`Error al crear el auto: ${text}`);
+                });
+            }
             return autoResponse.json();
         })
         .then((createdAuto) => {
             // 2. Crear la Publicación
-            const publicacionPayload = {
-                ...publicacionData,
+            const publicacionData = {
+                titulo: publicacionData.titulo,
+                descripcion: publicacionData.descripcion || null,
+                ubicacion: publicacionData.ubicacion || null,
+                precio: parseFloat(publicacionData.precio),
+                metodoDePago: publicacionData.metodoDePago || null,
                 idUsuario: USUARIO_ID,
-                idAuto: createdAuto.idAuto
+                idAuto: createdAuto.idAuto,
+                estado: 'A'
             };
             
             return fetch(PUBLICACION_URL, {
                 method: "POST",
                 headers: createAuthHeaders(),
-                body: JSON.stringify(publicacionPayload)
+                body: JSON.stringify(publicacionData)
             }).then((publicacionResponse) => {
-                if (!publicacionResponse.ok) throw new Error("Error al crear la publicación");
+                if (!publicacionResponse.ok) {
+                    return publicacionResponse.text().then(text => {
+                        throw new Error(`Error al crear la publicación: ${text}`);
+                    });
+                }
                 return publicacionResponse.json();
             });
         })
@@ -182,7 +224,6 @@ const PublicacionForm = () => {
                     })
                     .then((fotoResponse) => {
                         if (!fotoResponse.ok) {
-                            console.error(`Error al subir foto ${i + 1}`);
                             return null;
                         }
                         return fotoResponse.json();
@@ -227,10 +268,11 @@ const PublicacionForm = () => {
                 fileInputRef.current.value = "";
             }
             
+            alert("Publicación creada exitosamente");
             navigate('/publicaciones');
         })
         .catch((error) => {
-            console.error("Error al crear publicación:", error);
+            alert(`Error al crear publicación: ${error.message}`);
         })
         .finally(() => {
             setIsSubmitting(false);
@@ -371,14 +413,24 @@ const PublicacionForm = () => {
                     />
                 </div>
                 <div className="mb-4">
-                    <label className="block text-gray-700 font-medium mb-2">Descripción:</label>
+                    <label className="block text-gray-700 font-medium mb-2">
+                        Descripción: 
+                        <span className={`ml-2 text-sm ${publicacionData.descripcion.length > 255 ? 'text-red-600 font-bold' : 'text-gray-500'}`}>
+                            ({publicacionData.descripcion.length}/255 caracteres)
+                        </span>
+                    </label>
                     <textarea
                         name="descripcion"
                         value={publicacionData.descripcion}
                         onChange={handlePublicacionChange}
+                        maxLength={255}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-paleta1-blue"
                         rows="4"
+                        placeholder="Describe el vehículo (máximo 255 caracteres)"
                     />
+                    {publicacionData.descripcion.length > 255 && (
+                        <p className="text-red-600 text-sm mt-1">La descripción no puede superar los 255 caracteres</p>
+                    )}
                 </div>
                 <div className="mb-4">
                     <label className="block text-gray-700 font-medium mb-2">Ubicación:</label>

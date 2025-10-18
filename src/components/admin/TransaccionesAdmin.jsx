@@ -2,15 +2,11 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../../services/authService';
 
-const API_URL = 'http://localhost:4002/api';
-
 const TransaccionesAdmin = () => {
     const [transacciones, setTransacciones] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
 
-    // Helper para obtener headers de autenticación
     const getAuthHeaders = () => {
         const token = authService.getToken();
         return {
@@ -24,24 +20,24 @@ const TransaccionesAdmin = () => {
     }, []);
 
     const fetchTransacciones = () => {
-        setLoading(true);
-        fetch(`${API_URL}/transacciones`, {
+        fetch('http://localhost:4002/api/transacciones', {
             method: 'GET',
             headers: getAuthHeaders()
         })
             .then(response => {
-                if (!response.ok) throw new Error('Error al obtener transacciones');
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(text || 'Error al obtener transacciones');
+                    });
+                }
                 return response.json();
             })
             .then(data => {
                 setTransacciones(data);
                 setError(null);
-                setLoading(false);
             })
-            .catch(err => {
-                setError('Error al cargar transacciones. Verifica que tengas permisos de administrador.');
-                console.error(err);
-                setLoading(false);
+            .catch((error) => {
+                setError(`Error al cargar transacciones: ${error.message}`);
             });
     };
 
@@ -50,18 +46,21 @@ const TransaccionesAdmin = () => {
             return;
         }
 
-        fetch(`${API_URL}/transacciones/${id}`, {
+        fetch(`http://localhost:4002/api/transacciones/${id}`, {
             method: 'DELETE',
             headers: getAuthHeaders()
         })
             .then(response => {
-                if (!response.ok) throw new Error('Error al eliminar transacción');
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(text || 'Error al eliminar transacción');
+                    });
+                }
                 fetchTransacciones();
                 alert('Transacción eliminada exitosamente');
             })
-            .catch(err => {
-                alert('Error al eliminar la transacción');
-                console.error(err);
+            .catch((error) => {
+                setError(`Error al eliminar la transacción: ${error.message}`);
             });
     };
 
@@ -80,30 +79,17 @@ const TransaccionesAdmin = () => {
         }).format(monto);
     };
 
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-yellow-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Cargando transacciones...</p>
-                </div>
-            </div>
-        );
-    }
-
     if (error) {
         return (
-            <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-                <div className="bg-white p-8 rounded-lg shadow-md max-w-md">
-                    <div className="text-red-600 text-center">
-                        <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <p className="text-lg font-semibold mb-2">Error</p>
-                        <p>{error}</p>
+            <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+                <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
+                    <div className="text-center">
+                        <div className="text-red-600 text-5xl mb-4">⚠️</div>
+                        <h3 className="text-xl font-bold text-gray-800 mb-2">Error</h3>
+                        <p className="text-gray-600 mb-6">{error}</p>
                         <button 
                             onClick={() => navigate('/admin')}
-                            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                            className="px-6 py-2 bg-paleta1-blue text-white rounded-lg hover:bg-paleta1-blue-light hover:text-gray-800 transition-colors"
                         >
                             Volver al Panel
                         </button>
@@ -131,6 +117,28 @@ const TransaccionesAdmin = () => {
                         Volver
                     </button>
                 </div>
+
+                {/* Mensaje de error */}
+                {error && (
+                    <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow-sm">
+                        <div className="flex items-center gap-3">
+                            <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div className="flex-1">
+                                <p className="text-red-800 font-medium">{error}</p>
+                            </div>
+                            <button
+                                onClick={() => setError(null)}
+                                className="text-red-600 hover:text-red-800"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 <div className="bg-white rounded-lg shadow overflow-hidden">
                     <div className="overflow-x-auto">

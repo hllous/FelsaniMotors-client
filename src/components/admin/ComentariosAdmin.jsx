@@ -2,16 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../../services/authService';
 
-const API_URL = 'http://localhost:4002/api';
-
 const ComentariosAdmin = () => {
     const [comentarios, setComentarios] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [filtroPublicacion, setFiltroPublicacion] = useState('');
+    const [error, setError] = useState(null);
     const navigate = useNavigate();
 
-    // Helper para obtener headers de autenticación
     const getAuthHeaders = () => {
         const token = authService.getToken();
         return {
@@ -25,59 +21,43 @@ const ComentariosAdmin = () => {
     }, []);
 
     const fetchComentarios = () => {
-        setLoading(true);
-        
-        // Primero obtenemos todas las publicaciones
-        fetch(`${API_URL}/publicaciones`, {
-            method: 'GET',
-            headers: getAuthHeaders()
+        fetch('http://localhost:4002/api/publicaciones', {
+            method: 'GET'
         })
             .then(response => {
-                if (!response.ok) throw new Error('Error al obtener publicaciones');
+                if (!response.ok) return;
                 return response.json();
             })
             .then(publicaciones => {
-                // Luego obtenemos los comentarios de cada publicación
-                const todosLosComentarios = [];
-                const promises = [];
+                if (!publicaciones || publicaciones.length === 0) {
+                    setComentarios([]);
+                    return;
+                }
                 
-                publicaciones.forEach(pub => {
-                    const promise = fetch(`${API_URL}/publicaciones/${pub.idPublicacion}/comentarios`, {
+                const todosLosComentarios = [];
+                
+                publicaciones.forEach(p => {
+                    fetch(`http://localhost:4002/api/publicaciones/${p.idPublicacion}/comentarios`, {
                         method: 'GET'
                     })
                         .then(response => {
-                            if (!response.ok) throw new Error('Error al obtener comentarios');
-                            return response.json();
+                            if (response.ok) {
+                                return response.json();
+                            }
+                            return [];
                         })
                         .then(comentariosDePub => {
-                            // Agregamos la info de la publicación a cada comentario
                             const comentariosConPublicacion = comentariosDePub.map(com => ({
                                 ...com,
                                 publicacion: {
-                                    idPublicacion: pub.idPublicacion,
-                                    titulo: pub.titulo
+                                    idPublicacion: p.idPublicacion,
+                                    titulo: p.titulo
                                 }
                             }));
                             todosLosComentarios.push(...comentariosConPublicacion);
-                        })
-                        .catch(() => {
-                            console.log(`No hay comentarios para la publicación ${pub.idPublicacion}`);
+                            setComentarios([...todosLosComentarios]);
                         });
-                    
-                    promises.push(promise);
                 });
-                
-                return Promise.all(promises).then(() => todosLosComentarios);
-            })
-            .then(todosLosComentarios => {
-                setComentarios(todosLosComentarios);
-                setError(null);
-                setLoading(false);
-            })
-            .catch(err => {
-                setError('Error al cargar comentarios. Verifica que tengas permisos de administrador.');
-                console.error(err);
-                setLoading(false);
             });
     };
 
@@ -86,53 +66,25 @@ const ComentariosAdmin = () => {
             return;
         }
 
-        // Intentar varios endpoints posibles
-        const endpoints = [
-            `${API_URL}/admin/comentarios/${idComentario}`,
-            `${API_URL}/publicaciones/${idPublicacion}/comentarios/${idComentario}`,
-            `${API_URL}/comentarios/${idComentario}`
-        ];
+        const urlComentarioPublicacion = `http://localhost:4002/api/publicaciones/${idPublicacion}/comentarios/${idComentario}`;
 
-        const tryDeleteEndpoint = (index) => {
-            if (index >= endpoints.length) {
-                alert('No se pudo eliminar el comentario. Ningún endpoint disponible.');
-                return;
-            }
-
-            const endpoint = endpoints[index];
-            console.log(`Intentando eliminar con endpoint: ${endpoint}`);
-
-            fetch(endpoint, {
-                method: 'DELETE',
-                headers: getAuthHeaders()
-            })
-                .then(response => {
-                    if (response.ok) {
-                        console.log(`✓ Comentario eliminado exitosamente usando: ${endpoint}`);
-                        fetchComentarios();
-                        alert('Comentario eliminado exitosamente');
-                        return;
-                    }
-
-                    // Si es 404, intentar siguiente endpoint
-                    if (response.status === 404) {
-                        tryDeleteEndpoint(index + 1);
-                        return;
-                    }
-
-                    // Si es otro error, mostrar y no intentar más
-                    return response.text().then(errorData => {
-                        console.error('Error del servidor:', response.status, errorData);
-                        throw new Error(`Error al eliminar comentario: ${response.status}`);
+        fetch(urlComentarioPublicacion, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+        })
+            .then(response => {
+                if (response.ok) {
+                    fetchComentarios();
+                    alert('Comentario eliminado exitosamente');
+                } else {
+                    return response.text().then(text => {
+                        throw new Error(text || 'Error al eliminar el comentario');
                     });
-                })
-                .catch(err => {
-                    console.error('Error completo:', err);
-                    alert('Error al eliminar el comentario. Verifica que el backend tenga implementado el endpoint de eliminación.');
-                });
-        };
-
-        tryDeleteEndpoint(0);
+                }
+            })
+            .catch((error) => {
+                setError(`Error al eliminar el comentario: ${error.message}`);
+            });
     };
 
     const formatearFecha = (fecha) => {
@@ -149,46 +101,13 @@ const ComentariosAdmin = () => {
         ? comentarios.filter(c => c.publicacion?.titulo?.toLowerCase().includes(filtroPublicacion.toLowerCase()))
         : comentarios;
 
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Cargando comentarios...</p>
-                </div>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-                <div className="bg-white p-8 rounded-lg shadow-md max-w-md">
-                    <div className="text-red-600 text-center">
-                        <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <p className="text-lg font-semibold mb-2">Error</p>
-                        <p>{error}</p>
-                        <button 
-                            onClick={() => navigate('/admin')}
-                            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                        >
-                            Volver al Panel
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
     return (
         <div className="min-h-screen bg-gray-100 py-8">
             <div className="container mx-auto px-4">
                 {/* Header */}
                 <div className="mb-6 flex justify-between items-center">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-800 mb-2">Gestión de Comentarios</h1>
+                        <h1 className="text-3xl font-bold text-gray-800 mb-2">Gestion Comentarios</h1>
                         <p className="text-gray-600">Total: {comentariosFiltrados.length} comentario(s)</p>
                     </div>
                     <button
@@ -201,6 +120,28 @@ const ComentariosAdmin = () => {
                         Volver
                     </button>
                 </div>
+
+                {/* Mensaje de error */}
+                {error && (
+                    <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow-sm">
+                        <div className="flex items-center gap-3">
+                            <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div className="flex-1">
+                                <p className="text-red-800 font-medium">{error}</p>
+                            </div>
+                            <button
+                                onClick={() => setError(null)}
+                                className="text-red-600 hover:text-red-800"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 {/* Filtro */}
                 <div className="mb-6 bg-white p-4 rounded-lg shadow">
@@ -222,6 +163,7 @@ const ComentariosAdmin = () => {
                         <div key={comentario.idComentario} className="bg-white rounded-lg shadow-md p-6">
                             <div className="flex justify-between items-start">
                                 <div className="flex-1">
+
                                     {/* Info del comentario */}
                                     <div className="flex items-center gap-3 mb-3">
                                         <span className="px-3 py-1 bg-purple-100 text-purple-800 text-xs font-semibold rounded-full">
@@ -241,7 +183,7 @@ const ComentariosAdmin = () => {
                                         </span>
                                     </div>
 
-                                    {/* Publicación */}
+                                    {/* Publicacion */}
                                     <div className="mb-3">
                                         <span className="font-semibold text-gray-700">Publicación: </span>
                                         <button
@@ -257,7 +199,7 @@ const ComentariosAdmin = () => {
                                         <p className="text-gray-800">{comentario.contenido || comentario.texto}</p>
                                     </div>
 
-                                    {/* Calificación si existe */}
+                                    {/* Calificacion si existe */}
                                     {comentario.calificacion && (
                                         <div className="mt-2 flex items-center gap-2">
                                             <span className="text-sm font-semibold text-gray-700">Calificación:</span>
@@ -282,7 +224,7 @@ const ComentariosAdmin = () => {
                                     )}
                                 </div>
 
-                                {/* Botón eliminar */}
+                                {/* Boton eliminar */}
                                 <button
                                     onClick={() => handleEliminarComentario(
                                         comentario.idComentario,

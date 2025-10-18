@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import TransaccionEstado from "./TransaccionEstado";
 import authService from '../../services/authService';
+import { AuthContext } from '../../context/AuthContext';
 
 const TransaccionCard = ({transaccion}) => {
-
+    const { user } = useContext(AuthContext);
     const [image, setImage] = useState("https://via.placeholder.com/300x200?text=Loading...");
     
     const [publicacion, setPublicacion] = useState({
@@ -106,15 +107,32 @@ const TransaccionCard = ({transaccion}) => {
         return `$${parseFloat(monto).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
 
+    // Determinar el rol del usuario actual en esta transacción
+    const esComprador = user?.idUsuario === transaccion.idComprador;
+    const esVendedor = user?.idUsuario === transaccion.idVendedor;
+
     return (
         <div className="bg-white border border-gray-200 mb-6 max-w-5xl mx-auto">
             {/* Header con información principal */}
             <div className="bg-blue-50 border-b border-gray-200 p-6">
                 <div className="flex justify-between items-start mb-4">
                     <div className="flex-1">
-                        <h3 className="text-xl font-semibold text-gray-800 mb-1">
-                            Transacción #{transaccion.idTransaccion || 'Cargando...'}
-                        </h3>
+                        <div className="flex items-center gap-3 mb-2">
+                            <h3 className="text-xl font-semibold text-gray-800">
+                                Transacción #{transaccion.idTransaccion || 'Cargando...'}
+                            </h3>
+                            {/* Badge indicando rol del usuario */}
+                            {esComprador && (
+                                <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
+                                    TÚ COMPRASTE
+                                </span>
+                            )}
+                            {esVendedor && (
+                                <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full">
+                                    TÚ VENDISTE
+                                </span>
+                            )}
+                        </div>
                         <p className="text-sm text-gray-600">
                             {formatearFecha(transaccion.fechaTransaccion)}
                         </p>
@@ -198,18 +216,64 @@ const TransaccionCard = ({transaccion}) => {
 
 
             {/* Pago */}
-            <div className="p-6">
-                <h4 className="text-base font-semibold text-gray-800 mb-4">Pago</h4>
+            <div className="p-6 bg-gray-50">
+                <h4 className="text-base font-semibold text-gray-800 mb-4">Información de Pago</h4>
                 
-                
-                <div className="space-y-2">
-                    <p className="text-sm text-gray-600">{transaccion.metodoPago || 'Cargando...'} - {transaccion.referenciaPago || 'Cargando...'}</p>
-                    {transaccion.comentarios && (
-                        <p className="text-sm text-gray-600 italic">
-                            Comentarios: {transaccion.comentarios}
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <p className="text-xs text-gray-500 uppercase mb-1">Método de Pago</p>
+                        <p className="text-sm font-medium text-gray-900">
+                            {transaccion.metodoPago || 'No especificado'}
                         </p>
-                    )}
+                    </div>
+                    <div>
+                        <p className="text-xs text-gray-500 uppercase mb-1">Referencia</p>
+                        <p className="text-sm font-medium text-gray-900 font-mono">
+                            {transaccion.referenciaPago || 'N/A'}
+                        </p>
+                    </div>
                 </div>
+
+                {/* Datos de Tarjeta */}
+                {(transaccion.numeroTarjeta || transaccion.fechaVencimiento || transaccion.cvv) && (
+                    <div className="border-t border-gray-200 pt-4 mb-4">
+                        <p className="text-xs text-gray-500 uppercase mb-2">Datos de Tarjeta</p>
+                        <div className="grid grid-cols-3 gap-3">
+                            {transaccion.numeroTarjeta && (
+                                <div>
+                                    <p className="text-xs text-gray-500">Número</p>
+                                    <p className="text-sm font-mono text-gray-900">
+                                        •••• {transaccion.numeroTarjeta.slice(-4)}
+                                    </p>
+                                </div>
+                            )}
+                            {transaccion.fechaVencimiento && (
+                                <div>
+                                    <p className="text-xs text-gray-500">Vencimiento</p>
+                                    <p className="text-sm font-mono text-gray-900">
+                                        {transaccion.fechaVencimiento}
+                                    </p>
+                                </div>
+                            )}
+                            {transaccion.cvv && (
+                                <div>
+                                    <p className="text-xs text-gray-500">CVV</p>
+                                    <p className="text-sm font-mono text-gray-900">•••</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* Comentarios */}
+                {transaccion.comentarios && (
+                    <div className="border-t border-gray-200 pt-4">
+                        <p className="text-xs text-gray-500 uppercase mb-1">Comentarios</p>
+                        <p className="text-sm text-gray-700 italic">
+                            "{transaccion.comentarios}"
+                        </p>
+                    </div>
+                )}
             </div>
         </div>
     ) 

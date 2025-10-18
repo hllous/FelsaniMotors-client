@@ -19,7 +19,8 @@ const UsuarioTransacciones = () => {
     headers.append("Content-Type", "application/json");
     headers.append("Authorization", `Bearer ${token}`);
 
-    const URL_TRANSACCIONES = `http://localhost:4002/api/transacciones/usuario/${user.idUsuario}`;
+    // Obtener todas las transacciones y filtrar por usuario
+    const URL_TRANSACCIONES = `http://localhost:4002/api/transacciones`;
 
     fetch(URL_TRANSACCIONES, { method: "GET", headers: headers })
       .then((response) => {
@@ -33,11 +34,16 @@ const UsuarioTransacciones = () => {
       })
       .then((data) => {
         if (data) {
-          setTransacciones(data);
+          // Filtrar transacciones donde el usuario es comprador O vendedor
+          const misTransacciones = data.filter(
+            (t) => t.idComprador === user.idUsuario || t.idVendedor === user.idUsuario
+          );
+          setTransacciones(misTransacciones);
+          console.log(`✅ Transacciones del usuario ${user.idUsuario}:`, misTransacciones);
         }
       })
       .catch((error) => {
-        console.error("Error: ", error);
+        console.error("Error al cargar transacciones: ", error);
       });
   }, [user]);
 

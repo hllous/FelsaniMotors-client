@@ -2,17 +2,13 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../../services/authService';
 
-const API_URL = 'http://localhost:4002/api';
-
 const UsuariosAdmin = () => {
     const [usuarios, setUsuarios] = useState([]);
     const [usuarioExpandido, setUsuarioExpandido] = useState(null);
     const [publicacionesPorUsuario, setPublicacionesPorUsuario] = useState({});
-    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
 
-    // Helper para obtener headers de autenticación
     const getAuthHeaders = () => {
         const token = authService.getToken();
         return {
@@ -26,33 +22,37 @@ const UsuariosAdmin = () => {
     }, []);
 
     const fetchUsuarios = () => {
-        setLoading(true);
-        fetch(`${API_URL}/usuarios`, {
+        fetch('http://localhost:4002/api/usuarios', {
             method: 'GET',
             headers: getAuthHeaders()
         })
             .then(response => {
-                if (!response.ok) throw new Error('Error al obtener usuarios');
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(text || 'Error al obtener usuarios');
+                    });
+                }
                 return response.json();
             })
             .then(data => {
                 setUsuarios(data);
                 setError(null);
-                setLoading(false);
             })
-            .catch(err => {
-                setError('Error al cargar usuarios. Verifica que tengas permisos de administrador.');
-                console.error(err);
-                setLoading(false);
+            .catch((error) => {
+                setError(`Error al cargar usuarios: ${error.message}`);
             });
     };
 
     const fetchPublicacionesUsuario = (idUsuario) => {
-        fetch(`${API_URL}/publicaciones?userId=${idUsuario}`, {
+        fetch(`http://localhost:4002/api/publicaciones/usuario/${idUsuario}`, {
             method: 'GET'
         })
             .then(response => {
-                if (!response.ok) throw new Error('Error al cargar publicaciones');
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(text || 'Error al cargar publicaciones');
+                    });
+                }
                 return response.json();
             })
             .then(data => {
@@ -61,8 +61,7 @@ const UsuariosAdmin = () => {
                     [idUsuario]: data
                 }));
             })
-            .catch(err => {
-                console.error('Error al cargar publicaciones del usuario:', err);
+            .catch(() => {
                 setPublicacionesPorUsuario(prev => ({
                     ...prev,
                     [idUsuario]: []
@@ -86,18 +85,21 @@ const UsuariosAdmin = () => {
             return;
         }
 
-        fetch(`${API_URL}/usuarios/${idUsuario}`, {
+        fetch(`http://localhost:4002/api/usuarios/${idUsuario}`, {
             method: 'DELETE',
             headers: getAuthHeaders()
         })
             .then(response => {
-                if (!response.ok) throw new Error('Error al eliminar usuario');
-                fetchUsuarios(); // Recargar lista
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(text || 'Error al eliminar usuario');
+                    });
+                }
+                fetchUsuarios();
                 alert('Usuario eliminado exitosamente');
             })
-            .catch(err => {
-                alert('Error al eliminar el usuario');
-                console.error(err);
+            .catch((error) => {
+                setError(`Error al eliminar el usuario: ${error.message}`);
             });
     };
 
@@ -106,53 +108,37 @@ const UsuariosAdmin = () => {
             return;
         }
 
-        fetch(`${API_URL}/publicaciones/${idPublicacion}`, {
+        fetch(`http://localhost:4002/api/publicaciones/${idPublicacion}`, {
             method: 'DELETE',
             headers: getAuthHeaders()
         })
             .then(response => {
                 if (!response.ok) {
-                    return response.text().then(errorData => {
-                        console.error('Error del servidor:', response.status, errorData);
-                        throw new Error(`Error al eliminar publicación: ${response.status}`);
+                    return response.text().then(text => {
+                        throw new Error(text || 'Error al eliminar publicación');
                     });
                 }
-                // Recargar las publicaciones del usuario
                 fetchPublicacionesUsuario(idUsuario);
                 alert('Publicación eliminada exitosamente');
             })
-            .catch(err => {
-                console.error('Error completo:', err);
-                alert('Error al eliminar la publicación. Puede que tenga transacciones o items en carritos asociados. Verifica el backend.');
+            .catch((error) => {
+                setError(`Error al eliminar la publicación: ${error.message}`);
             });
     };
 
     const usuariosFiltrados = usuarios;
 
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Cargando usuarios...</p>
-                </div>
-            </div>
-        );
-    }
-
     if (error) {
         return (
-            <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-                <div className="bg-white p-8 rounded-lg shadow-md max-w-md">
-                    <div className="text-red-600 text-center">
-                        <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <p className="text-lg font-semibold mb-2">Error</p>
-                        <p>{error}</p>
+            <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+                <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
+                    <div className="text-center">
+                        <div className="text-red-600 text-5xl mb-4">⚠️</div>
+                        <h3 className="text-xl font-bold text-gray-800 mb-2">Error</h3>
+                        <p className="text-gray-600 mb-6">{error}</p>
                         <button 
                             onClick={() => navigate('/admin')}
-                            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                            className="px-6 py-2 bg-paleta1-blue text-white rounded-lg hover:bg-paleta1-blue-light hover:text-gray-800 transition-colors"
                         >
                             Volver al Panel
                         </button>
@@ -173,6 +159,44 @@ const UsuariosAdmin = () => {
                     </div>
                     <button
                         onClick={() => navigate('/admin')}
+                        className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                    >
+                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        Volver
+                    </button>
+                </div>
+
+                {/* Mensaje de error */}
+                {error && (
+                    <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow-sm">
+                        <div className="flex items-center gap-3">
+                            <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div className="flex-1">
+                                <p className="text-red-800 font-medium">{error}</p>
+                            </div>
+                            <button
+                                onClick={() => setError(null)}
+                                className="text-red-600 hover:text-red-800"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Lista de usuarios */}
+                <div className="bg-white rounded-lg shadow">
+                    <div className="p-4">
+                        <h2 className="text-lg font-semibold text-gray-800 mb-2">Total: {usuariosFiltrados.length} usuario(s)</h2>
+                    </div>
+                    <button
+                        onClick={() => navigate('/admin')}
                         className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
                     >
                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -186,6 +210,7 @@ const UsuariosAdmin = () => {
                 <div className="space-y-4">
                     {usuariosFiltrados.map((usuario) => (
                         <div key={usuario.idUsuario} className="bg-white rounded-lg shadow-md overflow-hidden">
+                            
                             {/* Datos principales del usuario */}
                             <div className="p-6">
                                 <div className="flex justify-between items-start">

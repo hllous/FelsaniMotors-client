@@ -1,11 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const API_URL = 'http://localhost:4002/api';
-
 const AutosAdmin = () => {
     const [autos, setAutos] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
 
@@ -14,48 +11,35 @@ const AutosAdmin = () => {
     }, []);
 
     const fetchAutos = () => {
-        setLoading(true);
-        fetch(`${API_URL}/autos`)
+        fetch('http://localhost:4002/api/autos')
             .then(response => {
-                if (!response.ok) throw new Error('Error al cargar autos');
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(text || 'Error al cargar autos');
+                    });
+                }
                 return response.json();
             })
             .then(data => {
                 setAutos(data);
                 setError(null);
-                setLoading(false);
             })
-            .catch(err => {
-                setError('Error al cargar autos');
-                console.error(err);
-                setLoading(false);
+            .catch((error) => {
+                setError(`Error al cargar autos: ${error.message}`);
             });
     };
 
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-red-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Cargando autos...</p>
-                </div>
-            </div>
-        );
-    }
-
     if (error) {
         return (
-            <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-                <div className="bg-white p-8 rounded-lg shadow-md max-w-md">
-                    <div className="text-red-600 text-center">
-                        <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <p className="text-lg font-semibold mb-2">Error</p>
-                        <p>{error}</p>
+            <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+                <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
+                    <div className="text-center">
+                        <div className="text-red-600 text-5xl mb-4">⚠️</div>
+                        <h3 className="text-xl font-bold text-gray-800 mb-2">Error</h3>
+                        <p className="text-gray-600 mb-6">{error}</p>
                         <button 
                             onClick={() => navigate('/admin')}
-                            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                            className="px-6 py-2 bg-paleta1-blue text-white rounded-lg hover:bg-paleta1-blue-light hover:text-gray-800 transition-colors"
                         >
                             Volver al Panel
                         </button>
