@@ -54,9 +54,6 @@ const PublicacionList = () => {
                 setPublicaciones([]);
                 return null;
             }
-            if (!response.ok) {
-                throw new Error(`Error HTTP: ${response.status}`);
-            }
             return response.json();
         })
         .then((data) => {
@@ -67,12 +64,7 @@ const PublicacionList = () => {
                 return;
             }
             
-            if (data) {
-                setPublicaciones(data);
-                return;
-            }
-            
-            setPublicaciones([]);
+            setPublicaciones(data || []);
         })
         .catch(() => {
             setPublicaciones([]);

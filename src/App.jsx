@@ -18,8 +18,6 @@ import UsuarioTransacciones from './components/usuario/UsuarioTransacciones'
 import AdminDashboard from './components/admin/AdminDashboard'
 import UsuariosAdmin from './components/admin/UsuariosAdmin'
 import PublicacionesAdmin from './components/admin/PublicacionesAdmin'
-import TransaccionesAdmin from './components/admin/TransaccionesAdmin'
-import AutosAdmin from './components/admin/AutosAdmin'
 import ComentariosAdmin from './components/admin/ComentariosAdmin'
 import FAQ from './components/common/FAQ'
 
@@ -70,8 +68,6 @@ function App() {
           <Route path="/admin" element={adminElement(<AdminDashboard />)} />
           <Route path="/admin/usuarios" element={adminElement(<UsuariosAdmin />)} />
           <Route path="/admin/publicaciones" element={adminElement(<PublicacionesAdmin />)} />
-          <Route path="/admin/transacciones" element={adminElement(<TransaccionesAdmin />)} />
-          <Route path="/admin/autos" element={adminElement(<AutosAdmin />)} />
           <Route path="/admin/comentarios" element={adminElement(<ComentariosAdmin />)} />
           
         </Routes>

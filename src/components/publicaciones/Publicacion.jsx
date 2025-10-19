@@ -23,11 +23,10 @@ const Publicacion = () => {
             'V': 'Vendido',
             'P': 'Pausado'
         };
-        return estadosMap[estado] || estado || 'Disponible';
+        return estadosMap[estado];
     };
 
     const formatearFecha = (fecha) => {
-        if (!fecha) return '';
         const date = new Date(fecha);
         return date.toLocaleDateString('es-ES', { 
             year: 'numeric', 
@@ -65,7 +64,7 @@ const Publicacion = () => {
         const result = carritoService.addToCart(item);
         if (result.success) {
             setIsInCart(true);
-            alert("✅ Auto agregado al carrito");
+            alert("Auto agregado al carrito");
         } else {
             alert(result.message);
         }
@@ -145,9 +144,7 @@ const Publicacion = () => {
 
     // Verificar si el item está en el carrito
     useEffect(() => {
-        if (idPublicacion) {
-            setIsInCart(carritoService.isInCart(idPublicacion));
-        }
+        setIsInCart(carritoService.isInCart(idPublicacion));
     }, [idPublicacion]);
 
     if (error) {

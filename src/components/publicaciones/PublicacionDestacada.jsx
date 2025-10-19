@@ -15,26 +15,19 @@ const PublicacionDestacada = ({ publicacion }) => {
             'V': 'Vendido',
             'P': 'Pausado'
         };
-        return estadosMap[estado] || 'Disponible';
+        return estadosMap[estado];
     };
     
     useEffect(() => {
-        if (publicacion?.idPublicacion) {
-            fetch(`http://localhost:4002/api/publicaciones/${publicacion.idPublicacion}/fotos-contenido`)
-                .then(response => {
-                    if (!response.ok) { 
-                        throw new Error('No se encontraron imágenes')
-                    }
-                    return response.json()
-                })
-                .then(data => {
-                    setImage(`data:image/jpeg;base64,${data[0].file}`)
-                })
-                .catch(error => { 
-                    console.error('Error cargando imagen:', error)
-                });
-        }
-    }, [publicacion?.idPublicacion]);
+        fetch(`http://localhost:4002/api/publicaciones/${publicacion.idPublicacion}/fotos-contenido`)
+            .then(response => response.json())
+            .then(data => {
+                setImage(`data:image/jpeg;base64,${data[0].file}`)
+            })
+            .catch(error => { 
+                console.error('Error cargando imagen:', error)
+            });
+    }, [publicacion.idPublicacion]);
 
     return(
         <div 
