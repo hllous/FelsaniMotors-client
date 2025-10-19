@@ -45,7 +45,7 @@ const UsuarioPublicaciones = () => {
         {publicaciones.map((publicacion) => (
           <div
             key={publicacion.idPublicacion}
-            className="bg-white border border-[#cbdceb] shadow-md rounded-2xl p-4 flex flex-col hover:shadow-lg transition-shadow cursor-pointer"
+            className="bg-white border border-[#cbdceb] rounded-2xl p-4 flex flex-col cursor-pointer"
             onClick={() => handleClick(publicacion.idPublicacion)}
           >
             <h3 className="text-lg font-semibold text-gray-800 mb-2">
@@ -58,7 +58,7 @@ const UsuarioPublicaciones = () => {
               {publicacion.descripcion || "Sin descripción"}
             </p>
             <div className="mt-3 text-sm text-gray-400">
-              {publicacion.fechaPublicacion}
+              {new Date(publicacion.fechaPublicacion).toISOString().split('T')[0]}
             </div>
           </div>
         ))}
