@@ -136,21 +136,18 @@ const PublicacionForm = () => {
         e.preventDefault();
         setIsSubmitting(true);
         
-        // Validar campos requeridos
         if (!autoData.marca || !autoData.modelo || !publicacionData.titulo || !publicacionData.precio) {
             alert("Por favor completa todos los campos obligatorios");
             setIsSubmitting(false);
             return;
         }
 
-        // Validar longitud de descripción
         if (publicacionData.descripcion && publicacionData.descripcion.length > 255) {
             alert("La descripción no puede superar los 255 caracteres");
             setIsSubmitting(false);
             return;
         }
         
-        // Preparar datos del auto con conversión de tipos
         const autoDataRequest = {
             marca: autoData.marca,
             modelo: autoData.modelo,
@@ -164,10 +161,11 @@ const PublicacionForm = () => {
             motor: autoData.motor || null
         };
         
-        // 1. Crear el Auto
+        //Crear el Auto
         fetch(AUTO_URL, {
             method: "POST",
             headers: createAuthHeaders(),
+            body: JSON.stringify(autoDataRequest)
             body: JSON.stringify(autoDataRequest)
         })
         .then((autoResponse) => {
@@ -194,6 +192,7 @@ const PublicacionForm = () => {
             return fetch(PUBLICACION_URL, {
                 method: "POST",
                 headers: createAuthHeaders(),
+                body: JSON.stringify(publicacionDataRequest)
                 body: JSON.stringify(publicacionDataRequest)
             }).then((publicacionResponse) => {
                 if (!publicacionResponse.ok) {

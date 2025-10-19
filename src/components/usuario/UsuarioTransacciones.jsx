@@ -1,18 +1,43 @@
 import { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { AuthContext } from "../../context/AuthContext";
-import authService from "../../services/authService";
-import TransaccionCard from "../transacciones/TransaccionCard";
+import MetodoPagoForm from "./MetodoPagoForm";
+import { AuthContext } from '../../context/AuthContext';
+import authService from '../../services/authService';
+import carritoService from '../../services/carritoService';
 
-const UsuarioTransacciones = () => {
-  const navigate = useNavigate();
-  const { user } = useContext(AuthContext);
-  const [transacciones, setTransacciones] = useState([]);
+const TransaccionForm = () => {
+    const navigate = useNavigate();
+    const { user } = useContext(AuthContext);
 
-  useEffect(() => {
-    if (!user?.idUsuario) {
-      return;
-    }
+    const [transaccionData, setTransaccionData] = useState({
+        metodoPago: "Visa",
+        numeroTarjeta: "",
+        fechaCaducidad: "",
+        codigoSeguridad: "",
+        comentarios: ""
+    });
+    
+    const [publicaciones, setPublicaciones] = useState([]);
+    const [total, setTotal] = useState(0);
+    const [isProcessing, setIsProcessing] = useState(false);
+
+    const URLTransaccion = `http://localhost:4002/api/transacciones`;
+
+    useEffect(() => {
+        const token = authService.getToken();
+        
+        const headers = new Headers();
+        headers.append('Content-Type', 'application/json');
+        if (token) {
+            headers.append('Authorization', `Bearer ${token}`);
+        }
+
+        // Validar si el usuario está loggeado
+        if (!user) {
+            alert('Debes iniciar sesión para completar tu compra.\n\nPor favor, inicia sesión y vuelve a intentarlo.');
+            navigate('/');
+            return;
+        }
 
     const token = authService.getToken();
     const headers = new Headers();

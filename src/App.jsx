@@ -48,14 +48,15 @@ function App() {
       <Navbar />
       <main className="min-h-screen pb-16">
         <Routes>
-          {/* Rutas publicas */}
+
+          {/* Rutas any */}
           <Route path="/" element={<PublicacionList />} />
           <Route path="/publicaciones" element={<PublicacionList />} />
           <Route path="/publicacion/:id" element={<Publicacion />} />
           <Route path="/crear-publicacion" element={<PublicacionForm />} />
           <Route path="/faq" element={<FAQ />} />
 
-          {/* Rutas de usuario autenticado */}
+          {/* Rutas de user */}
           <Route path="/editar-publicacion/:id" element={protectedElement(<PublicacionEditar />)} />
           <Route path="/comprar-carrito" element={protectedElement(<TransaccionForm />)} />
           <Route path="/mis-transacciones" element={protectedElement(<TransaccionList />)} />
@@ -65,13 +66,14 @@ function App() {
           <Route path="/perfil/publicaciones" element={protectedElement(<UsuarioPublicaciones />)} />
           <Route path="/perfil/transacciones" element={protectedElement(<UsuarioTransacciones />)} />
 
-          {/* Rutas de administración */}
+          {/* Rutas de admin */}
           <Route path="/admin" element={adminElement(<AdminDashboard />)} />
           <Route path="/admin/usuarios" element={adminElement(<UsuariosAdmin />)} />
           <Route path="/admin/publicaciones" element={adminElement(<PublicacionesAdmin />)} />
           <Route path="/admin/transacciones" element={adminElement(<TransaccionesAdmin />)} />
           <Route path="/admin/autos" element={adminElement(<AutosAdmin />)} />
           <Route path="/admin/comentarios" element={adminElement(<ComentariosAdmin />)} />
+          
         </Routes>
       </main>
       <Footer />

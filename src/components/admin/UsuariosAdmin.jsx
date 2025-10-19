@@ -195,15 +195,6 @@ const UsuariosAdmin = () => {
                     <div className="p-4">
                         <h2 className="text-lg font-semibold text-gray-800 mb-2">Total: {usuariosFiltrados.length} usuario(s)</h2>
                     </div>
-                    <button
-                        onClick={() => navigate('/admin')}
-                        className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-                    >
-                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                        </svg>
-                        Volver
-                    </button>
                 </div>
 
                 {/* Lista de usuarios */}
@@ -288,7 +279,7 @@ const UsuariosAdmin = () => {
                                     ) : (
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                             {publicacionesPorUsuario[usuario.idUsuario].map((pub) => (
-                                                <div key={pub.idPublicacion} className="bg-white p-4 rounded-lg shadow hover:shadow-md transition-shadow">
+                                                <div key={pub.idPublicacion} className="bg-white p-4 rounded-lg shadow">
                                                     <h5 className="font-semibold text-gray-800 mb-2">{pub.titulo}</h5>
                                                     <p className="text-sm text-gray-600 mb-2 line-clamp-2">{pub.descripcion}</p>
                                                     <div className="flex justify-between items-center text-xs text-gray-500 mb-3">

@@ -4,7 +4,7 @@ import authService from '../../services/authService';
 
 const PublicacionEditar = () => {
   
-  // parametros
+  // Parametros
   const { id } = useParams();
   const idPublicacion = parseInt(id);
   const navigate = useNavigate();
@@ -16,7 +16,7 @@ const PublicacionEditar = () => {
   const [principalId, setPrincipalId] = useState(null)
   const [nuevoEstado, setNuevoEstado] = useState('Disponible')
 
-  // plantilla de los cambios
+  // Plantilla de los cambios
   const [cambios, setCambios] = useState({
     imgBorrar: [],
     imgAgregar: [],
