@@ -19,13 +19,11 @@ const UsuarioTransacciones = () => {
     headers.append("Content-Type", "application/json");
     headers.append("Authorization", `Bearer ${token}`);
 
-    // Obtener todas las transacciones y filtrar por usuario
-    const URL_TRANSACCIONES = `http://localhost:4002/api/transacciones`;
+    const URL_TRANSACCIONES = `http://localhost:4002/api/transacciones/usuario/${user.idUsuario}`;
 
     fetch(URL_TRANSACCIONES, { method: "GET", headers: headers })
       .then((response) => {
         if (response.status === 204) {
-          // No hay contenido - sin transacciones
           setTransacciones([]);
           return null;
         }
@@ -34,12 +32,8 @@ const UsuarioTransacciones = () => {
       })
       .then((data) => {
         if (data) {
-          // Filtrar transacciones donde el usuario es comprador O vendedor
-          const misTransacciones = data.filter(
-            (t) => t.idComprador === user.idUsuario || t.idVendedor === user.idUsuario
-          );
-          setTransacciones(misTransacciones);
-          console.log(`✅ Transacciones del usuario ${user.idUsuario}:`, misTransacciones);
+          setTransacciones(data);
+          console.log(`✅ Transacciones del usuario ${user.idUsuario}:`, data);
         }
       })
       .catch((error) => {
@@ -48,7 +42,7 @@ const UsuarioTransacciones = () => {
   }, [user]);
 
   return (
-    <div className="bg-[#f5efe6] min-h-screen py-10 px-6">
+    <div className="bg-white min-h-screen py-10 px-6">
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-800">Mis Transacciones</h2>
         <button
@@ -77,4 +71,4 @@ const UsuarioTransacciones = () => {
   );
 };
 
-export default UsuarioTransacciones;    
+export default UsuarioTransacciones;

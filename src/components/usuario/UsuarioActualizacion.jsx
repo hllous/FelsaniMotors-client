@@ -31,7 +31,7 @@ const UsuarioActualizacion = () => {
     
     const URLModificarUsuario = `http://localhost:4002/api/usuarios/${user?.idUsuario}`;
     
-    // Filtrar solo los campos que no están vacíos
+    
     const dataToUpdate = {};
     if (modUsuarioData.nombre.trim() !== "") {
       dataToUpdate.nombre = modUsuarioData.nombre;
@@ -43,7 +43,7 @@ const UsuarioActualizacion = () => {
       dataToUpdate.telefono = modUsuarioData.telefono;
     }
 
-    // Si no hay campos para actualizar, mostrar mensaje
+    
     if (Object.keys(dataToUpdate).length === 0) {
       alert("No has ingresado ningún campo para actualizar");
       return;
@@ -70,10 +70,10 @@ const UsuarioActualizacion = () => {
   };
 
   return (
-    <div className="bg-[#f5efe6] min-h-screen flex justify-center items-start py-10">
+    <div className="bg-white min-h-screen flex justify-center items-start py-10">
       <form
         onSubmit={handleActualizacion}
-        className="bg-white border border-[#cbdceb] shadow-md rounded-2xl p-6 w-full max-w-md"
+        className="bg-white border border-[#cbdceb] rounded-2xl p-6 w-full max-w-md"
       >
         <h3 className="text-2xl font-semibold text-gray-800 mb-1">
           Actualiza tu información
