@@ -7,10 +7,6 @@ const AutosAdmin = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        fetchAutos();
-    }, []);
-
-    const fetchAutos = () => {
         fetch('http://localhost:4002/api/autos')
             .then(response => {
                 if (!response.ok) {
@@ -27,12 +23,12 @@ const AutosAdmin = () => {
             .catch((error) => {
                 setError(`Error al cargar autos: ${error.message}`);
             });
-    };
+    }, []);
 
     if (error) {
         return (
             <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-                <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
+                <div className="bg-white rounded-lg p-8 max-w-md w-full">
                     <div className="text-center">
                         <div className="text-red-600 text-5xl mb-4">⚠️</div>
                         <h3 className="text-xl font-bold text-gray-800 mb-2">Error</h3>
@@ -83,7 +79,7 @@ const AutosAdmin = () => {
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow overflow-hidden">
+                <div className="bg-white rounded-lg overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
@@ -131,7 +127,7 @@ const AutosAdmin = () => {
                 </div>
 
                 {autos.length === 0 && (
-                    <div className="text-center py-8 bg-white rounded-lg shadow mt-4">
+                    <div className="text-center py-8 bg-white rounded-lg mt-4">
                         <p className="text-gray-500">No hay autos registrados</p>
                     </div>
                 )}

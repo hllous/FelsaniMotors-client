@@ -16,7 +16,44 @@ const ComentariosAdmin = () => {
     };
 
     useEffect(() => {
-        fetchComentarios();
+        fetch('http://localhost:4002/api/publicaciones', {
+            method: 'GET'
+        })
+            .then(response => {
+                if (!response.ok) return;
+                return response.json();
+            })
+            .then(publicaciones => {
+                if (!publicaciones || publicaciones.length === 0) {
+                    setComentarios([]);
+                    return;
+                }
+                
+                const comentarios = [];
+                
+                publicaciones.forEach(p => {
+                    fetch(`http://localhost:4002/api/publicaciones/${p.idPublicacion}/comentarios`, {
+                        method: 'GET'
+                    })
+                        .then(response => {
+                            if (response.ok) {
+                                return response.json();
+                            }
+                            return [];
+                        })
+                        .then(comentariosDePub => {
+                            const comentariosConPublicacion = comentariosDePub.map(com => ({
+                                ...com,
+                                publicacion: {
+                                    idPublicacion: p.idPublicacion,
+                                    titulo: p.titulo
+                                }
+                            }));
+                            comentarios.push(...comentariosConPublicacion);
+                            setComentarios([...comentarios]);
+                        });
+                });
+            });
     }, []);
 
     const fetchComentarios = () => {
@@ -86,16 +123,6 @@ const ComentariosAdmin = () => {
             });
     };
 
-    const formatearFecha = (fecha) => {
-        return new Date(fecha).toLocaleString('es-AR', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
-
     return (
         <div className="min-h-screen bg-gray-100 py-8">
             <div className="container mx-auto px-4">
@@ -118,7 +145,7 @@ const ComentariosAdmin = () => {
 
                 {/* Mensaje de error */}
                 {error && (
-                    <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow-sm">
+                    <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
                         <div className="flex items-center gap-3">
                             <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -141,38 +168,31 @@ const ComentariosAdmin = () => {
                 {/* Lista de comentarios */}
                 <div className="space-y-4">
                     {comentarios.map((comentario) => (
-                        <div key={comentario.idComentario} className="bg-white rounded-lg shadow-md p-6">
+                        <div key={comentario.idComentario} className="bg-white rounded-lg p-6">
                             <div className="flex justify-between items-start">
                                 <div className="flex-1">
 
                                     {/* Info del comentario */}
                                     <div className="flex items-center gap-3 mb-3">
-                                        <span className="px-3 py-1 bg-purple-100 text-purple-800 text-xs font-semibold rounded-full">
+                                        <div className="px-3 py-1 bg-purple-100 text-purple-800 text-xs font-semibold rounded-full">
                                             ID: {comentario.idComentario}
-                                        </span>
-                                        <span className="text-sm text-gray-600">
-                                            {formatearFecha(comentario.fechaCreacion || comentario.fecha)}
-                                        </span>
+                                        </div>
                                     </div>
 
                                     {/* Usuario */}
-                                    <div className="mb-2">
-                                        <span className="font-semibold text-gray-700">Usuario: </span>
-                                        <span className="text-gray-900">
-                                            {comentario.usuario?.nombre} {comentario.usuario?.apellido} 
-                                            <span className="text-gray-500 ml-2">({comentario.usuario?.email})</span>
-                                        </span>
+                                    <div className="mb-2 flex items-center gap-2">
+                                        <div className="font-semibold text-gray-700">Usuario:</div>
+                                        <div className="text-gray-900">
+                                            {comentario.usuario?.nombre} {comentario.usuario?.apellido}
+                                        </div>
                                     </div>
 
                                     {/* Publicacion */}
-                                    <div className="mb-3">
-                                        <span className="font-semibold text-gray-700">Publicación: </span>
-                                        <button
-                                            onClick={() => navigate(`/publicacion/${comentario.publicacion?.idPublicacion}`)}
-                                            className="text-blue-600 hover:text-blue-800 hover:underline"
-                                        >
+                                    <div className="mb-3 flex items-center gap-2">
+                                        <div className="font-semibold text-gray-700">Publicación:</div>
+                                        <div className="text-gray-900">
                                             {comentario.publicacion?.titulo || 'N/A'}
-                                        </button>
+                                        </div>
                                     </div>
 
                                     {/* Contenido del comentario */}
@@ -183,7 +203,7 @@ const ComentariosAdmin = () => {
                                     {/* Calificacion si existe */}
                                     {comentario.calificacion && (
                                         <div className="mt-2 flex items-center gap-2">
-                                            <span className="text-sm font-semibold text-gray-700">Calificación:</span>
+                                            <div className="text-sm font-semibold text-gray-700">Calificación:</div>
                                             <div className="flex items-center">
                                                 {[...Array(5)].map((_, i) => (
                                                     <svg
@@ -197,9 +217,9 @@ const ComentariosAdmin = () => {
                                                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                                     </svg>
                                                 ))}
-                                                <span className="ml-2 text-sm text-gray-600">
+                                                <div className="ml-2 text-sm text-gray-600">
                                                     ({comentario.calificacion}/5)
-                                                </span>
+                                                </div>
                                             </div>
                                         </div>
                                     )}
@@ -212,11 +232,8 @@ const ComentariosAdmin = () => {
                                         `${comentario.usuario?.nombre} ${comentario.usuario?.apellido}`,
                                         comentario.publicacion?.idPublicacion
                                     )}
-                                    className="ml-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors flex items-center gap-2"
+                                    className="ml-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
                                 >
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
                                     Eliminar
                                 </button>
                             </div>
@@ -225,7 +242,7 @@ const ComentariosAdmin = () => {
                 </div>
 
                 {comentarios.length === 0 && (
-                    <div className="text-center py-8 bg-white rounded-lg shadow">
+                    <div className="text-center py-8 bg-white rounded-lg">
                         <p className="text-gray-500">No hay comentarios en el sistema</p>
                     </div>
                 )}

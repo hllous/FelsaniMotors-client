@@ -24,7 +24,6 @@ const PublicacionForm = () => {
     const tiposCajaDisponibles = ["Manual", "Automática", "Semiautomática"];
 
     // Estructura JSON de endpoints
-
     const [autoData, setAutoData] = useState({
         marca: "",
         modelo: "",
@@ -166,7 +165,6 @@ const PublicacionForm = () => {
             method: "POST",
             headers: createAuthHeaders(),
             body: JSON.stringify(autoDataRequest)
-            body: JSON.stringify(autoDataRequest)
         })
         .then((autoResponse) => {
             if (!autoResponse.ok) {
@@ -192,7 +190,6 @@ const PublicacionForm = () => {
             return fetch(PUBLICACION_URL, {
                 method: "POST",
                 headers: createAuthHeaders(),
-                body: JSON.stringify(publicacionDataRequest)
                 body: JSON.stringify(publicacionDataRequest)
             }).then((publicacionResponse) => {
                 if (!publicacionResponse.ok) {
@@ -227,8 +224,8 @@ const PublicacionForm = () => {
                         }
                         return fotoResponse.json();
                     })
-                    .catch((error) => {
-                        console.error(`Error al subir foto ${i + 1}:`, error);
+                    .catch(() => {
+                        return null;
                     });
                     
                     uploadPromises.push(uploadPromise);

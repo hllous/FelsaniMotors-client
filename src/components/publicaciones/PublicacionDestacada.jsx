@@ -44,11 +44,17 @@ const PublicacionDestacada = ({ publicacion }) => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
                 {/* Imagen */}
                 <div className="relative">
-                    <img 
-                        src={image} 
-                        alt={publicacion.titulo} 
-                        className="w-full h-80 lg:h-96 object-cover rounded-lg border border-paleta1-cream"
-                    />
+                    {image ? (
+                        <img 
+                            src={image} 
+                            alt={publicacion.titulo} 
+                            className="w-full h-80 lg:h-96 object-cover rounded-lg border border-paleta1-cream"
+                        />
+                    ) : (
+                        <div className="w-full h-80 lg:h-96 bg-gray-200 rounded-lg border border-paleta1-cream flex items-center justify-center">
+                            <span className="text-gray-400 text-lg">Sin imagen</span>
+                        </div>
+                    )}
                     <div className="absolute top-4 left-4 bg-paleta1-blue text-white px-3 py-1 rounded-full text-sm font-bold">
                         DESTACADO
                     </div>

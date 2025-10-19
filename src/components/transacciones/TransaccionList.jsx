@@ -36,12 +36,9 @@ const TransaccionList = () => {
         .then((data) => {
             if (data) {
                 setTransacciones(data);
-                console.log(`✅ Transacciones del usuario ${user.idUsuario}:`, data);
             }
         })
-        .catch((error) => {
-            console.error("Error buscando transacciones : ", error);
-        });
+        .catch(() => {});
     }, [user]);
 
     return(

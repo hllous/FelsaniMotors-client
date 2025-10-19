@@ -44,7 +44,7 @@ const CambioContrasena = () => {
         alert("Contraseña actualizada correctamente");
         navigate('/perfil');
       })
-      .catch((error) => console.error("Error: ", error));
+      .catch(() => {});
   };
 
   return (

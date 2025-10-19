@@ -16,7 +16,25 @@ const PublicacionesAdmin = () => {
     };
 
     useEffect(() => {
-        fetchPublicaciones();
+        // Cargar publicaciones
+        fetch('http://localhost:4002/api/publicaciones', {
+            method: 'GET'
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(text || 'Error al obtener publicaciones');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                setPublicaciones(data);
+                setError(null);
+            })
+            .catch((error) => {
+                setError(`Error al cargar publicaciones: ${error.message}`);
+            });
     }, []);
 
     const fetchPublicaciones = () => {
@@ -40,11 +58,7 @@ const PublicacionesAdmin = () => {
             });
     };
 
-    const handleEliminar = (id, titulo) => {
-        if (!window.confirm(`¿Estás seguro de eliminar la publicación "${titulo}"?`)) {
-            return;
-        }
-
+    const handleEliminarPublicacion = (id) => {
         fetch(`http://localhost:4002/api/publicaciones/${id}`, {
             method: 'DELETE',
             headers: getAuthHeaders()
@@ -56,7 +70,6 @@ const PublicacionesAdmin = () => {
                     });
                 }
                 fetchPublicaciones();
-                alert('Publicacion eliminada exitosamente');
             })
             .catch((error) => {
                 setError(`Error al eliminar la publicación: ${error.message}`);
@@ -66,7 +79,7 @@ const PublicacionesAdmin = () => {
     if (error) {
         return (
             <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-                <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
+                <div className="bg-white rounded-lg p-8 max-w-md w-full">
                     <div className="text-center">
                         <div className="text-red-600 text-5xl mb-4">⚠️</div>
                         <h3 className="text-xl font-bold text-gray-800 mb-2">Error</h3>
@@ -104,7 +117,7 @@ const PublicacionesAdmin = () => {
 
                 {/* Mensaje de error */}
                 {error && (
-                    <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow-sm">
+                    <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
                         <div className="flex items-center gap-3">
                             <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -125,7 +138,7 @@ const PublicacionesAdmin = () => {
                 )}
 
                 {/* Tabla de publicaciones */}
-                <div className="bg-white rounded-lg shadow overflow-hidden">
+                <div className="bg-white rounded-lg overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
@@ -135,6 +148,9 @@ const PublicacionesAdmin = () => {
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Título
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Propietario
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Descripción
@@ -159,8 +175,11 @@ const PublicacionesAdmin = () => {
                                         <td className="px-6 py-4 text-sm text-gray-900 max-w-xs">
                                             <div className="font-semibold">{pub.titulo}</div>
                                         </td>
+                                        <td className="px-6 py-4 text-sm text-gray-700">
+                                            <div className="font-medium">{pub.nombreUsuario || 'N/A'}</div>
+                                        </td>
                                         <td className="px-6 py-4 text-sm text-gray-600 max-w-md">
-                                            <div className="line-clamp-2">{pub.descripcion}</div>
+                                            <div className="line-clamp-2 break-words">{pub.descripcion}</div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -178,22 +197,15 @@ const PublicacionesAdmin = () => {
                                             <div className="flex gap-2 justify-center">
                                                 <button
                                                     onClick={() => navigate(`/publicacion/${pub.idPublicacion}`)}
-                                                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm font-medium"
+                                                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm font-medium"
                                                 >
-                                                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                    </svg>
                                                     Ver
                                                 </button>
                                                 <button
-                                                    onClick={() => handleEliminar(pub.idPublicacion, pub.titulo)}
-                                                    className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm font-medium"
+                                                    onClick={() => handleEliminarPublicacion(pub.idPublicacion)}
+                                                    className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm font-medium"
                                                 >
-                                                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                    </svg>
-                                                    DELETE
+                                                    Eliminar
                                                 </button>
                                             </div>
                                         </td>
@@ -205,7 +217,7 @@ const PublicacionesAdmin = () => {
                 </div>
 
                 {publicaciones.length === 0 && (
-                    <div className="text-center py-8 bg-white rounded-lg shadow mt-4">
+                    <div className="text-center py-8 bg-white rounded-lg mt-4">
                         <p className="text-gray-500">No hay publicaciones disponibles</p>
                     </div>
                 )}

@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import PublicacionCard from "./PublicacionCard";
 import PublicacionDestacada from "./PublicacionDestacada";
 
@@ -7,7 +7,6 @@ const PublicacionList = () => {
     const [publicaciones, setPublicaciones] = useState([]);
     const [publicacionDestacada, setPublicacionDestacada] = useState(null);
     const [searchParams] = useSearchParams();
-    const navigate = useNavigate();
     
     const consultaBusqueda = searchParams.get('q') || '';
     const userId = searchParams.get('userId');
@@ -36,32 +35,52 @@ const PublicacionList = () => {
                 params.append('busqueda', consultaBusqueda);
             }
             
-            searchParams.forEach((value, key) => {
-                if (key !== 'q' && key !== 'userId') {
+            // Agregar filtros
+            if (hasFiltros) {
+                const filtros = new URLSearchParams(paramsString);
+                filtros.delete('q');
+                filtros.delete('userId');
+                filtros.forEach((value, key) => {
                     params.append(key, value);
-                }
-            });
+                });
+            }
             
             url = `http://localhost:4002/api/publicaciones/filtrar?${params.toString()}`;
         }
 
         fetch(url)
         .then((response) => {
-            if (response.status === 204) { return []; }
+            if (response.status === 204) { 
+                setPublicaciones([]);
+                return null;
+            }
+            if (!response.ok) {
+                throw new Error(`Error HTTP: ${response.status}`);
+            }
             return response.json();
         })
         .then((data) => {
+            if (data === null) return;
+            
             if (data.content) {
                 setPublicaciones(data.content);
-            } else {
-                setPublicaciones(data);
+                return;
             }
+            
+            if (data) {
+                setPublicaciones(data);
+                return;
+            }
+            
+            setPublicaciones([]);
         })
-        .catch((error) => console.error("Error al obtener datos", error));
+        .catch(() => {
+            setPublicaciones([]);
+        });
 
-    }, [userId, consultaBusqueda, hasFiltros, searchParams]);
+    }, [userId, consultaBusqueda, hasFiltros, paramsString]);
 
-    // Actualizar publicación destacada cuando cambian las publicaciones
+    // Actualizar publicacion destacada cuando cambian las publicaciones
     useEffect(() => {
         if (publicaciones.length > 0) {
             const randomIndex = Math.floor(Math.random() * publicaciones.length);
@@ -97,15 +116,6 @@ const PublicacionList = () => {
                         {hasFiltros && ' según los filtros aplicados'}
                     </p>
                     
-                    {/* Botón para limpiar filtros */}
-                    {(userId || consultaBusqueda || hasFiltros) && (
-                        <button 
-                            onClick={() => navigate('/publicaciones')}
-                            className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
-                        >
-                            Mostrar todas las publicaciones
-                        </button>
-                    )}
                 </div>
 
                 {/* Grid de publicaciones */}
@@ -123,23 +133,6 @@ const PublicacionList = () => {
                         />
                     ))}
                 </div>
-
-                {/* Mensaje si no hay publicaciones */}
-                {publicaciones.length === 0 && (
-                    <div className="text-center py-12">
-                        <div className="text-gray-400 text-6xl mb-4">🚗</div>
-                        <h3 className="text-xl font-semibold text-gray-600 mb-2">
-                            {userId ? 'No tienes publicaciones aún' :
-                             consultaBusqueda ? 'No se encontraron resultados' :
-                             'No hay publicaciones disponibles'}
-                        </h3>
-                        <p className="text-gray-500">
-                            {userId ? 'Crea tu primera publicación para vender tu vehículo' :
-                             consultaBusqueda ? 'Intenta con otros términos de búsqueda' :
-                             'Sé el primero en publicar tu vehículo'}
-                        </p>
-                    </div>
-                )}
             </div>
         </div>
     );

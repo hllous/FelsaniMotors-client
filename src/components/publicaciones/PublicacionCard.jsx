@@ -64,12 +64,14 @@ const PublicacionCard = ({ idPublicacion, titulo, ubicacion, precio, estado, mar
             return response.json();
         })
         .then(data => {
-            if (data && data.length > 0) {
+            if (data && data.length > 0 && data[0]?.file) {
                 setImage(`data:image/jpeg;base64,${data[0].file}`);
+            } else {
+                setImage('');
             }
         })
-        .catch(error => { 
-            console.error('Error cargando imagen:', error);
+        .catch(() => { 
+            setImage('');
         });
 
         // Obtener descuento desde el backend
@@ -96,11 +98,17 @@ w            className="bg-white rounded-xl overflow-hidden cursor-pointer borde
         >
             {/* Imagen */}
             <div className="relative">
-                <img 
-                    src={image} 
-                    alt={titulo} 
-                    className="w-full h-48 object-cover"
-                />
+                {image ? (
+                    <img 
+                        src={image} 
+                        alt={titulo} 
+                        className="w-full h-48 object-cover"
+                    />
+                ) : (
+                    <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
+                        <span className="text-gray-400">Sin imagen</span>
+                    </div>
+                )}
             </div>
 
             {/* Contenido */}

@@ -33,7 +33,6 @@ const ComentarioList = ({ idPublicacion }) => {
             setError(null);
         })
         .catch((e) => {
-            console.error('Error al obtener los comentarios:', e);
             setError(e.message);
         })
     }, [API_URL]);
@@ -65,7 +64,6 @@ const ComentarioList = ({ idPublicacion }) => {
                 return nuevoComentario;
             })
             .catch((error) => {
-                console.error('Error al crear comentario:', error);
                 throw error;
             });
     };
@@ -96,7 +94,6 @@ const ComentarioList = ({ idPublicacion }) => {
                 return actualizado;
             })
             .catch((error) => {
-                console.error('Error al editar comentario:', error);
                 throw error;
             });
     };
@@ -122,7 +119,6 @@ const ComentarioList = ({ idPublicacion }) => {
                 setComentarios(comentarios.filter(c => c.idComentario !== idComentario));
             })
             .catch((error) => {
-                console.error('Error al eliminar comentario:', error);
                 throw error;
             });
     };
@@ -171,7 +167,6 @@ const ComentarioList = ({ idPublicacion }) => {
                 return nuevaRespuesta;
             })
             .catch((error) => {
-                console.error('Error al responder comentario:', error);
                 throw error;
             });
     };

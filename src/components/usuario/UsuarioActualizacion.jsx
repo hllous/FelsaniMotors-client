@@ -66,7 +66,7 @@ const UsuarioActualizacion = () => {
         alert("Perfil actualizado correctamente");
         navigate('/perfil');
       })
-      .catch((error) => console.error("Error: ", error));
+      .catch(() => {});
   };
 
   return (

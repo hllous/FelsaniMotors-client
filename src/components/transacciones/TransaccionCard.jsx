@@ -1,10 +1,8 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState } from "react";
 import TransaccionEstado from "./TransaccionEstado";
 import authService from '../../services/authService';
-import { AuthContext } from '../../context/AuthContext';
 
 const TransaccionCard = ({ transaccion }) => {
-  const { user } = useContext(AuthContext);
   const [image, setImage] = useState("https://via.placeholder.com/300x200?text=Loading...");
   const [publicacion, setPublicacion] = useState({});
   const [comprador, setComprador] = useState({});
@@ -26,22 +24,22 @@ const TransaccionCard = ({ transaccion }) => {
     fetch(URLPublicacion, { method: "GET", headers })
       .then((res) => res.json())
       .then((data) => setPublicacion(data))
-      .catch((err) => console.error("Error buscando publicación:", err));
+      .catch(() => {});
 
     fetch(URLPublicacionFoto)
       .then((res) => res.json())
       .then((data) => setImage(`data:image/jpeg;base64,${data[0].file}`))
-      .catch((err) => console.error("Error cargando imagen:", err));
+      .catch(() => {});
 
     fetch(URLComprador, { method: "GET", headers })
       .then((res) => res.json())
       .then((data) => setComprador(data))
-      .catch((err) => console.error("Error buscando comprador:", err));
+      .catch(() => {});
 
     fetch(URLVendedor, { method: "GET", headers })
       .then((res) => res.json())
       .then((data) => setVendedor(data))
-      .catch((err) => console.error("Error buscando vendedor:", err));
+      .catch(() => {});
   }, [transaccion]);
 
   const formatearFecha = (fecha) => {

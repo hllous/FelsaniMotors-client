@@ -16,7 +16,25 @@ const TransaccionesAdmin = () => {
     };
 
     useEffect(() => {
-        fetchTransacciones();
+        fetch('http://localhost:4002/api/transacciones', {
+            method: 'GET',
+            headers: getAuthHeaders()
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(text || 'Error al obtener transacciones');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                setTransacciones(data);
+                setError(null);
+            })
+            .catch((error) => {
+                setError(`Error al cargar transacciones: ${error.message}`);
+            });
     }, []);
 
     const fetchTransacciones = () => {
@@ -41,7 +59,7 @@ const TransaccionesAdmin = () => {
             });
     };
 
-    const handleEliminar = (id) => {
+    const handleEliminarTransaccion = (id) => {
         if (!window.confirm('¿Estás seguro de eliminar esta transacción?')) {
             return;
         }
@@ -82,7 +100,7 @@ const TransaccionesAdmin = () => {
     if (error) {
         return (
             <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-                <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
+                <div className="bg-white rounded-lg p-8 max-w-md w-full">
                     <div className="text-center">
                         <div className="text-red-600 text-5xl mb-4">⚠️</div>
                         <h3 className="text-xl font-bold text-gray-800 mb-2">Error</h3>
@@ -120,7 +138,7 @@ const TransaccionesAdmin = () => {
 
                 {/* Mensaje de error */}
                 {error && (
-                    <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow-sm">
+                    <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
                         <div className="flex items-center gap-3">
                             <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -140,7 +158,7 @@ const TransaccionesAdmin = () => {
                     </div>
                 )}
 
-                <div className="bg-white rounded-lg shadow overflow-hidden">
+                <div className="bg-white rounded-lg overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
@@ -179,8 +197,8 @@ const TransaccionesAdmin = () => {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <button
-                                                onClick={() => handleEliminar(transaccion.idTransaccion)}
-                                                className="text-red-600 hover:text-red-900"
+                                                onClick={() => handleEliminarTransaccion(transaccion.idTransaccion)}
+                                                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
                                             >
                                                 Eliminar
                                             </button>
@@ -193,7 +211,7 @@ const TransaccionesAdmin = () => {
                 </div>
 
                 {transacciones.length === 0 && (
-                    <div className="text-center py-8 bg-white rounded-lg shadow mt-4">
+                    <div className="text-center py-8 bg-white rounded-lg mt-4">
                         <p className="text-gray-500">No hay transacciones registradas</p>
                     </div>
                 )}

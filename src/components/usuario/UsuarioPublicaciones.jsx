@@ -22,7 +22,7 @@ const UsuarioPublicaciones = () => {
         return response.json();
       })
       .then((data) => setPublicaciones(data))
-      .catch((error) => console.error("Error: ", error));
+      .catch(() => {});
   }, [user?.idUsuario, token]);
 
   const handleClick = (idPublicacion) => {

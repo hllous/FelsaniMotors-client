@@ -61,10 +61,11 @@ const Filter = () => {
           combustible: data.combustibles || [],
           tipoCategoria: data.tipoCategorias || [],
           tipoCaja: data.tipoCajas || [],
-          motor: data.motores || []
+          motor: data.motores || [],
+          estadoPublicacion: ['A', 'V', 'P']
         });
       })
-      .catch(error => console.error('Error cargando opciones de filtros:', error));
+      .catch(() => {});
   }, []);
 
   const [openDropdowns, setOpenDropdowns] = useState({});

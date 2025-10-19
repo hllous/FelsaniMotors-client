@@ -20,7 +20,7 @@ const AdminDashboard = () => {
                     {/* Gestión de Usuarios */}
                     <Link 
                         to="/admin/usuarios" 
-                        className="bg-white p-6 rounded-lg shadow-lg border-l-4 border-paleta1-blue"
+                        className="bg-white p-6 rounded-lg border-l-4 border-paleta1-blue"
                     >
                         <div className="flex items-center mb-4">
                             <div className="bg-paleta1-blue-light p-3 rounded-full">
@@ -42,7 +42,7 @@ const AdminDashboard = () => {
                     {/* Gestión de Publicaciones */}
                     <Link 
                         to="/admin/publicaciones" 
-                        className="bg-white p-6 rounded-lg shadow-lg border-l-4 border-paleta1-blue"
+                        className="bg-white p-6 rounded-lg border-l-4 border-paleta1-blue"
                     >
                         <div className="flex items-center mb-4">
                             <div className="bg-paleta1-blue-light p-3 rounded-full">
@@ -64,7 +64,7 @@ const AdminDashboard = () => {
                     {/* Gestión de Comentarios */}
                     <Link 
                         to="/admin/comentarios" 
-                        className="bg-white p-6 rounded-lg shadow-lg border-l-4 border-paleta1-blue"
+                        className="bg-white p-6 rounded-lg border-l-4 border-paleta1-blue"
                     >
                         <div className="flex items-center mb-4">
                             <div className="bg-paleta1-blue-light p-3 rounded-full">

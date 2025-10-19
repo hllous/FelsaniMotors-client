@@ -33,7 +33,7 @@ const UsuarioPerfil = () => {
         return response.json();
       })
       .then((data) => setUsuarioData(data))
-      .catch((error) => console.error("Error: ", error));
+      .catch(() => {});
   }, [user?.idUsuario, token]);
 
   return (
