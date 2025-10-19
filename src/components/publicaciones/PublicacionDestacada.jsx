@@ -38,7 +38,7 @@ const PublicacionDestacada = ({ publicacion }) => {
 
     return(
         <div 
-            className="bg-white rounded-xl shadow-lg overflow-hidden mb-8 mx-4 cursor-pointer border border-paleta1-cream"
+            className="bg-white rounded-xl overflow-hidden mb-8 mx-4 cursor-pointer border border-paleta1-cream"
             onClick={handleClick}>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
@@ -49,7 +49,7 @@ const PublicacionDestacada = ({ publicacion }) => {
                         alt={publicacion.titulo} 
                         className="w-full h-80 lg:h-96 object-cover rounded-lg border border-paleta1-cream"
                     />
-                    <div className="absolute top-4 left-4 bg-paleta1-blue text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
+                    <div className="absolute top-4 left-4 bg-paleta1-blue text-white px-3 py-1 rounded-full text-sm font-bold">
                         DESTACADO
                     </div>
                 </div>
@@ -92,7 +92,7 @@ const PublicacionDestacada = ({ publicacion }) => {
                             e.stopPropagation();
                             handleClick();
                         }}
-                        className="w-full bg-paleta1-blue text-white font-bold py-3 px-6 rounded-lg shadow-lg"
+                        className="w-full bg-paleta1-blue text-white font-bold py-3 px-6 rounded-lg"
                     >
                         Ver Detalles
                     </button>

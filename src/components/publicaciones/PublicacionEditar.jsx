@@ -414,7 +414,7 @@ const PublicacionEditar = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center bg-[#F5EFE6] py-10">
-      <div className="w-full max-w-3xl bg-white rounded-2xl shadow-md p-8 space-y-8 border border-[#CBDCEB]">
+      <div className="w-full max-w-3xl bg-white rounded-2xl p-8 space-y-8 border border-[#CBDCEB]">
         <h1 className="text-2xl font-semibold text-center text-gray-700">Editar Publicación</h1>
 
         {/* "Formulario" */}
@@ -517,7 +517,7 @@ const PublicacionEditar = () => {
           <div className="mt-8">
             <h2 className="text-lg font-semibold text-gray-700 mb-3">Imágenes</h2>
 
-            <div className="max-w-xl mx-auto overflow-hidden relative rounded-2xl shadow-md">
+            <div className="max-w-xl mx-auto overflow-hidden relative rounded-2xl">
               <div
                 className="flex transition-transform duration-500 ease-in-out"
                 style={{ transform: `translateX(-${imagenActual * 100}%)` }}
@@ -536,7 +536,7 @@ const PublicacionEditar = () => {
                         className="w-full h-full object-cover rounded-2xl"
                       />
                       {seleccionada && (
-                        <div className="absolute top-3 right-3 bg-[#CBDCEB] rounded-full p-1 shadow-md">
+                        <div className="absolute top-3 right-3 bg-[#CBDCEB] rounded-full p-1">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             className="w-4 h-4 text-white"
@@ -558,7 +558,7 @@ const PublicacionEditar = () => {
               {imagenActual > 0 && (
                 <button
                   onClick={anteriorImagen}
-                  className="absolute top-1/2 left-3 transform -translate-y-1/2 bg-[#CBDCEB] text-white p-2 rounded-full shadow"
+                  className="absolute top-1/2 left-3 transform -translate-y-1/2 bg-[#CBDCEB] text-white p-2 rounded-full"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -569,7 +569,7 @@ const PublicacionEditar = () => {
               {imagenActual < cantidad - 1 && (
                 <button
                   onClick={siguienteImagen}
-                  className="absolute top-1/2 right-3 transform -translate-y-1/2 bg-[#CBDCEB] text-white p-2 rounded-full shadow"
+                  className="absolute top-1/2 right-3 transform -translate-y-1/2 bg-[#CBDCEB] text-white p-2 rounded-full"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -623,12 +623,12 @@ const PublicacionEditar = () => {
         <div className="flex justify-center gap-4 mt-8">
           <button 
             onClick={handleCambioClick}
-            className="bg-[#CBDCEB] text-gray-700 font-semibold px-6 py-3 rounded-xl shadow hover:bg-[#b4cde2] transition">
+            className="bg-[#CBDCEB] text-gray-700 font-semibold px-6 py-3 rounded-xl hover:bg-[#b4cde2] transition">
             Guardar Cambios
           </button>
           <button 
             onClick={handleCancelarClick}
-            className="bg-gray-300 text-gray-700 font-semibold px-6 py-3 rounded-xl shadow hover:bg-gray-400 transition">
+            className="bg-gray-300 text-gray-700 font-semibold px-6 py-3 rounded-xl hover:bg-gray-400 transition">
             Cancelar
           </button>
         </div>
@@ -637,7 +637,7 @@ const PublicacionEditar = () => {
         <div className="flex justify-center mt-6">
           <button
             onClick={handleEliminarPublicacion}
-            className="bg-red-500 text-white font-semibold px-6 py-3 rounded-xl shadow hover:bg-red-600 transition"
+            className="bg-red-500 text-white font-semibold px-6 py-3 rounded-xl hover:bg-red-600 transition"
           >
             Eliminar Publicación
           </button>

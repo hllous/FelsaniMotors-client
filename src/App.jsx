@@ -53,70 +53,17 @@ function App() {
           <Route path="/publicaciones" element={<PublicacionList />} />
           <Route path="/publicacion/:id" element={<Publicacion />} />
           <Route path="/crear-publicacion" element={<PublicacionForm />} />
-          <Route 
-            path="/editar-publicacion/:id" 
-            element={
-              <ProtectedRoute>
-                <PublicacionEditar />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/comprar-carrito" 
-            element={
-              <ProtectedRoute>
-                <TransaccionForm />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/mis-transacciones" 
-            element={
-              <ProtectedRoute>
-                <TransaccionList />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/perfil" 
-            element={
-              <ProtectedRoute>
-                <UsuarioPerfil />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/perfil/actualizar" 
-            element={
-              <ProtectedRoute>
-                <UsuarioActualizacion />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/perfil/cambiar-contraseña" 
-            element={
-              <ProtectedRoute>
-                <CambioContraseña />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/perfil/publicaciones" 
-            element={
-              <ProtectedRoute>
-                <UsuarioPublicaciones />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/perfil/transacciones" 
-            element={
-              <ProtectedRoute>
-                <UsuarioTransacciones />
-              </ProtectedRoute>
-            } 
-          />
+          <Route path="/faq" element={<FAQ />} />
+
+          {/* Rutas de usuario autenticado */}
+          <Route path="/editar-publicacion/:id" element={protectedElement(<PublicacionEditar />)} />
+          <Route path="/comprar-carrito" element={protectedElement(<TransaccionForm />)} />
+          <Route path="/mis-transacciones" element={protectedElement(<TransaccionList />)} />
+          <Route path="/perfil" element={protectedElement(<UsuarioPerfil />)} />
+          <Route path="/perfil/actualizar" element={protectedElement(<UsuarioActualizacion />)} />
+          <Route path="/perfil/cambiar-contraseña" element={protectedElement(<CambioContraseña />)} />
+          <Route path="/perfil/publicaciones" element={protectedElement(<UsuarioPublicaciones />)} />
+          <Route path="/perfil/transacciones" element={protectedElement(<UsuarioTransacciones />)} />
 
           {/* Rutas de administración */}
           <Route path="/admin" element={adminElement(<AdminDashboard />)} />

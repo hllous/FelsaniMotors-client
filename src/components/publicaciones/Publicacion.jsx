@@ -153,7 +153,7 @@ const Publicacion = () => {
     if (error) {
         return (
             <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-                <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
+                <div className="bg-white rounded-lg p-8 max-w-md w-full">
                     <div className="text-center">
                         <div className="text-red-600 text-5xl mb-4">⚠️</div>
                         <h3 className="text-xl font-bold text-gray-800 mb-2">Error al cargar la publicación</h3>
@@ -172,7 +172,7 @@ const Publicacion = () => {
 
     if (!publicacion) {
         return (
-            <div className="bg-paleta1-cream-light border border-paleta1-cream rounded-lg p-6 text-center shadow-lg">
+            <div className="bg-paleta1-cream-light border border-paleta1-cream rounded-lg p-6 text-center">
                 <div className="text-paleta1-blue text-4xl mb-4">📄</div>
                 <p className="text-paleta1-blue">Publicación no encontrada</p>
             </div>
@@ -182,7 +182,7 @@ const Publicacion = () => {
     // Vista completa de la publicación
     return (
         <div className="pt-8 bg-white min-h-screen">
-            <div className="max-w-[95vw] mx-auto bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200">
+            <div className="max-w-[95vw] mx-auto bg-white rounded-xl overflow-hidden border border-gray-200">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 p-6 lg:p-12 bg-paleta1-cream-light">
                     <div className="lg:col-span-2 flex gap-6">
                         <div className="flex flex-col gap-4 w-32">
@@ -190,7 +190,7 @@ const Publicacion = () => {
                                 imagenes.map((imagen, index) => (
                                     <div key={index} className={`relative p-2 rounded-2xl border-2 ${
                                         index === imagenSeleccionada 
-                                            ? 'border-paleta1-blue bg-paleta1-blue-light shadow-lg' 
+                                            ? 'border-paleta1-blue bg-paleta1-blue-light' 
                                             : 'border-gray-200 bg-white'
                                     }`}>
                                         <img 
@@ -211,11 +211,11 @@ const Publicacion = () => {
                         {/* Imagen principal grande */}
                         <div className="flex-1">
                             {imagenes.length > 0 ? (
-                                <div className="bg-white p-6 rounded-3xl shadow-2xl border-2 border-gray-200">
+                                <div className="bg-white p-6 rounded-3xl border-2 border-gray-200">
                                     <img 
                                         src={imagenes[imagenSeleccionada]} 
                                         alt={publicacion.titulo}
-                                        className="w-full h-[450px] lg:h-[550px] object-contain bg-gray-50 rounded-2xl shadow-lg"
+                                        className="w-full h-[450px] lg:h-[550px] object-contain bg-gray-50 rounded-2xl"
                                     />
                                 </div>
                             ) : (
@@ -252,7 +252,7 @@ const Publicacion = () => {
                         </div>
 
                         {/* Especificaciones */}
-                        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+                        <div className="bg-white border border-gray-200 rounded-xl p-4">
                             <h3 className="text-md font-semibold text-paleta1-blue mb-3 border-b border-gray-200 pb-2">Información Básica</h3>
                             <div className="space-y-3">
                                 <div className="flex flex-col">
@@ -282,7 +282,7 @@ const Publicacion = () => {
 
                         {/* Descripción */}
                         {publicacion.descripcion && (
-                            <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+                            <div className="bg-white border border-gray-200 rounded-xl p-4">
                                 <h3 className="text-md font-semibold text-paleta1-blue mb-3 border-b border-gray-200 pb-2">Descripción</h3>
                                 <p className="text-gray-700 leading-relaxed text-sm">
                                     {publicacion.descripcion}
@@ -311,7 +311,7 @@ const Publicacion = () => {
                                             isInCart
                                                 ? 'bg-paleta1-cream text-paleta1-blue border-2 border-paleta1-blue cursor-not-allowed'
                                                 : 'bg-paleta1-cream text-paleta1-blue border-2 border-paleta1-blue cursor-pointer'
-                                        } font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md text-sm`}
+                                        } font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 text-sm`}
                                         disabled={isInCart}
                                         title={isInCart ? 'Ya está en el carrito' : 'Agregar al carrito'}
                                     >
@@ -348,7 +348,7 @@ const Publicacion = () => {
                                             
                                             navigate('/comprar-carrito');
                                         }}
-                                        className="w-full bg-paleta1-blue text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg cursor-pointer text-sm"
+                                        className="w-full bg-paleta1-blue text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 cursor-pointer text-sm"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-5">
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
@@ -366,7 +366,7 @@ const Publicacion = () => {
                                                 }
                                                 navigate(`/editar-publicacion/${idPublicacion}`);
                                             }}
-                                            className="w-full bg-gray-700 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg cursor-pointer text-sm"
+                                            className="w-full bg-gray-700 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 cursor-pointer text-sm"
                                         >
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-5">
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 18.07a4.5 4.5 0 0 1-1.897 1.13L6 20.5l1.09-3.413a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14.25H6a2.25 2.25 0 0 0-2.25 2.25v2.25a2.25 2.25 0 0 0 2.25 2.25h12a2.25 2.25 0 0 0 2.25-2.25v-2.25a2.25 2.25 0 0 0-2.25-2.25Z" />
@@ -383,7 +383,7 @@ const Publicacion = () => {
 
             {/* Especificaciones mas a detalle */}
             <div className="max-w-[95vw] mx-auto mt-12 px-6 lg:px-12">
-                <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8">
+                <div className="bg-white rounded-xl border border-gray-200 p-8">
                     <h3 className="text-2xl font-bold text-paleta1-blue mb-8 border-b border-paleta1-cream pb-4 text-left">
                         Especificaciones Técnicas Completas
                     </h3>

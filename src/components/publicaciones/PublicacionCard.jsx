@@ -91,7 +91,7 @@ const PublicacionCard = ({ idPublicacion, titulo, ubicacion, precio, estado, mar
 
     return(
         <div 
-            className="bg-white rounded-xl shadow-md overflow-hidden cursor-pointer border border-paleta1-cream"
+w            className="bg-white rounded-xl overflow-hidden cursor-pointer border border-paleta1-cream"
             onClick={handleClick}
         >
             {/* Imagen */}

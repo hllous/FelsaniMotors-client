@@ -76,11 +76,6 @@ const ComentarioItem = ({
             {/* Header del comentario */}
             <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-4">
-
-                    {/* Perfil */}
-                    <div className="w-14 h-14 bg-gradient-to-br from-paleta1-blue to-paleta1-blue/80 rounded-full flex items-center justify-center text-white font-bold text-xl ring-4 ring-paleta1-blue-light/30">
-                        {comentario.usuario?.nombre?.[0]?.toUpperCase() || '?'}
-                    </div>
                     
                     {/* Info del usuario */}
                     <div>
@@ -88,9 +83,6 @@ const ComentarioItem = ({
                             {comentario.usuario?.nombre} {comentario.usuario?.apellido}
                         </p>
                         <p className="text-sm text-gray-500 flex items-center gap-2">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
                             {formatearFecha(comentario.fecha)}
                         </p>
                     </div>
@@ -127,7 +119,7 @@ const ComentarioItem = ({
 
             {/* Contenido del comentario */}
             {isEditing ? (
-                <div className="ml-18">
+                <div>
                     <ComentarioForm
                         initialValue={comentario.texto}
                         onSubmit={handleEdit}
@@ -136,7 +128,7 @@ const ComentarioItem = ({
                 </div>
             ) : (
                 <>
-                    <div className="ml-18 mb-5">
+                    <div className=" mb-5">
                         <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                             <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
                                 {comentario.texto}
@@ -145,26 +137,20 @@ const ComentarioItem = ({
                     </div>
 
                     {canReply && handleResponder && (
-                        <div className="ml-18">
+                        <div>
                             <button
                                 onClick={() => setIsReplying(!isReplying)}
                                 className="inline-flex items-center gap-2 text-paleta1-blue hover:bg-blue-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-paleta1-blue-light"
                             >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                                </svg>
-                                {isReplying ? 'Cancelar respuesta' : 'Responder'}
+                                {'Responder'}
                             </button>
                         </div>
                     )}
 
                     {isReplying && (
-                        <div className="mt-6 ml-18 p-4 bg-blue-50 rounded-lg border-l-4 border-paleta1-blue">
+                        <div className="mt-6 p-4 bg-blue-100 rounded-lg border-2 border-paleta1-blue-light">
                             <div className="mb-3">
                                 <p className="text-sm font-semibold text-paleta1-blue flex items-center gap-2">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                                    </svg>
                                     Respondiendo a {comentario.usuario?.nombre}
                                 </p>
                             </div>
@@ -197,7 +183,7 @@ const ComentarioItem = ({
                             </div>
                         </div>
                         <p className="text-gray-700 mb-8 leading-relaxed">
-                            ¿Estás seguro de que deseas eliminar este comentario? Se eliminará permanentemente y no podrás recuperarlo.
+                            ¿Estás seguro de que deseas eliminar este comentario?
                         </p>
                         <div className="flex gap-3 justify-end">
                             <button

@@ -49,7 +49,7 @@ const ComentarioForm = ({
                     placeholder="Escribe tu comentario..."
                     rows={4}
                     maxLength={500}
-                    className="w-full px-5 py-4 border-2 border-paleta1-blue-light bg-white rounded-xl focus:outline-none focus:ring-2 focus:ring-paleta1-blue focus:border-paleta1-blue resize-none transition-all duration-200 placeholder-gray-400 text-gray-900"
+                    className="w-full px-5 py-4 border-2 border-paleta1-blue-light bg-white rounded-xl focus:outline-none resize-none transition-all duration-200 placeholder-gray-400 text-gray-900"
                 />
                 
                 {/* Contador de caracteres */}
@@ -80,8 +80,8 @@ const ComentarioForm = ({
                     <button
                         type="button"
                         onClick={handleCancel}
-                        className="px-6 py-3 bg-paleta1-cream-light text-paleta1-blue rounded-xl hover:bg-paleta1-cream transition-colors font-medium border border-paleta1-blue"
-                    >
+                        className="px-6 py-3 bg-white text-paleta1-blue rounded-xl hover:bg-gray-200
+                        transition-colors font-medium border border-paleta1-blue">
                         Cancelar
                     </button>
                 )}

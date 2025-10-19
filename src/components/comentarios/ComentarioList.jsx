@@ -195,9 +195,10 @@ const ComentarioList = ({ idPublicacion }) => {
                     handleEliminarComentario={handleEliminarComentario}
                     handleResponder={handleResponder}
                 />
-
+                
+                {/** GET de comentarios modo arbol */}
                 {tieneRespuestas && (
-                    <div className="ml-8 pl-6 border-l-4 border-paleta1-blue-light space-y-4 mt-6">
+                    <div className="ml-8 pl-6 border-l-4 border-paleta1-blue-light space-y-2 mt-6">
                         {comentario.respuestas.map(respuesta => 
                             renderComentarioConRespuestas(respuesta)
                         )}
