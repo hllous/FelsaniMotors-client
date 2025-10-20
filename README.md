@@ -1,16 +1,12 @@
-# React + Vite
+## API-Lunes-Grupo7
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+### Felsani Motors - Sección Backend
 
-Currently, two official plugins are available:
+### Integrantes:
+- Iriarte, Facundo (LU: 1157051) https://github.com/FacuIria
+- Abrego, Lautaro (LU: 1152414) https://github.com/SirCaballero
+- Padilla, Esteban Facundo Guzman () https://github.com/facuguzzz
+- Peralta, Santiago Tomas (LU: 1155874) https://github.com/SantiPeralta1
+- Llousas, Nicolas Facundo (LU: 1147795) (owner)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is not enabled on this template. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+REPO: https://github.com/hllous/FelsaniMotors-client
