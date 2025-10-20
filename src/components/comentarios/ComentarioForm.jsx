@@ -13,12 +13,12 @@ const ComentarioForm = ({
         
         // Validaciones
         if (!texto.trim()) {
-            setError('El comentario no puede estar vacío');
+            setError("El comentario no puede estar vacío");
             return;
         }
 
         if (texto.length > 500) {
-            setError(`El comentario no puede exceder los 500 caracteres`);
+            setError("El comentario no puede exceder los 500 caracteres");
             return;
         }
 
@@ -29,7 +29,7 @@ const ComentarioForm = ({
                 setTexto('');
             })
             .catch((err) => {
-                setError(err.message || 'Error al enviar el comentario');
+                setError(err.message || "Error al enviar el comentario");
             });
     };
 
@@ -60,6 +60,7 @@ const ComentarioForm = ({
                         {texto.length}
                     </span>
                     <span className="text-gray-400 text-sm">/500</span>
+                    
                 </div>
 
             </div>

@@ -1,4 +1,4 @@
 import { createContext } from 'react';
 
-// Crear el contexto de autenticación
+// Crear el contexto de autenticacion
 export const AuthContext = createContext();

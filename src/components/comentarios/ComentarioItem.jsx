@@ -11,8 +11,6 @@ const ComentarioItem = ({
     const [isEditing, setIsEditing] = useState(false);
     const [isReplying, setIsReplying] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const [showErrorModal, setShowErrorModal] = useState(false);
-    const [errorMessage, setErrorMessage] = useState("");
     
     // Obtener datos del usuario desde el contexto
     const { isAuthenticated, user } = useContext(AuthContext);
@@ -27,11 +25,7 @@ const ComentarioItem = ({
 
     const handleEdit = (nuevoTexto) => {
         return handleEditarComentario(comentario.idComentario, nuevoTexto)
-            .then(() => setIsEditing(false))
-            .catch((error) => {
-                setErrorMessage('Error al editar: ' + error.message);
-                setShowErrorModal(true);
-            });
+            .then(() => setIsEditing(false));
     };
 
     const handleDeleteClick = () => {
@@ -40,11 +34,7 @@ const ComentarioItem = ({
 
     const handleConfirmDelete = () => {
         setShowDeleteConfirm(false);
-        handleEliminarComentario(comentario.idComentario)
-            .catch((error) => {
-                setErrorMessage('Error al eliminar: ' + error.message);
-                setShowErrorModal(true);
-            });
+        handleEliminarComentario(comentario.idComentario);
     };
 
     const handleCancelDelete = () => {
@@ -53,11 +43,7 @@ const ComentarioItem = ({
 
     const handleReply = (textoRespuesta) => {
         return handleResponder(comentario.idComentario, textoRespuesta)
-            .then(() => setIsReplying(false))
-            .catch((error) => {
-                setErrorMessage('Error al responder: ' + error.message);
-                setShowErrorModal(true);
-            });
+            .then(() => setIsReplying(false));
     };
 
     const formatearFecha = (fecha) => {
@@ -167,21 +153,6 @@ const ComentarioItem = ({
             {showDeleteConfirm && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
                     <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 border border-paleta1-blue-light">
-                        <div className="flex items-center gap-4 mb-6">
-                            <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center">
-                                <svg className="w-7 h-7 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h3 className="text-xl font-bold text-gray-900">
-                                    ¿Eliminar comentario?
-                                </h3>
-                                <p className="text-sm text-gray-600">
-                                    Esta acción no se puede deshacer
-                                </p>
-                            </div>
-                        </div>
                         <p className="text-gray-700 mb-8 leading-relaxed">
                             ¿Estás seguro de que deseas eliminar este comentario?
                         </p>
@@ -196,26 +167,7 @@ const ComentarioItem = ({
                                 onClick={handleConfirmDelete}
                                 className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
                             >
-                                Eliminar comentario
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Modal de Error */}
-            {showErrorModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 max-w-sm mx-4">
-                        <div className="text-center">
-                            <div className="text-red-500 text-5xl mb-4">✕</div>
-                            <h3 className="text-xl font-bold text-gray-800 mb-2">Error</h3>
-                            <p className="text-gray-600 mb-4">{errorMessage}</p>
-                            <button
-                                onClick={() => setShowErrorModal(false)}
-                                className="bg-paleta1-blue hover:bg-paleta1-blue-light hover:text-gray-800 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
-                            >
-                                Cerrar
+                                Eliminar
                             </button>
                         </div>
                     </div>

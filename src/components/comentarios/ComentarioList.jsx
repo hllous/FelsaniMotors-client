@@ -10,7 +10,7 @@ const ComentarioList = ({ idPublicacion }) => {
     const [error, setError] = useState(null);
     
     const { isAuthenticated = false, user = null } = useContext(AuthContext);
-    const API_URL = `http://localhost:4002/api/publicaciones/${idPublicacion}/comentarios`;
+    const URL = `http://localhost:4002/api/publicaciones/${idPublicacion}/comentarios`;
 
     const createAuthHeaders = () => {
         const headers = new Headers();
@@ -21,52 +21,52 @@ const ComentarioList = ({ idPublicacion }) => {
 
     // GET comentarios
     useEffect(() => {
-        fetch(API_URL)
+        fetch(URL)
+
         .then((response) => {
             if (!response.ok) {
                 throw new Error(`Error HTTP ${response.status}: ${response.statusText}`);
             }
+            return response.json() })
 
-            return response.json();})
         .then((data) => { 
             setComentarios(data);
-            setError(null);
-        })
+            setError(null) })
+
         .catch((e) => {
-            setError(e.message);
-        })
-    }, [API_URL]);
+            setError(e.message) })
+
+    }, [URL]);
 
     // POST comentario
     const handleCrearComentario = (texto) => {
 
+        // Validaciones
         if (!user?.activo) {
             alert('Tu cuenta está inactiva. No puedes comentar.');
             return;
         }
         
-        return fetch(API_URL, {
-            method: 'POST',
-            headers: createAuthHeaders(),
-            body: JSON.stringify({ 
-                idUsuario: user.idUsuario, 
-                texto 
-            })
-        })
+        return (
+            fetch(URL, {
+                method: 'POST',
+                headers: createAuthHeaders(),
+                body: JSON.stringify({ idUsuario: user.idUsuario, texto }) })
+
             .then((response) => {
                 if (!response.ok) {
                     throw new Error(`Error ${response.status}: ${response.statusText}`);
                 }
-                return response.json();
-            })
+                return response.json() })
+
             .then((nuevoComentario) => {
                 setComentarios([nuevoComentario, ...comentarios]);
-                return nuevoComentario;
-            })
+                return nuevoComentario })
+
             .catch((error) => {
-                throw error;
-            });
-    };
+                throw error })
+        )
+    }
 
     // PUT comentario
     const handleEditarComentario = (idComentario, nuevoTexto) => {
@@ -76,26 +76,27 @@ const ComentarioList = ({ idPublicacion }) => {
             return;
         }
         
-        return fetch(`${API_URL}/${idComentario}/texto`, {
-            method: 'PUT',
-            headers: createAuthHeaders(),
-            body: JSON.stringify({ texto: nuevoTexto })
-        })
+        return (
+            fetch(`http://localhost:4002/api/publicaciones/${idPublicacion}/comentarios/${idComentario}/texto`, {
+                method: 'PUT',
+                headers: createAuthHeaders(),
+                body: JSON.stringify({ texto: nuevoTexto }) })
+
             .then((response) => {
                 if (!response.ok) {
                     throw new Error(`Error ${response.status}: ${response.statusText}`);
                 }
-                return response.json();
-            })
+                return response.json() })
+
             .then((actualizado) => {
                 setComentarios(comentarios.map(c => 
                     c.idComentario === idComentario ? actualizado : c
                 ));
-                return actualizado;
-            })
+                return actualizado })
+
             .catch((error) => {
-                throw error;
-            });
+                throw error })
+        )
     };
 
     // DELETE comentario
@@ -106,21 +107,22 @@ const ComentarioList = ({ idPublicacion }) => {
             return;
         }
         
-        return fetch(`${API_URL}/${idComentario}`, {
-            method: 'DELETE',
-            headers: createAuthHeaders()
-        })
+        return (
+            fetch(`${URL}/${idComentario}`, {
+                method: 'DELETE',
+                headers: createAuthHeaders() })
+
             .then((response) => {
                 if (!response.ok) {
                     throw new Error(`Error ${response.status}: ${response.statusText}`);
-                }
-            })
+                } })
+
             .then(() => {
-                setComentarios(comentarios.filter(c => c.idComentario !== idComentario));
-            })
+                setComentarios(comentarios.filter(c => c.idComentario !== idComentario)) })
+
             .catch((error) => {
-                throw error;
-            });
+                throw error })
+        )
     };
 
     // Responder comentario
@@ -130,20 +132,20 @@ const ComentarioList = ({ idPublicacion }) => {
             return;
         }
         
-        return fetch(`${API_URL}/${idComentarioPadre}/respuestas`, {
-            method: 'POST',
-            headers: createAuthHeaders(),
-            body: JSON.stringify({ 
-                idUsuario: user.idUsuario, 
-                texto: textoRespuesta 
-            })
-        })
+        return (
+            fetch(`${URL}/${idComentarioPadre}/respuestas`, {
+                method: 'POST',
+                headers: createAuthHeaders(),
+                body: JSON.stringify({ 
+                    idUsuario: user.idUsuario, 
+                    texto: textoRespuesta }) })
+
             .then((response) => {
                 if (!response.ok) {
                     throw new Error(`Error ${response.status}: ${response.statusText}`);
                 }
-                return response.json();
-            })
+                return response.json() })
+
             .then((nuevaRespuesta) => {
                 const actualizarComentarios = (comentariosList) => {
                     return comentariosList.map(comentario => {
@@ -164,11 +166,11 @@ const ComentarioList = ({ idPublicacion }) => {
                 };
                 
                 setComentarios(actualizarComentarios(comentarios));
-                return nuevaRespuesta;
-            })
+                return nuevaRespuesta })
+
             .catch((error) => {
-                throw error;
-            });
+                throw error })
+        )
     };
 
     // Renderizar un comentario con respuestas anteriores
