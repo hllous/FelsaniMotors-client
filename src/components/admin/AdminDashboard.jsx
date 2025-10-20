@@ -20,66 +20,36 @@ const AdminDashboard = () => {
                     {/* Gestión de Usuarios */}
                     <Link 
                         to="/admin/usuarios" 
-                        className="bg-white p-6 rounded-lg border-l-4 border-paleta1-blue"
+                        className="bg-white p-6 rounded-lg shadow"
                     >
-                        <div className="flex items-center mb-4">
-                            <div className="bg-paleta1-blue-light p-3 rounded-full">
-                                <svg className="w-8 h-8 text-paleta1-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                                </svg>
-                            </div>
-                            <h2 className="text-xl font-bold ml-3 text-gray-800">Usuarios</h2>
-                        </div>
+                        <h2 className="text-xl font-bold mb-4 text-gray-800">Usuarios</h2>
                         <p className="text-gray-600">Ver todos los usuarios, sus datos completos, publicaciones y eliminar usuarios</p>
-                        <div className="mt-4 flex items-center text-paleta1-blue font-semibold">
-                            <span>Gestionar Usuarios</span>
-                            <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                            </svg>
+                        <div className="mt-4 text-paleta1-blue font-semibold">
+                            Gestionar Usuarios →
                         </div>
                     </Link>
 
                     {/* Gestión de Publicaciones */}
                     <Link 
                         to="/admin/publicaciones" 
-                        className="bg-white p-6 rounded-lg border-l-4 border-paleta1-blue"
+                        className="bg-white p-6 rounded-lg shadow"
                     >
-                        <div className="flex items-center mb-4">
-                            <div className="bg-paleta1-blue-light p-3 rounded-full">
-                                <svg className="w-8 h-8 text-paleta1-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-                                </svg>
-                            </div>
-                            <h2 className="text-xl font-bold ml-3 text-gray-800">Publicaciones</h2>
-                        </div>
+                        <h2 className="text-xl font-bold mb-4 text-gray-800">Publicaciones</h2>
                         <p className="text-gray-600">Ver todas las publicaciones del sistema y eliminar las que sean necesarias</p>
-                        <div className="mt-4 flex items-center text-paleta1-blue font-semibold">
-                            <span>Gestionar Publicaciones</span>
-                            <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                            </svg>
+                        <div className="mt-4 text-paleta1-blue font-semibold">
+                            Gestionar Publicaciones →
                         </div>
                     </Link>
 
                     {/* Gestión de Comentarios */}
                     <Link 
                         to="/admin/comentarios" 
-                        className="bg-white p-6 rounded-lg border-l-4 border-paleta1-blue"
+                        className="bg-white p-6 rounded-lg shadow"
                     >
-                        <div className="flex items-center mb-4">
-                            <div className="bg-paleta1-blue-light p-3 rounded-full">
-                                <svg className="w-8 h-8 text-paleta1-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                                </svg>
-                            </div>
-                            <h2 className="text-xl font-bold ml-3 text-gray-800">Comentarios</h2>
-                        </div>
+                        <h2 className="text-xl font-bold mb-4 text-gray-800">Comentarios</h2>
                         <p className="text-gray-600">Moderar y eliminar comentarios inapropiados de las publicaciones</p>
-                        <div className="mt-4 flex items-center text-paleta1-blue font-semibold">
-                            <span>Gestionar Comentarios</span>
-                            <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                            </svg>
+                        <div className="mt-4 text-paleta1-blue font-semibold">
+                            Gestionar Comentarios →
                         </div>
                     </Link>
                 </div>

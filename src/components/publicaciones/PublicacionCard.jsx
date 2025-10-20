@@ -51,23 +51,16 @@ const PublicacionCard = ({ idPublicacion, titulo, ubicacion, precio, estado, mar
             'V': 'Vendido',
             'P': 'Pausado'
         };
-        return estadosMap[estado] || estado || 'Disponible';
+        return estadosMap[estado];
     };
 
     useEffect(() => {
         // Cargar imagen
         fetch(`http://localhost:4002/api/publicaciones/${idPublicacion}/fotos-contenido`)
-        .then(response => {
-            if (!response.ok) { 
-                throw new Error('No se encontraron imágenes')
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
             if (data && data.length > 0 && data[0]?.file) {
                 setImage(`data:image/jpeg;base64,${data[0].file}`);
-            } else {
-                setImage('');
             }
         })
         .catch(() => { 
@@ -78,7 +71,6 @@ const PublicacionCard = ({ idPublicacion, titulo, ubicacion, precio, estado, mar
         fetch(`http://localhost:4002/api/publicaciones/${idPublicacion}`)
         .then(response => response.json())
         .then(data => {
-            // Obtener descuento desde la base de datos
             const descuentoPorcentaje = data?.descuentoPorcentaje || 0;
             const descuentoDecimal = descuentoPorcentaje / 100;
             const nuevoPrecio = precio - (precio * descuentoDecimal);
