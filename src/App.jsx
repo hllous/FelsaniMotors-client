@@ -1,9 +1,9 @@
-import React, { useContext } from 'react'
+import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { useSelector } from 'react-redux'
 import './App.css'
 import Footer from './components/common/Footer'
 import Navbar from './components/common/Navbar'
-import { AuthContext } from './context/AuthContext'
 import PublicacionList from './components/publicaciones/PublicacionList'
 import PublicacionForm from './components/publicaciones/PublicacionForm'
 import Publicacion from './components/publicaciones/Publicacion'
@@ -22,7 +22,7 @@ import ComentariosAdmin from './components/admin/ComentariosAdmin'
 import FAQ from './components/common/FAQ'
 
 function App() {
-  const { isAuthenticated, user } = useContext(AuthContext);
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
 
   const protectedElement = (element) => {
     if (!isAuthenticated) {

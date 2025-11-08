@@ -32,7 +32,7 @@ const Filter = () => {
     estadoPublicacion: ['A', 'V', 'P']
   });
 
-  // Mapeo para mostrar valores formateados en UI pero enviar valores correctos al backend
+  // Mapeo para mostrar valores
   const kilometrajeDisplay = {
     '0-50000': '0-50.000 km',
     '50000-100000': '50.000-100.000 km',
@@ -41,7 +41,7 @@ const Filter = () => {
     '200000-999999999': '200.000+ km'
   };
 
-  // Mapeo para mostrar estados de publicación en español
+  // Mapeo para mostrar estados de publicacion
   const estadoPublicacionDisplay = {
     'A': 'Activa',
     'V': 'Vendida',
@@ -63,10 +63,11 @@ const Filter = () => {
           tipoCaja: data.tipoCajas || [],
           motor: data.motores || [],
           estadoPublicacion: ['A', 'V', 'P']
-        });
+        })
+
       })
       .catch(() => {});
-  }, []);
+  }, [])
 
   const [openDropdowns, setOpenDropdowns] = useState({});
 
@@ -84,10 +85,12 @@ const Filter = () => {
       
       let updatedArray;
       if (isSelected) {
-        // Si ya esta, lo removemos del array
+
+        // Si ya esta, lo sacamos del array
         updatedArray = currentArray.filter(v => v !== value);
       } else {
-        // Si no esta, lo agregamos al array
+
+        // Si no esta, lo agregamos
         updatedArray = [...currentArray, value];
       }
       
@@ -114,6 +117,7 @@ const Filter = () => {
   };
 
   const applyFilters = () => {
+
     const params = new URLSearchParams();
     
     const textoBusqueda = searchParams.get('q');
@@ -132,6 +136,7 @@ const Filter = () => {
   };
 
   const getFilterLabel = (key) => {
+
     const labels = {
       marca: 'Marca',
       modelo: 'Modelo',
@@ -179,24 +184,22 @@ const Filter = () => {
         )}
       </button>
 
-      {/* === MODAL DE FILTROS === */}
-      {/* Utiliza paleta1-blue como color principal y paleta1-cream para fondos suaves */}
+      {/* Dropdown de filtros */}
       {isOpen && (
         <>
-          {/* Overlay de fondo - oscurece el contenido detrás del modal */}
+          {/* Overlay de fondo */}
           <div 
             className="fixed inset-0 bg-black/50 z-40"
             onClick={() => setIsOpen(false)}
           />
 
-          {/* Contenedor principal del modal */}
+          {/* Contenedor principal */}
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div 
               className="bg-white rounded-lg shadow-2xl w-[90%] max-w-4xl h-[85vh] flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* === HEADER DEL MODAL === */}
-              {/* Usa paleta1-blue para títulos y elementos importantes */}
+              {/* HEADER */}
               <div className="flex items-center justify-between p-6 border-b border-gray-200">
                 <h2 className="text-2xl font-bold text-paleta1-blue flex items-center gap-2">
                   <svg 
@@ -225,15 +228,13 @@ const Filter = () => {
                 </button>
               </div>
 
-              {/* === CONTENIDO PRINCIPAL === */}
+              {/* PRINCIPAl */}
               <div className="flex-1 overflow-y-auto p-6">
                 {/* Lista expandible de filtros */}
-                {/* Implementa design pattern de acordeón con paleta de colores consistente */}
                 <div className="space-y-2">
                   {Object.keys(filters).map((filterKey) => (
                     <div key={filterKey} className="relative">
                       {/* Botón de categoría de filtro */}
-                      {/* Usa fondos limpios sin beige */}
                       <div
                         onClick={() => toggleDropdown(filterKey)}
                         className={`flex items-center justify-between px-4 py-3 bg-white border border-paleta1-blue-light ${
@@ -266,7 +267,7 @@ const Filter = () => {
                         </svg>
                       </div>
 
-                      {/* === DROPDOWN EXPANDIBLE === */}
+                      {/* DROPDOWN */}
                       {/* Se conecta visualmente con el botón principal sin espacios */}
                       {openDropdowns[filterKey] && (
                         <div className="overflow-hidden">
@@ -313,19 +314,20 @@ const Filter = () => {
                   ))}
                 </div>
 
-                {/* Resumen de filtros activos sin beige */}
+                {/* Resumen de filtros */}
                 {activeFiltersCount > 0 && (
                   <div className="mt-6 p-4 bg-blue-50 border border-paleta1-blue-light rounded-lg">
                     <h3 className="text-sm font-semibold text-paleta1-blue mb-3">
                       Filtros Activos ({activeFiltersCount})
                     </h3>
-                    {/* Tags de filtros activos con botón de eliminación */}
                     <div className="flex flex-wrap gap-2">
+
                       {/* Mostrar en pantalla filtros activos */}
                       {(() => {
                         const tags = [];
                         for (const key in filters) {
                           filters[key].forEach((value) => {
+
                             // Para kilometraje y estadoPublicacion, mostrar valor formateado
                             let displayValue = value;
                             if (key === 'kilometraje') {
@@ -359,8 +361,6 @@ const Filter = () => {
                 )}
               </div>
 
-              {/* === FOOTER CON ACCIONES === */}
-              {/* Usa fondos limpios sin beige */}
               <div className="flex items-center justify-between p-6 border-t border-paleta1-blue-light bg-gray-50">
                 {/* Botón para limpiar todos los filtros */}
                 <button
@@ -369,7 +369,7 @@ const Filter = () => {
                 >
                   Limpiar Filtros
                 </button>
-                {/* Botones de acción principales */}
+                {/* Botones de acciones principales */}
                 <div className="flex gap-3">
                   <button
                     onClick={() => setIsOpen(false)}

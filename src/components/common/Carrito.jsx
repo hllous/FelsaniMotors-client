@@ -1,13 +1,13 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import carritoService from '../../services/carritoService';
-import { AuthContext } from '../../context/AuthContext';        
 
 const Carrito = ({ isOpen, onClose }) => {
   const [cartItems, setCartItems] = useState([]);
   const [total, setTotal] = useState(0);
   const navigate = useNavigate();
-  const { user } = useContext(AuthContext);
+  const { user } = useSelector((state) => state.auth);
 
   useEffect(() => {
     if (isOpen) {

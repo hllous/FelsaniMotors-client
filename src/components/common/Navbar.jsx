@@ -1,11 +1,12 @@
 //Nico
 import SearchBar from './SearchBar';
 import Carrito from './Carrito';
-import { useState, useContext, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
 import LogInPopup from '../usuario/LogInPopup';
 import SignInPopup from '../usuario/SignInPopup';
-import { AuthContext } from '../../context/AuthContext';
+import { logout } from '../../redux/slices/authSlice';
 import carritoService from '../../services/carritoService';
 
 const Navbar = () => {
@@ -14,7 +15,9 @@ const Navbar = () => {
     const [visibleSignIn, setVisibleSignIn] = useState(false)
     const [carritoOpen, setCarritoOpen] = useState(false)
     const [cartCount, setCartCount] = useState(0)
-    const { isAuthenticated, user, logout } = useContext(AuthContext);
+    
+    const dispatch = useDispatch();
+    const { isAuthenticated, user } = useSelector((state) => state.auth);
     const navigate = useNavigate();
 
     // Actualizar contador del carrito
@@ -44,7 +47,7 @@ const Navbar = () => {
     }
 
     const handleLogout = () => {
-        logout();
+        dispatch(logout());
     }
 
     const handleMisPublicaciones = () => {

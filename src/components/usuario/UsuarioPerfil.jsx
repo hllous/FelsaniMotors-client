@@ -1,11 +1,10 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AuthContext } from "../../context/AuthContext";
-import authService from "../../services/authService";
+import { useSelector } from "react-redux";
+import axios from "axios";
 
 const UsuarioPerfil = () => {
-  const { user } = useContext(AuthContext);
-  const token = authService.getToken();
+  const { user, token } = useSelector((state) => state.auth);
   const navigate = useNavigate();
 
   const [usuarioData, setUsuarioData] = useState({
@@ -21,19 +20,22 @@ const UsuarioPerfil = () => {
   });
 
   useEffect(() => {
-    const URLUsuario = `http://localhost:4002/api/usuarios/${user?.idUsuario}`;
-    
-    const headers = new Headers();
-    headers.append("Content-Type", "application/json");
-    headers.append("Authorization", `Bearer ${token}`);
+    const fetchUsuario = async () => {
+      try {
+        const response = await axios.get(`http://localhost:4002/api/usuarios/${user?.idUsuario}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        setUsuarioData(response.data);
+      } catch (error) {
+        console.error("Error al cargar usuario:", error);
+      }
+    };
 
-    fetch(URLUsuario, { method: "GET", headers: headers })
-      .then((response) => {
-        if (!response.ok) throw new Error("No se encontro al usuario.");
-        return response.json();
-      })
-      .then((data) => setUsuarioData(data))
-      .catch(() => {});
+    if (user?.idUsuario && token) {
+      fetchUsuario();
+    }
   }, [user?.idUsuario, token]);
 
   return (

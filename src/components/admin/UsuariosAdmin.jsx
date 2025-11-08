@@ -37,28 +37,6 @@ const UsuariosAdmin = () => {
             });
     }, []);
 
-    const fetchUsuarios = () => {
-        fetch('http://localhost:4002/api/usuarios', {
-            method: 'GET',
-            headers: getAuthHeaders()
-        })
-            .then(response => {
-                if (!response.ok) {
-                    return response.text().then(text => {
-                        throw new Error(text || 'Error al obtener usuarios');
-                    });
-                }
-                return response.json();
-            })
-            .then(data => {
-                setUsuarios(data);
-                setError(null);
-            })
-            .catch((error) => {
-                setError(`Error al cargar usuarios: ${error.message}`);
-            });
-    };
-
     const handleDesactivarUsuario = (idUsuario) => {
         fetch(`http://localhost:4002/api/usuarios/${idUsuario}`, {
             method: 'DELETE',
@@ -70,7 +48,14 @@ const UsuariosAdmin = () => {
                         throw new Error(text || 'Error al desactivar usuario');
                     });
                 }
-                fetchUsuarios();
+                setUsuarios(prevUsuarios => 
+                    prevUsuarios.map(u => 
+                        u.idUsuario === idUsuario 
+                            ? { ...u, activo: false } 
+                            : u
+                    )
+                );
+                setError(null);
             })
             .catch((error) => {
                 setError(`Error al desactivar el usuario: ${error.message}`);

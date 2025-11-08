@@ -1,30 +1,34 @@
-import { useState, useContext } from 'react';
-import { AuthContext } from '../../context/AuthContext';
+import { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { login } from '../../redux/slices/authSlice';
 
 const LogInPopup = ({ close, openSignIn }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
-  const { login } = useContext(AuthContext);
+  
+  const dispatch = useDispatch();
 
   const handleClose = () => {
     close();
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    const emailFilter = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailFilter.test(email)) {
       alert('Por favor, ingresa un email válido (ejemplo: usuario@gmail.com)');
       return;
     }
 
-    login(email, password).then((result) => {
-      if (result.success) {
+    try {
+      const result = await dispatch(login({ email, password })).unwrap();
+      if (result) {
         handleClose();
       }
-    });
+    } catch (err) {
+      alert(err || 'Error al iniciar sesión');
+    }
   };
 
   return (

@@ -113,7 +113,7 @@ const ComentarioItem = ({
                     />
                 </div>
             ) : (
-                <>
+                <>  
                     <div className=" mb-5">
                         <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                             <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">

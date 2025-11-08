@@ -1,5 +1,6 @@
-import { useState, useContext } from 'react';
-import { AuthContext } from '../../context/AuthContext';
+import { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { register } from '../../redux/slices/authSlice';
 
 const SignInPopup = ({ close, openLogIn }) => {
   const [formData, setFormData] = useState({
@@ -10,7 +11,7 @@ const SignInPopup = ({ close, openLogIn }) => {
     telefono: '',
   });
 
-  const { register } = useContext(AuthContext);
+  const dispatch = useDispatch();
 
   const handleChange = (e) => {
     setFormData({
@@ -23,7 +24,7 @@ const SignInPopup = ({ close, openLogIn }) => {
     close();
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const emailValidation = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -37,18 +38,22 @@ const SignInPopup = ({ close, openLogIn }) => {
       return;
     }
 
-    register(
-      formData.email,
-      formData.password,
-      formData.nombre,
-      formData.apellido,
-      parseInt(formData.telefono),
-      'USER'
-    ).then((result) => {
-      if (result.success) {
+    try {
+      const result = await dispatch(register({
+        email: formData.email,
+        password: formData.password,
+        nombre: formData.nombre,
+        apellido: formData.apellido,
+        telefono: parseInt(formData.telefono),
+        rol: 'USER'
+      })).unwrap();
+      
+      if (result) {
         handleClose();
       }
-    });
+    } catch (err) {
+      alert(err || 'Error al registrarse');
+    }
   };
 
   return (

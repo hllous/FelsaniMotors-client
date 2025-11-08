@@ -37,27 +37,6 @@ const PublicacionesAdmin = () => {
             });
     }, []);
 
-    const fetchPublicaciones = () => {
-        fetch('http://localhost:4002/api/publicaciones', {
-            method: 'GET'
-        })
-            .then(response => {
-                if (!response.ok) {
-                    return response.text().then(text => {
-                        throw new Error(text || 'Error al obtener publicaciones');
-                    });
-                }
-                return response.json();
-            })
-            .then(data => {
-                setPublicaciones(data);
-                setError(null);
-            })
-            .catch((error) => {
-                setError(`Error al cargar publicaciones: ${error.message}`);
-            });
-    };
-
     const handleEliminarPublicacion = (id) => {
         fetch(`http://localhost:4002/api/publicaciones/${id}`, {
             method: 'DELETE',
@@ -69,7 +48,10 @@ const PublicacionesAdmin = () => {
                         throw new Error(text || 'Error al eliminar publicación');
                     });
                 }
-                fetchPublicaciones();
+                setPublicaciones(prevPublicaciones => 
+                    prevPublicaciones.filter(pub => pub.idPublicacion !== id)
+                );
+                setError(null);
             })
             .catch((error) => {
                 setError(`Error al eliminar la publicación: ${error.message}`);

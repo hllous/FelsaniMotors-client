@@ -56,47 +56,6 @@ const ComentariosAdmin = () => {
             });
     }, []);
 
-    const fetchComentarios = () => {
-        fetch('http://localhost:4002/api/publicaciones', {
-            method: 'GET'
-        })
-            .then(response => {
-                if (!response.ok) return;
-                return response.json();
-            })
-            .then(publicaciones => {
-                if (!publicaciones || publicaciones.length === 0) {
-                    setComentarios([]);
-                    return;
-                }
-                
-                const todosLosComentarios = [];
-                
-                publicaciones.forEach(p => {
-                    fetch(`http://localhost:4002/api/publicaciones/${p.idPublicacion}/comentarios`, {
-                        method: 'GET'
-                    })
-                        .then(response => {
-                            if (response.ok) {
-                                return response.json();
-                            }
-                            return [];
-                        })
-                        .then(comentariosDePub => {
-                            const comentariosConPublicacion = comentariosDePub.map(com => ({
-                                ...com,
-                                publicacion: {
-                                    idPublicacion: p.idPublicacion,
-                                    titulo: p.titulo
-                                }
-                            }));
-                            todosLosComentarios.push(...comentariosConPublicacion);
-                            setComentarios([...todosLosComentarios]);
-                        });
-                });
-            });
-    };
-
     const handleEliminarComentario = (idComentario, usuario, idPublicacion) => {
         if (!window.confirm(`¿Estás seguro de eliminar el comentario de ${usuario}?`)) {
             return;
@@ -110,7 +69,9 @@ const ComentariosAdmin = () => {
         })
             .then(response => {
                 if (response.ok) {
-                    fetchComentarios();
+                    setComentarios(prevComentarios => 
+                        prevComentarios.filter(com => com.idComentario !== idComentario)
+                    );
                     alert('Comentario eliminado exitosamente');
                 } else {
                     return response.text().then(text => {
