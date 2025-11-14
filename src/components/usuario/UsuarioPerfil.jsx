@@ -1,49 +1,30 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
-import axios from "axios";
+import { useSelector, useDispatch } from "react-redux";
+import { fetchUsuarioById } from "../../redux/slices/usuariosSlice";
 
 const UsuarioPerfil = () => {
   const { user, token } = useSelector((state) => state.auth);
+  const { currentItem: usuarioData } = useSelector((state) => state.usuarios);
+  const idUsuarioToFetch = useSelector((state) => state.auth.user?.idUsuario);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const [usuarioData, setUsuarioData] = useState({
-    idUsuario: "",
-    email: "",
-    nombre: "",
-    apellido: "",
-    telefono: "",
-    rol: "",
-    activo: "",
-    cantidadPublicaciones: "",
-    cantidadComentarios: "",
-  });
-
   useEffect(() => {
-    const fetchUsuario = async () => {
-      try {
-        const response = await axios.get(`http://localhost:4002/api/usuarios/${user?.idUsuario}`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        setUsuarioData(response.data);
-      } catch (error) {
-        console.error("Error al cargar usuario:", error);
-      }
-    };
-
-    if (user?.idUsuario && token) {
-      fetchUsuario();
+    if (idUsuarioToFetch && token) {
+      dispatch(fetchUsuarioById({ 
+        idUsuario: idUsuarioToFetch, 
+        token 
+      }));
     }
-  }, [user?.idUsuario, token]);
+  }, [idUsuarioToFetch, token, dispatch]);
 
   return (
     <div className="bg-white flex justify-center items-start py-10">
       <div className="bg-white border border-[#cbdceb] rounded-2xl p-6 max-w-3xl w-full">
         <div className="flex items-center justify-between mb-6 border-b border-[#cbdceb] pb-4">
           <h3 className="text-2xl font-semibold text-gray-800">
-            {usuarioData.nombre} {usuarioData.apellido}
+            {usuarioData?.nombre} {usuarioData?.apellido}
           </h3>
           <button
             onClick={() => navigate('/perfil/actualizar')}
@@ -56,20 +37,20 @@ const UsuarioPerfil = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-gray-700">
           <div>
             <p className="text-sm text-gray-500">E-mail</p>
-            <p>{usuarioData.email}</p>
+            <p>{usuarioData?.email}</p>
           </div>
           <div>
             <p className="text-sm text-gray-500">Teléfono</p>
-            <p>{usuarioData.telefono}</p>
+            <p>{usuarioData?.telefono}</p>
           </div>
           <div>
             <p className="text-sm text-gray-500">Rol</p>
-            <p>{usuarioData.rol}</p>
+            <p>{usuarioData?.rol}</p>
           </div>
           <div>
             <p className="text-sm text-gray-500">Activo</p>
             <p>
-              {usuarioData.activo ? "Sí" : "No"}
+              {usuarioData?.activo ? "Sí" : "No"}
             </p>
           </div>
         </div>

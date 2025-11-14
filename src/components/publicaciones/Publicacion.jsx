@@ -1,21 +1,54 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { AuthContext } from "../../context/AuthContext";
+import { useSelector, useDispatch } from 'react-redux';
+import { addToCart, clearCart } from "../../redux/slices/carritoSlice";
+import { fetchPublicacionById } from "../../redux/slices/publicacionesSlice";
+import { fetchFotosByPublicacion } from "../../redux/slices/fotosSlice";
+import { fetchAutoById } from "../../redux/slices/autosSlice";
+import Modal from "../common/Modal";
 import ComentarioList from "../comentarios/ComentarioList";
-import carritoService from "../../services/carritoService";
 
 const Publicacion = () => {
     const { id } = useParams();
     const idPublicacion = parseInt(id);
     const navigate = useNavigate();
-    const { isAuthenticated, user } = useContext(AuthContext);
+    const dispatch = useDispatch();
+    const { isAuthenticated, user } = useSelector((state) => state.auth);
+    const { items: cartItems } = useSelector((state) => state.carrito);
+    const { currentItem: publicacionData } = useSelector((state) => state.publicaciones);
+    const { currentItem: autoData } = useSelector((state) => state.autos);
+    const { fotosByPublicacion } = useSelector((state) => state.fotos);
+    const idAutoToFetch = useSelector((state) => state.publicaciones.currentItem?.idAuto);
     
-    const [publicacion, setPublicacion] = useState(null);
     const [imagenes, setImagenes] = useState([]);
     const [imagenSeleccionada, setImagenSeleccionada] = useState(0);
-    const [error, setError] = useState(null);
     const [isInCart, setIsInCart] = useState(false);
     const [editarVisible, setEditarVisible] = useState(false);
+    const [modalConfig, setModalConfig] = useState({ isOpen: false });
+
+    // Combinar datos de publicacion y auto
+    let publicacion = publicacionData;
+    if (publicacionData && autoData && publicacionData.idAuto === autoData.idAuto) {
+        publicacion = {
+            ...publicacionData,
+            anio: autoData.anio,
+            kilometraje: autoData.kilometraje,
+            combustible: autoData.combustible,
+            motor: autoData.motor,
+            tipoCaja: autoData.tipoCaja,
+            capacidadTanque: autoData.capacidadTanque,
+            tipoCategoria: autoData.tipoCategoria,
+            estadoAuto: autoData.estado
+        };
+    }
+
+    const showModal = (config) => {
+        setModalConfig({ ...config, isOpen: true });
+    };
+
+    const closeModal = () => {
+        setModalConfig({ isOpen: false });
+    };
 
     const formatearEstado = (estado) => {
         const estadosMap = {
@@ -37,135 +70,99 @@ const Publicacion = () => {
 
     const handleAddToCart = () => {
         if (!isAuthenticated) {
-            alert("Debes iniciar sesión para agregar al carrito");
+            showModal({
+                type: 'warning',
+                title: 'Iniciar Sesión',
+                message: 'Debes iniciar sesión para agregar al carrito',
+                showCancel: false
+            });
             return;
         }
-        if (!user?.activo) {
-            alert("Tu cuenta está inactiva. Contacta al administrador para activarla.");
+        if (user?.activo === 0) {
+            showModal({
+                type: 'error',
+                title: 'Cuenta Inactiva',
+                message: 'Tu cuenta está inactiva. Contacta al administrador para activarla.',
+                showCancel: false
+            });
             return;
         }
         if (publicacion?.estado === 'V') {
-            alert("Esta publicación ya fue vendida.");
+            showModal({
+                type: 'info',
+                title: 'No Disponible',
+                message: 'Esta publicación ya fue vendida.',
+                showCancel: false
+            });
             return;
         }
 
+        // Validar que no sea el mismo
+        if (user?.idUsuario === publicacion?.idUsuario) {
+            showModal({
+                type: 'warning',
+                title: 'No Disponible',
+                message: 'No puedes comprar tu propia publicación',
+                showCancel: false
+            });
+            return;
+        }
+
+        // Guardar publicacion en carrito
         const item = {
-            idPublicacion: publicacion.idPublicacion,
-            idVendedor: publicacion.idUsuario,
-            titulo: publicacion.titulo,
-            ubicacion: publicacion.ubicacion,
-            precio: publicacion.precio,
-            estado: publicacion.estado,
-            marcaAuto: publicacion.marcaAuto,
-            modeloAuto: publicacion.modeloAuto,
+            ...publicacion,
             imagen: imagenes.length > 0 ? imagenes[0] : ""
         };
 
-        const result = carritoService.addToCart(item);
-        if (result.success) {
-            setIsInCart(true);
-            alert("Auto agregado al carrito");
-        } else {
-            alert(result.message);
-        }
+        dispatch(addToCart(item));
+        setIsInCart(true);
+        showModal({
+            type: 'success',
+            title: 'Agregado',
+            message: 'Auto agregado al carrito exitosamente',
+            showCancel: false
+        });
     };
 
     useEffect(() => {
         if (!idPublicacion) return;
+        
+        // Solo hacer fetch si no existe en Redux o es diferente
+        if (!publicacionData || publicacionData.idPublicacion !== idPublicacion) {
+            dispatch(fetchPublicacionById(idPublicacion));
+        }
+        
+        // Solo hacer fetch de fotos si no existen en Redux
+        if (!fotosByPublicacion[idPublicacion]) {
+            dispatch(fetchFotosByPublicacion(idPublicacion));
+        }
+    }, [idPublicacion, dispatch, publicacionData?.idPublicacion]);
 
-        let publicacionData = null;
+    useEffect(() => {
+        if (idAutoToFetch && (!autoData || autoData.idAuto !== idAutoToFetch)) {
+            dispatch(fetchAutoById(idAutoToFetch));
+        }
+    }, [idAutoToFetch, dispatch, autoData?.idAuto]);
 
-        // Obtener datos de la publicación
-        fetch(`http://localhost:4002/api/publicaciones/${idPublicacion}`)
-            .then((response) => {
-                if (!response.ok) throw new Error('Publicación no encontrada');
-                return response.json();
-            })
-            .then((data) => {
-                publicacionData = data;
-                
-                // Verificar si el usuario es el dueño de la publicación
-                if(isAuthenticated && user && publicacionData) {
-                    if(user.idUsuario === publicacionData.idUsuario) {
-                        setEditarVisible(true);
-                    }
-                }
-                
-                // Si hay idAuto, obtener datos del auto
-                if (data.idAuto) {
-                    return fetch(`http://localhost:4002/api/autos/${data.idAuto}`);
-                }
-                return null;
-            })
-            .then((autoResponse) => {
-                if (autoResponse && autoResponse.ok) {
-                    return autoResponse.json();
-                }
-                return null;
-            })
-            .then((autoData) => {
-                // Combinar datos de publicación con datos del auto
-                if (autoData) {
-                    publicacionData = {
-                        ...publicacionData,
-                        // Datos del auto
-                        anio: autoData.anio,
-                        kilometraje: autoData.kilometraje,
-                        combustible: autoData.combustible,
-                        motor: autoData.motor,
-                        tipoCaja: autoData.tipoCaja,
-                        capacidadTanque: autoData.capacidadTanque,
-                        tipoCategoria: autoData.tipoCategoria,
-                        estadoAuto: autoData.estado
-                    };
-                }
-                
-                setPublicacion(publicacionData);
+    useEffect(() => {
+        const fotos = fotosByPublicacion[idPublicacion];
+        if (fotos && fotos.length > 0) {
+            const imagenesFormateadas = fotos.map(foto => `data:image/jpeg;base64,${foto.file}`);
+            setImagenes(imagenesFormateadas);
+        }
+    }, [idPublicacion, Object.keys(fotosByPublicacion).length]);
 
-                // Obtener imágenes de la publicación
-                return fetch(`http://localhost:4002/api/publicaciones/${idPublicacion}/fotos-contenido`);
-            })
-            .then((fotosResponse) => {
-                if (fotosResponse && fotosResponse.ok) {
-                    return fotosResponse.json();
-                }
-                return null;
-            })
-            .then((fotosData) => {
-                if (fotosData) {
-                    const imagenesFormateadas = fotosData.map(foto => `data:image/jpeg;base64,${foto.file}`);
-                    setImagenes(imagenesFormateadas);
-                }
-            })
-            .catch((err) => {
-                setError(err.message);
-            });
-    }, [idPublicacion, isAuthenticated, user]);
+    useEffect(() => {
+        if (isAuthenticated && user && publicacionData) {
+            setEditarVisible(user.idUsuario === publicacionData.idUsuario);
+        }
+    }, [isAuthenticated, user?.idUsuario, publicacionData?.idUsuario]);
 
     // Verificar si el item esta en el carrito
     useEffect(() => {
-        setIsInCart(carritoService.isInCart(idPublicacion));
-    }, [idPublicacion]);
-
-    if (error) {
-        return (
-            <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-                <div className="bg-white rounded-lg p-8 max-w-md w-full">
-                    <div className="text-center">
-                        <div className="text-red-600 text-5xl mb-4">⚠️</div>
-                        <h3 className="text-xl font-bold text-gray-800 mb-2">Error al cargar la publicación</h3>
-                        <p className="text-gray-600 mb-6">{error}</p>
-                        <button 
-                            onClick={() => navigate('/')}
-                            className="px-6 py-2 bg-paleta1-blue text-white rounded-lg"
-                        >
-                            Volver al Inicio
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    }
+        const publicacionEncontrada = cartItems.some(item => item.idPublicacion === idPublicacion);
+        setIsInCart(publicacionEncontrada);
+    }, [idPublicacion, cartItems.length]);
 
     if (!publicacion) {
         return (
@@ -337,26 +334,44 @@ const Publicacion = () => {
                                     <button 
                                         onClick={() => {
                                             if (!isAuthenticated) {
-                                                alert("Debes iniciar sesión para comprar");
-                                                return;
+                                                showModal({
+
+                                                    type: 'warning',
+                                                    title: 'Iniciar Sesión',
+                                                    message: 'Debes iniciar sesión para comprar',
+                                                    showCancel: false
+                                                })
+
+                                                return
                                             }
-                                            if (!user?.activo) {
-                                                alert("Tu cuenta está inactiva. Contacta al administrador para activarla.");
-                                                return;
+                                            if (user?.activo === 0) {
+                                                showModal({
+                                                    type: 'error',
+                                                    title: 'Cuenta Inactiva',
+                                                    message: 'Tu cuenta está inactiva. Contacta al administrador para activarla.',
+                                                    showCancel: false
+                                                })
+
+                                                return
+                                            }
+                                            // Validar que no sea el vendedor
+                                            if (user?.idUsuario === publicacion?.idUsuario) {
+                                                showModal({
+                                                    type: 'warning',
+                                                    title: 'No Disponible',
+                                                    message: 'No puedes comprar tu propia publicación',
+                                                    showCancel: false
+                                                })
+
+                                                return
                                             }
                                             
                                             // Crear carrito de publicacion
-                                            carritoService.clearCart();
-                                            carritoService.addToCart({
-                                                idPublicacion: publicacion.idPublicacion,
-                                                titulo: publicacion.titulo,
-                                                precio: publicacion.precio,
-                                                marcaAuto: publicacion.marcaAuto,
-                                                modeloAuto: publicacion.modeloAuto,
-                                                ubicacion: publicacion.ubicacion,
-                                                imagen: imagenes[0]?.img,
-                                                estado: publicacion.estado
-                                            });
+                                            dispatch(clearCart());
+                                            dispatch(addToCart({
+                                                ...publicacion,
+                                                imagen: imagenes[0] || ""
+                                            }))
                                             
                                             navigate('/comprar-carrito');
                                         }}
@@ -373,8 +388,15 @@ const Publicacion = () => {
                                         <button 
                                             onClick={() => {
                                                 if (!isAuthenticated) {
-                                                    alert("Debes iniciar sesión para editar");
-                                                    return;
+                                                    showModal({
+                                                        type: 'warning',
+                                                        title: 'Iniciar Sesión',
+                                                        message: 'Debes iniciar sesión para editar',
+                                                        showCancel: false
+                                                    })
+
+                                                    return
+
                                                 }
                                                 navigate(`/editar-publicacion/${idPublicacion}`);
                                             }}
@@ -519,7 +541,18 @@ const Publicacion = () => {
                 </div>
             </div>
 
-
+            {/* Modal */}
+            <Modal
+                isOpen={modalConfig.isOpen}
+                onClose={closeModal}
+                type={modalConfig.type}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                onConfirm={modalConfig.onConfirm}
+                confirmText={modalConfig.confirmText}
+                cancelText={modalConfig.cancelText}
+                showCancel={modalConfig.showCancel}
+            />
         </div>
     );
 };

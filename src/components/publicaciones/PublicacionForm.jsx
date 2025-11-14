@@ -1,27 +1,43 @@
-import { useState, useContext, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { AuthContext } from "../../context/AuthContext";
-import authService from "../../services/authService";
+import { useSelector, useDispatch } from 'react-redux';
+import { createPublicacion } from '../../redux/slices/publicacionesSlice';
+import { fetchMarcas, fetchEstados, fetchCombustibles, fetchTiposCaja } from '../../redux/slices/catalogoSlice';
+import Modal from '../common/Modal';
 
 const PublicacionForm = () => {
 
-    const { user } = useContext(AuthContext);
+    const { user, token } = useSelector((state) => state.auth);
+    const { marcas, estados, combustibles, tiposCaja } = useSelector((state) => state.catalogo);
+    const dispatch = useDispatch();
     const navigate = useNavigate();
     const fileInputRef = useRef(null);
+    const [modalConfig, setModalConfig] = useState({ isOpen: false });
 
-    // Opciones para dropdowns
+    const showModal = (config) => {
+        setModalConfig({ ...config, isOpen: true });
+    };
 
-    const marcasDisponibles = [
-        "Toyota", "Volkswagen", "Ford", "Chevrolet", "Honda", "Nissan", 
-        "Renault", "Peugeot", "Fiat", "Mercedes-Benz", "BMW", "Audi",
-        "Hyundai", "Kia", "Mazda", "Jeep", "Citroën", "Suzuki"
-    ];
+    const closeModal = () => {
+        setModalConfig({ isOpen: false });
+    };
 
-    const estadosDisponibles = ["Nuevo", "Usado"];
-
-    const combustiblesDisponibles = ["Nafta", "Diesel", "GNC", "Eléctrico"];
-
-    const tiposCajaDisponibles = ["Manual", "Automática", "Semiautomática"];
+    // Cargar catalogo
+    useEffect(() => {
+        // Solo fetch si no existe en cache
+        if (!marcas || marcas.length === 0) {
+            dispatch(fetchMarcas());
+        }
+        if (!estados || estados.length === 0) {
+            dispatch(fetchEstados());
+        }
+        if (!combustibles || combustibles.length === 0) {
+            dispatch(fetchCombustibles());
+        }
+        if (!tiposCaja || tiposCaja.length === 0) {
+            dispatch(fetchTiposCaja());
+        }
+    }, [dispatch, marcas?.length, estados?.length, combustibles?.length, tiposCaja?.length]);
 
     // Estructura JSON de endpoints
     const [autoData, setAutoData] = useState({
@@ -51,35 +67,30 @@ const PublicacionForm = () => {
     const [fotoPrincipalIndex, setFotoPrincipalIndex] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Validar si el usuario está activo
-    if (!user?.activo) {
-        return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-                <div className="bg-white border-2 border-red-500 rounded-xl p-8 max-w-md">
-                    <div className="text-center">
-                        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-1.964-1.333-2.732 0L3.732 16c-.77 1.333.192 3 1.732 3z" />
-                            </svg>
-                        </div>
-                        <h2 className="text-2xl font-bold text-gray-900 mb-3">Cuenta Inactiva</h2>
-                        <p className="text-gray-600 mb-6">
-                            Tu cuenta está inactiva. No puedes crear publicaciones hasta que se active tu cuenta.
-                        </p>
-                        <p className="text-sm text-gray-500 mb-6">
-                            Contacta al administrador para activar tu cuenta.
-                        </p>
-                        <button
-                            onClick={() => navigate('/')}
-                            className="px-6 py-2 bg-paleta1-blue text-white rounded-lg hover:bg-paleta1-blue-light transition-colors"
-                        >
-                            Volver al Inicio
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    }
+    // Validar si el usuario esta loggeado
+    useEffect(() => {
+        if (!user) {
+            showModal({
+                type: 'warning',
+                title: 'Iniciar Sesión',
+                message: 'Debes iniciar sesión para crear una publicación.\n\nPor favor, inicia sesión y vuelve a intentarlo.',
+                showCancel: false,
+                onConfirm: () => navigate('/')
+            });
+            return;
+        }
+
+        // Validar si el usuario esta activo
+        if (user.activo === 0) {
+            showModal({
+                type: 'error',
+                title: 'Cuenta Inactiva',
+                message: 'Tu cuenta está inactiva. No puedes crear publicaciones.\n\nContacta al administrador para activar tu cuenta.',
+                showCancel: false,
+                onConfirm: () => navigate('/')
+            });
+        }
+    }, [user, navigate]);
 
     // Conexion a Back, con Bearer Token
 
@@ -87,21 +98,6 @@ const PublicacionForm = () => {
     const PUBLICACION_URL = "http://localhost:4002/api/publicaciones";
     
     const USUARIO_ID = user?.idUsuario;
-
-    const createAuthHeaders = (includeContentType = true) => {
-        const headers = new Headers();
-        const token = authService.getToken();
-        
-        if (token) {
-            headers.append('Authorization', `Bearer ${token}`);
-        }
-        
-        if (includeContentType) {
-            headers.append('Content-Type', 'application/json');
-        }
-        
-        return headers;
-    };
 
     const handleAutoChange = (e) => {
         const { name, value } = e.target;
@@ -131,22 +127,33 @@ const PublicacionForm = () => {
         setFotoPrincipalIndex(parseInt(e.target.value));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
         
         if (!autoData.marca || !autoData.modelo || !publicacionData.titulo || !publicacionData.precio) {
-            alert("Por favor completa todos los campos obligatorios");
+            showModal({
+                type: 'warning',
+                title: 'Campos Incompletos',
+                message: 'Por favor completa todos los campos obligatorios',
+                showCancel: false
+            });
             setIsSubmitting(false);
             return;
         }
 
         if (publicacionData.descripcion && publicacionData.descripcion.length > 255) {
-            alert("La descripción no puede superar los 255 caracteres");
+            showModal({
+                type: 'warning',
+                title: 'Descripción Muy Larga',
+                message: 'La descripción no puede superar los 255 caracteres',
+                showCancel: false
+            });
             setIsSubmitting(false);
             return;
         }
         
+        // Preparar datos del auto
         const autoDataRequest = {
             marca: autoData.marca,
             modelo: autoData.modelo,
@@ -160,119 +167,83 @@ const PublicacionForm = () => {
             motor: autoData.motor || null
         };
         
-        //Crear el Auto
-        fetch(AUTO_URL, {
-            method: "POST",
-            headers: createAuthHeaders(),
-            body: JSON.stringify(autoDataRequest)
-        })
-        .then((autoResponse) => {
-            if (!autoResponse.ok) {
-                return autoResponse.text().then(text => {
-                    throw new Error(`Error al crear el auto: ${text}`);
-                });
-            }
-            return autoResponse.json();
-        })
-        .then((createdAuto) => {
-            // 2. Crear la Publicación
-            const publicacionDataRequest = {
-                titulo: publicacionData.titulo,
-                descripcion: publicacionData.descripcion || null,
-                ubicacion: publicacionData.ubicacion || null,
-                precio: parseFloat(publicacionData.precio),
-                metodoDePago: publicacionData.metodoDePago || null,
-                idUsuario: USUARIO_ID,
-                idAuto: createdAuto.idAuto,
-                estado: 'A'
-            };
-            
-            return fetch(PUBLICACION_URL, {
-                method: "POST",
-                headers: createAuthHeaders(),
-                body: JSON.stringify(publicacionDataRequest)
-            }).then((publicacionResponse) => {
-                if (!publicacionResponse.ok) {
-                    return publicacionResponse.text().then(text => {
-                        throw new Error(`Error al crear la publicación: ${text}`);
-                    });
-                }
-                return publicacionResponse.json();
-            });
-        })
-        .then((createdPublicacion) => {
-            // 3. Subir las fotos
-            if (fotos.length > 0) {
-                const FOTOS_URL = `http://localhost:4002/api/publicaciones/${createdPublicacion.idPublicacion}/fotos`;
-                
-                const uploadPromises = [];
-                
-                for (let i = 0; i < fotos.length; i++) {
-                    const formData = new FormData();
-                    formData.append("file", fotos[i]);
-                    formData.append("esPrincipal", i === fotoPrincipalIndex ? "true" : "false");
-                    formData.append("orden", i.toString());
-                    
-                    const uploadPromise = fetch(FOTOS_URL, {
-                        method: "POST",
-                        headers: createAuthHeaders(false),
-                        body: formData
-                    })
-                    .then((fotoResponse) => {
-                        if (!fotoResponse.ok) {
-                            return null;
-                        }
-                        return fotoResponse.json();
-                    })
-                    .catch(() => {
-                        return null;
-                    });
-                    
-                    uploadPromises.push(uploadPromise);
-                }
-                
-                return Promise.all(uploadPromises);
-            }
-        })
-        .then(() => {
-            // Limpiar formulario
-            setAutoData({
-                marca: "",
-                modelo: "",
-                anio: "",
-                estado: "",
-                kilometraje: "",
-                combustible: "",
-                tipoCategoria: "",
-                capacidadTanque: "",
-                tipoCaja: "",
-                motor: ""
+        // Preparar datos de la publicacion
+        const publicacionDataRequest = {
+            titulo: publicacionData.titulo,
+            descripcion: publicacionData.descripcion || null,
+            ubicacion: publicacionData.ubicacion || null,
+            precio: parseFloat(publicacionData.precio),
+            metodoDePago: publicacionData.metodoDePago || null,
+            idUsuario: USUARIO_ID,
+            estado: 'A'
+        };
+        
+        // Preparar fotos
+        const fotosConMetadata = fotos.map((foto, index) => ({
+            file: foto,
+            esPrincipal: index === fotoPrincipalIndex,
+            orden: index
+        }));
+        
+        // Dispatch de Redux
+        const result = await dispatch(createPublicacion({
+            autoData: autoDataRequest,
+            publicacionData: publicacionDataRequest,
+            fotos: fotosConMetadata,
+            token
+        }));
+        
+        if (!result.payload) {
+
+            showModal({
+                type: 'error',
+                title: 'Error al Crear Publicación',
+                message: 'No se pudo crear la publicación. Verifica los datos e intenta nuevamente.',
+                showCancel: false
             });
             
-            setPublicacionData({
-                titulo: "",
-                descripcion: "",
-                ubicacion: "",
-                precio: "",
-                metodoDePago: ""
-            });
-            
-            setFotos([]);
-            setFotoPrincipalIndex(0);
-            
-            if (fileInputRef.current) {
-                fileInputRef.current.value = "";
-            }
-            
-            alert("Publicación creada exitosamente");
-            navigate('/publicaciones');
-        })
-        .catch((error) => {
-            alert(`Error al crear publicación: ${error.message}`);
-        })
-        .finally(() => {
             setIsSubmitting(false);
+            return;
+        }
+        
+        // Limpiar formulario
+        setAutoData({
+            marca: "",
+            modelo: "",
+            anio: "",
+            estado: "",
+            kilometraje: "",
+            combustible: "",
+            tipoCategoria: "",
+            capacidadTanque: "",
+            tipoCaja: "",
+            motor: ""
         });
+        
+        setPublicacionData({
+            titulo: "",
+            descripcion: "",
+            ubicacion: "",
+            precio: "",
+            metodoDePago: ""
+        });
+        
+        setFotos([]);
+        setFotoPrincipalIndex(0);
+        
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
+        
+        showModal({
+            type: 'success',
+            title: 'Éxito',
+            message: '¡Publicación creada exitosamente!',
+            showCancel: false,
+            onConfirm: () => navigate('/')
+        });
+        
+        setIsSubmitting(false);
     };
 
     return (
@@ -289,7 +260,7 @@ const PublicacionForm = () => {
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-paleta1-blue"
                     >
                         <option value="">Seleccionar marca</option>
-                        {marcasDisponibles.map((marca) => (
+                        {marcas.map((marca) => (
                             <option key={marca} value={marca}>{marca}</option>
                         ))}
                     </select>
@@ -323,7 +294,7 @@ const PublicacionForm = () => {
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-paleta1-blue"
                     >
                         <option value="">Seleccionar estado</option>
-                        {estadosDisponibles.map((estado) => (
+                        {estados.map((estado) => (
                             <option key={estado} value={estado}>{estado}</option>
                         ))}
                     </select>
@@ -347,7 +318,7 @@ const PublicacionForm = () => {
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-paleta1-blue"
                     >
                         <option value="">Seleccionar combustible</option>
-                        {combustiblesDisponibles.map((combustible) => (
+                        {combustibles.map((combustible) => (
                             <option key={combustible} value={combustible}>{combustible}</option>
                         ))}
                     </select>
@@ -381,7 +352,7 @@ const PublicacionForm = () => {
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-paleta1-blue"
                     >
                         <option value="">Seleccionar tipo de caja</option>
-                        {tiposCajaDisponibles.map((tipo) => (
+                        {tiposCaja.map((tipo) => (
                             <option key={tipo} value={tipo}>{tipo}</option>
                         ))}
                     </select>
@@ -506,6 +477,17 @@ const PublicacionForm = () => {
                     {isSubmitting ? 'Creando Publicación...' : 'Crear Publicación'}
                 </button>
             </form>
+
+            {/* Modal */}
+            <Modal
+                isOpen={modalConfig.isOpen}
+                onClose={closeModal}
+                type={modalConfig.type}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                onConfirm={modalConfig.onConfirm}
+                showCancel={modalConfig.showCancel}
+            />
         </div>
     );
 };

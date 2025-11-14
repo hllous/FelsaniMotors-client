@@ -1,9 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchFotosByPublicacion } from "../../redux/slices/fotosSlice";
 
 const PublicacionDestacada = ({ publicacion }) => {
     const [image, setImage] = useState("");
     const navigate = useNavigate();
+    const dispatch = useDispatch();
+    const { fotosByPublicacion } = useSelector((state) => state.fotos);
 
     const handleClick = () => {
         navigate(`/publicacion/${publicacion.idPublicacion}`);
@@ -19,15 +23,19 @@ const PublicacionDestacada = ({ publicacion }) => {
     };
     
     useEffect(() => {
-        fetch(`http://localhost:4002/api/publicaciones/${publicacion.idPublicacion}/fotos-contenido`)
-            .then(response => response.json())
-            .then(data => {
-                setImage(`data:image/jpeg;base64,${data[0].file}`)
-            })
-            .catch(error => { 
-                console.error('Error cargando imagen:', error)
-            });
-    }, [publicacion.idPublicacion]);
+        if (!fotosByPublicacion[publicacion.idPublicacion]) {
+            dispatch(fetchFotosByPublicacion(publicacion.idPublicacion));
+        }
+    }, [publicacion.idPublicacion, dispatch, fotosByPublicacion]);
+    
+    useEffect(() => {
+        const fotos = fotosByPublicacion[publicacion.idPublicacion];
+        if (fotos && fotos.length > 0 && fotos[0]?.file) {
+            setImage(`data:image/jpeg;base64,${fotos[0].file}`);
+        } else {
+            setImage('');
+        }
+    }, [publicacion.idPublicacion, Object.keys(fotosByPublicacion).length]);
 
     return(
         <div 
@@ -91,7 +99,7 @@ const PublicacionDestacada = ({ publicacion }) => {
                             e.stopPropagation();
                             handleClick();
                         }}
-                        className="w-full bg-paleta1-blue text-white font-bold py-3 px-6 rounded-lg"
+                        className="w-full bg-paleta1-blue text-white font-bold py-3 px-6 rounded-lg hover:bg-paleta1-blue-dark transition-colors cursor-pointer"
                     >
                         Ver Detalles
                     </button>

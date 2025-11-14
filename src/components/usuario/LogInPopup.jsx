@@ -1,12 +1,22 @@
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { login } from '../../redux/slices/authSlice';
+import Modal from '../common/Modal';
 
 const LogInPopup = ({ close, openSignIn }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [modalConfig, setModalConfig] = useState({ isOpen: false });
   
   const dispatch = useDispatch();
+
+  const showModal = (config) => {
+    setModalConfig({ ...config, isOpen: true });
+  };
+
+  const closeModal = () => {
+    setModalConfig({ isOpen: false });
+  };
 
   const handleClose = () => {
     close();
@@ -17,17 +27,28 @@ const LogInPopup = ({ close, openSignIn }) => {
 
     const emailFilter = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailFilter.test(email)) {
-      alert('Por favor, ingresa un email válido (ejemplo: usuario@gmail.com)');
+      showModal({
+        type: 'warning',
+        title: 'Email Inválido',
+        message: 'Por favor, ingresa un email válido (ejemplo: usuario@gmail.com)',
+        showCancel: false
+      });
       return;
     }
 
-    try {
-      const result = await dispatch(login({ email, password })).unwrap();
-      if (result) {
-        handleClose();
-      }
-    } catch (err) {
-      alert(err || 'Error al iniciar sesión');
+    const result = await dispatch(login({ email, password }))
+
+    if (result.payload) {
+      
+      handleClose();
+    } else {
+
+      showModal({
+        type: 'error',
+        title: 'Error al Iniciar Sesión',
+        message: 'Credenciales incorrectas o usuario inactivo. Verifica tus datos.',
+        showCancel: false
+      });
     }
   };
 
@@ -102,6 +123,16 @@ const LogInPopup = ({ close, openSignIn }) => {
           </button>
         </div>
       </div>
+
+      {/* Modal */}
+      <Modal
+        isOpen={modalConfig.isOpen}
+        onClose={closeModal}
+        type={modalConfig.type}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        showCancel={modalConfig.showCancel}
+      />
     </>
   );
 };

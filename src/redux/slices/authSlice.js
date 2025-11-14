@@ -1,39 +1,39 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { updateUsuario } from './usuariosSlice';
 
 const URL = 'http://localhost:4002'
 
 // --------------- THUNKS ---------------
 
 export const login = createAsyncThunk('auth/login', async ({ email, password }) => {
-
+    
   // Me traigo el bearer token
-  const { data: authData } = await axios.post(`${URL}/api/v1/auth/authenticate`, {
-    email,
-    password,
+    const { data: authData } = await axios.post(`${URL}/api/v1/auth/authenticate`, {
+        email,
+        password,
   })
   
   const { access_token } = authData;
   
   // Obtengo datos de user para el idUsuario
-  const { data: userData } = await axios.get(`${URL}/api/usuarios/me`, {
-    headers: {
-      Authorization: `Bearer ${access_token}`
-    }
-  })
+    const { data: userData } = await axios.get(
+        `${URL}/api/usuarios/me`,
+        { headers: {Authorization: `Bearer ${access_token}`} }
+    )
 
-  return {
-    token: access_token,
-    user: {
-      idUsuario: userData.idUsuario,
-      email: userData.email,
-      nombre: userData.nombre,
-      apellido: userData.apellido,
-      telefono: userData.telefono,
-      rol: userData.rol,
-      activo: userData.activo,
+    return {
+        token: access_token,
+        user: {
+            idUsuario: userData.idUsuario,
+            email: userData.email,
+            nombre: userData.nombre,
+            apellido: userData.apellido,
+            telefono: userData.telefono,
+            rol: userData.rol,
+            activo: userData.activo,
+        }
     }
-  }
 })
 
 export const register = createAsyncThunk('auth/register', async ({ email, password, nombre, apellido, telefono, rol = 'USER' }) => {
@@ -159,6 +159,14 @@ const authSlice = createSlice({
             state.loading = false;
             state.error = action.error.message;
         })
+    
+    builder.addCase(updateUsuario.fulfilled, (state, action) => {
+        
+        // Solo actualizar si es el usuario loggeado
+        if (state.user && state.user.idUsuario === action.payload.idUsuario) {
+            state.user = action.payload;
+        }
+    });
     }
     
 })

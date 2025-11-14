@@ -1,6 +1,6 @@
-import { useState, useContext } from 'react';
+import { useState } from 'react';
+import { useSelector } from 'react-redux';
 import ComentarioForm from './ComentarioForm';
-import { AuthContext } from '../../context/AuthContext';
 
 const ComentarioItem = ({ 
     comentario, 
@@ -12,8 +12,7 @@ const ComentarioItem = ({
     const [isReplying, setIsReplying] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     
-    // Obtener datos del usuario desde el contexto
-    const { isAuthenticated, user } = useContext(AuthContext);
+    const { isAuthenticated, user } = useSelector((state) => state.auth);
     const currentUserId = user?.idUsuario;
     const currentUserRole = user?.rol;
 

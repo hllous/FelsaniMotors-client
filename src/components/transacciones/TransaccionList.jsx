@@ -1,48 +1,18 @@
-import { useEffect, useState, useContext } from "react";
-import { AuthContext } from "../../context/AuthContext";
-import authService from '../../services/authService';
+import { useEffect } from "react";
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchTransaccionesUsuario } from '../../redux/slices/transaccionesSlice';
 import TransaccionCard from "./TransaccionCard";
 
 const TransaccionList = () => {
-    const { user } = useContext(AuthContext);
-    const [transacciones, setTransacciones] = useState([]);
+    const { user, token } = useSelector((state) => state.auth);
+    const { items: transacciones } = useSelector((state) => state.transacciones);
+    const dispatch = useDispatch();
 
     useEffect(() => {
-        if (!user?.idUsuario) {
-            return;
+        if (user?.idUsuario && token) {
+            dispatch(fetchTransaccionesUsuario({ idUsuario: user.idUsuario, token }));
         }
-
-        const token = authService.getToken();
-        const headers = new Headers();
-        headers.append('Content-Type', 'application/json');
-        headers.append('Authorization', `Bearer ${token}`);
-
-        // Obtener transacciones específicas del usuario
-        const URL_TRANSACCIONES = `http://localhost:4002/api/transacciones/usuario/${user.idUsuario}`;
-
-        fetch(URL_TRANSACCIONES, {
-            method: "GET",
-            headers: headers
-        })
-        .then((response) => {
-            if (response.status === 204) {
-                // No hay contenido - sin transacciones
-                setTransacciones([]);
-                return null;
-            }
-            if(!response.ok) throw new Error("Transacciones no encontradas");
-            return response.json();
-        })
-        .then((data) => {
-            if (data) {
-                setTransacciones(data);
-                console.log(`✅ Transacciones del usuario ${user.idUsuario}:`, data);
-            }
-        })
-        .catch((error) => {
-            console.error("Error buscando transacciones : ", error);
-        });
-    }, [user]);
+    }, [user?.idUsuario, token, dispatch]);
 
     return(
         <div className="bg-paleta1-cream-light min-h-screen py-10 px-6">

@@ -1,176 +1,159 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchComentariosByPublicacion, createComentario, updateComentario, deleteComentario, createRespuesta } from '../../redux/slices/comentariosSlice';
 import ComentarioItem from './ComentarioItem';
 import ComentarioForm from './ComentarioForm';
-import { AuthContext } from '../../context/AuthContext';
-import authService from '../../services/authService';
+import Modal from '../common/Modal';
 
 const ComentarioList = ({ idPublicacion }) => {
 
-    const [comentarios, setComentarios] = useState([]);
     const [error, setError] = useState(null);
+    const [modalConfig, setModalConfig] = useState({ isOpen: false });
     
-    const { isAuthenticated = false, user = null } = useContext(AuthContext);
-    const URL = `http://localhost:4002/api/publicaciones/${idPublicacion}/comentarios`;
+    const dispatch = useDispatch();
+    const { isAuthenticated = false, user = null, token } = useSelector((state) => state.auth);
+    const { comentariosByPublicacion } = useSelector((state) => state.comentarios);
+    
+    const comentarios = comentariosByPublicacion[idPublicacion] || [];
 
-    const createAuthHeaders = () => {
-        const headers = new Headers();
-        headers.append('Content-Type', 'application/json');
-        headers.append('Authorization', `Bearer ${authService.getToken()}`);
-        return headers;
+    const showModal = (config) => {
+        setModalConfig({ ...config, isOpen: true });
+    };
+
+    const closeModal = () => {
+        setModalConfig({ isOpen: false });
     };
 
     // GET comentarios
     useEffect(() => {
-        fetch(URL)
-
-        .then((response) => {
-            if (!response.ok) {
-                throw new Error(`Error HTTP ${response.status}: ${response.statusText}`);
-            }
-            return response.json() })
-
-        .then((data) => { 
-            setComentarios(data);
-            setError(null) })
-
-        .catch((e) => {
-            setError(e.message) })
-
-    }, [URL]);
+        // Solo fetch si no existen en cache
+        if (!comentariosByPublicacion[idPublicacion]) {
+            dispatch(fetchComentariosByPublicacion(idPublicacion));
+        }
+        setError(null);
+    }, [idPublicacion, dispatch, comentariosByPublicacion]);
 
     // POST comentario
-    const handleCrearComentario = (texto) => {
-
+    const handleCrearComentario = async (texto) => {
         // Validaciones
-        if (!user?.activo) {
-            alert('Tu cuenta está inactiva. No puedes comentar.');
-            return;
+        if (user?.activo === 0) {
+            showModal({
+                type: 'warning',
+                title: 'Cuenta Inactiva',
+                message: 'Tu cuenta está inactiva. No puedes comentar.',
+                showCancel: false
+            });
+            return null;
         }
         
-        return (
-            fetch(URL, {
-                method: 'POST',
-                headers: createAuthHeaders(),
-                body: JSON.stringify({ idUsuario: user.idUsuario, texto }) })
-
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error(`Error ${response.status}: ${response.statusText}`);
-                }
-                return response.json() })
-
-            .then((nuevoComentario) => {
-                setComentarios([nuevoComentario, ...comentarios]);
-                return nuevoComentario })
-
-            .catch((error) => {
-                throw error })
-        )
+        const result = await dispatch(createComentario({ 
+            idPublicacion, 
+            contenido: texto,
+            token 
+        }));
+        
+        if (result.payload?.comentario) {
+            return result.payload.comentario;
+        }
+        
+        showModal({
+            type: 'error',
+            title: 'Error al Comentar',
+            message: 'No se pudo crear el comentario. Intenta nuevamente.',
+            showCancel: false
+        });
+        return null;
     }
 
     // PUT comentario
-    const handleEditarComentario = (idComentario, nuevoTexto) => {
-
-        if (!user?.activo) {
-            alert('Tu cuenta está inactiva. No puedes editar comentarios.');
-            return;
+    const handleEditarComentario = async (idComentario, nuevoTexto) => {
+        if (user?.activo === 0) {
+            showModal({
+                type: 'warning',
+                title: 'Cuenta Inactiva',
+                message: 'Tu cuenta está inactiva. No puedes editar comentarios.',
+                showCancel: false
+            });
+            return null;
         }
         
-        return (
-            fetch(`http://localhost:4002/api/publicaciones/${idPublicacion}/comentarios/${idComentario}/texto`, {
-                method: 'PUT',
-                headers: createAuthHeaders(),
-                body: JSON.stringify({ texto: nuevoTexto }) })
-
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error(`Error ${response.status}: ${response.statusText}`);
-                }
-                return response.json() })
-
-            .then((actualizado) => {
-                setComentarios(comentarios.map(c => 
-                    c.idComentario === idComentario ? actualizado : c
-                ));
-                return actualizado })
-
-            .catch((error) => {
-                throw error })
-        )
+        const result = await dispatch(updateComentario({
+            idPublicacion,
+            idComentario,
+            contenido: nuevoTexto,
+            token
+        }));
+        
+        if (result.payload?.comentario) {
+            return result.payload.comentario;
+        }
+        
+        showModal({
+            type: 'error',
+            title: 'Error al Editar',
+            message: 'No se pudo editar el comentario. Intenta nuevamente.',
+            showCancel: false
+        });
+        return null;
     };
 
     // DELETE comentario
-    const handleEliminarComentario = (idComentario) => {
-
-        if (!user?.activo) {
-            alert('Tu cuenta está inactiva. No puedes eliminar comentarios.');
-            return;
+    const handleEliminarComentario = async (idComentario) => {
+        if (user?.activo === 0) {
+            showModal({
+                type: 'warning',
+                title: 'Cuenta Inactiva',
+                message: 'Tu cuenta está inactiva. No puedes eliminar comentarios.',
+                showCancel: false
+            });
+            return false;
         }
         
-        return (
-            fetch(`${URL}/${idComentario}`, {
-                method: 'DELETE',
-                headers: createAuthHeaders() })
-
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error(`Error ${response.status}: ${response.statusText}`);
-                } })
-
-            .then(() => {
-                setComentarios(comentarios.filter(c => c.idComentario !== idComentario)) })
-
-            .catch((error) => {
-                throw error })
-        )
+        const result = await dispatch(deleteComentario({ idPublicacion, idComentario, token }));
+        
+        if (result.payload) {
+            return true;
+        }
+        
+        showModal({
+            type: 'error',
+            title: 'Error al Eliminar',
+            message: 'No se pudo eliminar el comentario. Intenta nuevamente.',
+            showCancel: false
+        });
+        return false;
     };
 
     // Responder comentario
-    const handleResponder = (idComentarioPadre, textoRespuesta) => {
-        if (!user?.activo) {
-            alert('Tu cuenta está inactiva. No puedes responder comentarios.');
-            return;
+    const handleResponder = async (idComentarioPadre, textoRespuesta) => {
+        if (user?.activo === 0) {
+            showModal({
+                type: 'warning',
+                title: 'Cuenta Inactiva',
+                message: 'Tu cuenta está inactiva. No puedes responder comentarios.',
+                showCancel: false
+            });
+            return null;
         }
         
-        return (
-            fetch(`${URL}/${idComentarioPadre}/respuestas`, {
-                method: 'POST',
-                headers: createAuthHeaders(),
-                body: JSON.stringify({ 
-                    idUsuario: user.idUsuario, 
-                    texto: textoRespuesta }) })
-
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error(`Error ${response.status}: ${response.statusText}`);
-                }
-                return response.json() })
-
-            .then((nuevaRespuesta) => {
-                const actualizarComentarios = (comentariosList) => {
-                    return comentariosList.map(comentario => {
-                        if (comentario.idComentario === idComentarioPadre) {
-                            return {
-                                ...comentario,
-                                respuestas: [...(comentario.respuestas || []), nuevaRespuesta]
-                            };
-                        }
-                        if (comentario.respuestas?.length > 0) {
-                            return {
-                                ...comentario,
-                                respuestas: actualizarComentarios(comentario.respuestas)
-                            };
-                        }
-                        return comentario;
-                    });
-                };
-                
-                setComentarios(actualizarComentarios(comentarios));
-                return nuevaRespuesta })
-
-            .catch((error) => {
-                throw error })
-        )
+        const result = await dispatch(createRespuesta({
+            idPublicacion,
+            idComentario: idComentarioPadre,
+            contenido: textoRespuesta,
+            token
+        }));
+        
+        if (result.payload?.respuesta) {
+            return result.payload.respuesta;
+        }
+        
+        showModal({
+            type: 'error',
+            title: 'Error al Responder',
+            message: 'No se pudo crear la respuesta. Intenta nuevamente.',
+            showCancel: false
+        });
+        return null;
     };
 
     // Renderizar un comentario con respuestas anteriores
@@ -292,6 +275,16 @@ const ComentarioList = ({ idPublicacion }) => {
                     </div>)
                 }
             </div>
+
+            {/* Modal */}
+            <Modal
+                isOpen={modalConfig.isOpen}
+                onClose={closeModal}
+                type={modalConfig.type}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                showCancel={modalConfig.showCancel}
+            />
         </div>
     );
 };

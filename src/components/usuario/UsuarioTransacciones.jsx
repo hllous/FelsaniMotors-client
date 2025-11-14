@@ -1,47 +1,20 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { AuthContext } from "../../context/AuthContext";
-import authService from "../../services/authService";
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchTransaccionesUsuario } from '../../redux/slices/transaccionesSlice';
 import TransaccionCard from "../transacciones/TransaccionCard";
 
 const UsuarioTransacciones = () => {
   const navigate = useNavigate();
-  const { user } = useContext(AuthContext);
-  const [transacciones, setTransacciones] = useState([]);
+  const dispatch = useDispatch();
+  const { user, token } = useSelector((state) => state.auth);
+  const { items: transacciones } = useSelector((state) => state.transacciones);
 
   useEffect(() => {
-    if (!user?.idUsuario) {
-      return;
+    if (user?.idUsuario && token) {
+      dispatch(fetchTransaccionesUsuario({ idUsuario: user.idUsuario, token }));
     }
-
-    const token = authService.getToken();
-    const headers = new Headers();
-    headers.append("Content-Type", "application/json");
-    headers.append("Authorization", `Bearer ${token}`);
-
-    // Obtener transacciones específicas del usuario
-    const URL_TRANSACCIONES = `http://localhost:4002/api/transacciones/usuario/${user.idUsuario}`;
-
-    fetch(URL_TRANSACCIONES, { method: "GET", headers: headers })
-      .then((response) => {
-        if (response.status === 204) {
-          // No hay contenido - sin transacciones
-          setTransacciones([]);
-          return null;
-        }
-        if (!response.ok) throw new Error("Error al buscar transacciones");
-        return response.json();
-      })
-      .then((data) => {
-        if (data) {
-          setTransacciones(data);
-          console.log(`✅ Transacciones del usuario ${user.idUsuario}:`, data);
-        }
-      })
-      .catch((error) => {
-        console.error("Error al cargar transacciones: ", error);
-      });
-  }, [user]);
+  }, [user?.idUsuario, token, dispatch]);
 
   return (
     <div className="bg-[#f5efe6] min-h-screen py-10 px-6">

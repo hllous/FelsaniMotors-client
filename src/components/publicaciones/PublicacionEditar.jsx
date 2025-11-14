@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import authService from '../../services/authService';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchPublicacionById, updatePublicacion, deletePublicacion, updateEstadoPublicacion } from '../../redux/slices/publicacionesSlice';
+import { fetchFotosByPublicacion, uploadFoto, deleteFoto, setFotoPrincipal } from '../../redux/slices/fotosSlice';
+import Modal from '../common/Modal';
 
 const PublicacionEditar = () => {
   
@@ -8,13 +11,25 @@ const PublicacionEditar = () => {
   const { id } = useParams();
   const idPublicacion = parseInt(id);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { token } = useSelector((state) => state.auth);
+  const { currentItem: publicacion } = useSelector((state) => state.publicaciones);
+  const { fotosByPublicacion } = useSelector((state) => state.fotos);
 
   const [imagenes, setImagenes] = useState([]) 
-  const [publicacion, setPublicacion] = useState(null)
   const [imagenActual, setImagenActual] = useState(0);
-  const [pubSeleccionadas, setPubSeleccionadas] = useState([]);
+  const [publicacionesSeleccionadas, setPublicacionesSeleccionadas] = useState([]);
   const [principalId, setPrincipalId] = useState(null)
   const [nuevoEstado, setNuevoEstado] = useState('Disponible')
+  const [modalConfig, setModalConfig] = useState({ isOpen: false });
+
+  const showModal = (config) => {
+    setModalConfig({ ...config, isOpen: true });
+  };
+
+  const closeModal = () => {
+    setModalConfig({ isOpen: false });
+  };
 
   // Plantilla de los cambios
   const [cambios, setCambios] = useState({
@@ -29,75 +44,54 @@ const PublicacionEditar = () => {
     descuentoPorcentaje: 0
   });
 
+  // Cargar publicación y fotos
   useEffect(() => {
-    const token = authService.getToken();
-    const headers = new Headers()
-    headers.append('Content-Type', 'application/json');
-    if(token) {
-      headers.append('Authorization', `Bearer ${token}`);
+    if (!publicacion || publicacion.idPublicacion !== idPublicacion) {
+      dispatch(fetchPublicacionById(idPublicacion));
     }
+    if (!fotosByPublicacion[idPublicacion]) {
+      dispatch(fetchFotosByPublicacion(idPublicacion));
+    }
+  }, [idPublicacion, dispatch, publicacion?.idPublicacion, fotosByPublicacion]);
 
-    // obtener la informacion de la publicacion por idPublicacion
-    const URL_GET_Publicacion = `http://localhost:4002/api/publicaciones/${idPublicacion}`
-    fetch(URL_GET_Publicacion, {
-      method: "GET",
-      headers: headers
-    })
-      .then((response) => {
-        if(!response.ok) throw new Error("No se encontro la publicacion.")
-        return response.json()
-      })
-      .then((data) => {
-        setPublicacion(data)
-        setPrincipalId(data.idFotoPrincipal)
-        
-        // Inicializar cambios con datos de la publicación
-        setCambios({
-          imgBorrar: [],
-          imgAgregar: [],
-          titulo: data.titulo || '',
-          precio: data.precio || '',
-          ubicacion: data.ubicacion || '',
-          descripcion: data.descripcion || '',
-          metodoDePago: data.metodoDePago || '',
-          estado: data.estado || 'A',
-          descuentoPorcentaje: data.descuentoPorcentaje || 0
-        });
-
-        // Establecer estado visual
-        if(data.estado === 'A') setNuevoEstado('Disponible')
-        else if(data.estado === 'V') setNuevoEstado('Vendido')
-        else if(data.estado === 'P') setNuevoEstado('Pausado')
-      })
-      .catch(() => {
-        alert("Error al cargar la publicación")
-        navigate('/')
-      })
-
-    // obtener las fotos por idPublicacion
-    const URL_GET_Fotos = `http://localhost:4002/api/publicaciones/${idPublicacion}/fotos-contenido`
-    fetch(URL_GET_Fotos)
-      .then(response => {
-          if (!response.ok) { 
-              throw new Error('No se encontraron imágenes')
-          }
-          return response.json();
-      })
-      .then(data => {
-          if (data && data.length > 0) {
-            const imagenesFormateadas = data.map(foto => ({
-              idImg: foto.id,
-              img: `data:image/jpeg;base64,${foto.file}`
-            }))
-            setImagenes(imagenesFormateadas)
-          }
-      })
-      .catch(() => {
-        // No hacer nada si no hay imágenes
+  // Inicializar cambios
+  useEffect(() => {
+    if (publicacion) {
+      setPrincipalId(publicacion.idFotoPrincipal);
+      
+      setCambios({
+        imgBorrar: [],
+        imgAgregar: [],
+        titulo: publicacion.titulo || '',
+        precio: publicacion.precio || '',
+        ubicacion: publicacion.ubicacion || '',
+        descripcion: publicacion.descripcion || '',
+        metodoDePago: publicacion.metodoDePago || '',
+        estado: publicacion.estado || 'A',
+        descuentoPorcentaje: publicacion.descuentoPorcentaje || 0
       });
 
-  }, [idPublicacion, navigate])
+      // Establecer estado
+      if(publicacion.estado === 'A') setNuevoEstado('Disponible');
+      else if(publicacion.estado === 'V') setNuevoEstado('Vendido');
+      else if(publicacion.estado === 'P') setNuevoEstado('Pausado');
+    }
+  }, [idPublicacion]);
 
+  // Convertir fotos
+  useEffect(() => {
+    const fotos = fotosByPublicacion[idPublicacion];
+    if (fotos && fotos.length > 0) {
+      const imagenesFormateadas = fotos.map(foto => ({
+        idImg: foto.id,
+        file: foto.file,
+        esPrincipal: foto.esPrincipal,
+        orden: foto.orden,
+        img: `data:image/jpeg;base64,${foto.file}`
+      }));
+      setImagenes(imagenesFormateadas);
+    }
+  }, [idPublicacion, Object.keys(fotosByPublicacion).length]);
 
   const cantidad = imagenes.length;
 
@@ -112,28 +106,38 @@ const PublicacionEditar = () => {
   // handles
 
   const onFotoClick = (url) => {
-    if (pubSeleccionadas.some((pub) => url.img === pub.img)) {
-      setPubSeleccionadas(pubSeleccionadas.filter((pub) => pub.img !== url.img));
+    if (publicacionesSeleccionadas.some((pub) => url.img === pub.img)) {
+      setPublicacionesSeleccionadas(publicacionesSeleccionadas.filter((pub) => pub.img !== url.img));
     } else {
-      setPubSeleccionadas([...pubSeleccionadas, url]);
+      setPublicacionesSeleccionadas([...publicacionesSeleccionadas, url]);
     }
   };
 
   const handleEliminarClick = () => {
-    if(pubSeleccionadas.length === 0) {
-      alert("Selecciona al menos una imagen para eliminar");
+    if(publicacionesSeleccionadas.length === 0) {
+      showModal({
+        type: 'warning',
+        title: 'Selección Vacía',
+        message: 'Selecciona al menos una imagen para eliminar',
+        showCancel: false
+      });
       return;
     }
     
-    if(imagenes.length === pubSeleccionadas.length) {
-      alert("No puedes eliminar todas las imágenes. Debe quedar al menos una.");
+    if(imagenes.length === publicacionesSeleccionadas.length) {
+      showModal({
+        type: 'warning',
+        title: 'Acción No Permitida',
+        message: 'No puedes eliminar todas las imágenes. Debe quedar al menos una.',
+        showCancel: false
+      });
       return;
     }
 
-    setCambios({ ...cambios, imgBorrar: [...cambios.imgBorrar, ...pubSeleccionadas] });
-    const resto = imagenes.filter((img) => !pubSeleccionadas.some((pub) => pub.img === img.img));
+    setCambios({ ...cambios, imgBorrar: [...cambios.imgBorrar, ...publicacionesSeleccionadas] });
+    const resto = imagenes.filter((img) => !publicacionesSeleccionadas.some((pub) => pub.img === img.img));
     setImagenes(resto);
-    setPubSeleccionadas([]);
+    setPublicacionesSeleccionadas([]);
     
     // Ajustar imagen actual si es necesario
     if(imagenActual >= resto.length) {
@@ -177,16 +181,31 @@ const PublicacionEditar = () => {
   }
 
   const handlePrincipalClick = () => {
-    if(pubSeleccionadas.length !== 1) {
-      alert("Selecciona exactamente una imagen para marcar como principal");
+    if(publicacionesSeleccionadas.length !== 1) {
+      showModal({
+        type: 'warning',
+        title: 'Selección Incorrecta',
+        message: 'Selecciona exactamente una imagen para marcar como principal',
+        showCancel: false
+      });
       return;
     }
-    if(!pubSeleccionadas[0].idImg) {
-      alert("Primero guarda los cambios para poder seleccionar una imagen nueva como principal");
+    if(!publicacionesSeleccionadas[0].idImg) {
+      showModal({
+        type: 'info',
+        title: 'Acción No Disponible',
+        message: 'Primero guarda los cambios para poder seleccionar una imagen nueva como principal',
+        showCancel: false
+      });
       return;
     }
-    setPrincipalId(pubSeleccionadas[0].idImg);
-    alert("Imagen seleccionada como principal. Recuerda guardar los cambios.");
+    setPrincipalId(publicacionesSeleccionadas[0].idImg);
+    showModal({
+      type: 'info',
+      title: 'Imagen Principal',
+      message: 'Imagen seleccionada como principal. Recuerda guardar los cambios.',
+      showCancel: false
+    });
   };
 
   const handleCancelarClick = () => {
@@ -194,214 +213,168 @@ const PublicacionEditar = () => {
   }
 
   const handleEliminarPublicacion = () => {
-    if(!window.confirm('¿Estás seguro de que deseas eliminar esta publicación? Esta acción no se puede deshacer.')) {
-      return;
-    }
-
-    const token = authService.getToken();
-    const headers = new Headers()
-    headers.append('Authorization', `Bearer ${token}`);
-
-    const URL_DELETE_Publicacion = `http://localhost:4002/api/publicaciones/${idPublicacion}`
-    
-    fetch(URL_DELETE_Publicacion, {
-      method: "DELETE",
-      headers: headers
-    })
-    .then((response) => {
-      if(!response.ok) throw new Error("Error al eliminar la publicación")
-      alert("Publicación eliminada exitosamente")
-      navigate('/')
-    })
-    .catch(() => {
-      alert("Error al eliminar la publicación")
-    })
+    showModal({
+      type: 'warning',
+      title: 'Confirmar Eliminación',
+      message: '¿Estás seguro de que deseas eliminar esta publicación? Esta acción no se puede deshacer.',
+      confirmText: 'Eliminar',
+      showCancel: true,
+      onConfirm: async () => {
+        const result = await dispatch(deletePublicacion({ idPublicacion, token }));
+        
+        if (result.payload) {
+          showModal({
+            type: 'success',
+            title: 'Éxito',
+            message: 'Publicación eliminada exitosamente',
+            showCancel: false,
+            onConfirm: () => navigate('/')
+          });
+        } else {
+          showModal({
+            type: 'error',
+            title: 'Error',
+            message: 'Error al eliminar la publicación',
+            showCancel: false
+          });
+        }
+      }
+    });
   }
 
   const handleCambioClick = () => {
     // Validaciones
     if(!cambios.titulo || !cambios.titulo.trim()) {
-      alert("El título no puede estar vacío");
+      showModal({
+        type: 'warning',
+        title: 'Campo Requerido',
+        message: 'El título no puede estar vacío',
+        showCancel: false
+      });
       return;
     }
     if(!cambios.precio || isNaN(parseFloat(cambios.precio)) || parseFloat(cambios.precio) <= 0) {
-      alert("El precio debe ser un número válido mayor a 0");
+      showModal({
+        type: 'warning',
+        title: 'Precio Inválido',
+        message: 'El precio debe ser un número válido mayor a 0',
+        showCancel: false
+      });
       return;
     }
     if(!cambios.ubicacion || !cambios.ubicacion.trim()) {
-      alert("La ubicación no puede estar vacía");
+      showModal({
+        type: 'warning',
+        title: 'Campo Requerido',
+        message: 'La ubicación no puede estar vacía',
+        showCancel: false
+      });
       return;
     }
 
-    const token = authService.getToken();
-    const headers = new Headers()
-    headers.append('Content-Type', 'application/json');
-    headers.append('Authorization', `Bearer ${token}`);
 
-    let hayError = false;
+    const procesarCambios = async () => {
+      let hayError = false;
 
-    // PASO 1: Eliminar fotos
-    const eliminarFotos = () => {
-      if(cambios.imgBorrar.length === 0) {
-        agregarFotos();
-        return;
-      }
-
-      let eliminadas = 0;
-      cambios.imgBorrar.forEach((img) => {
-        if(img.idImg) {
-          const URL_DELETE_Foto = `http://localhost:4002/api/publicaciones/${idPublicacion}/fotos/${img.idImg}`
-          fetch(URL_DELETE_Foto, {
-            method: "DELETE",
-            headers: headers
-          })
-          .then(() => {
-            eliminadas++;
-            if(eliminadas === cambios.imgBorrar.length) {
-              agregarFotos();
-            }
-          })
-          .catch(() => {
-            hayError = true;
-            eliminadas++;
-            if(eliminadas === cambios.imgBorrar.length) {
-              agregarFotos();
-            }
-          })
-        } else {
-          eliminadas++;
-          if(eliminadas === cambios.imgBorrar.length) {
-            agregarFotos();
-          }
+      // PASO 1: Eliminar fotos
+      if (cambios.imgBorrar.length > 0) {
+        const promesasEliminar = cambios.imgBorrar
+          .filter(img => img.idImg)
+          .map(img => dispatch(deleteFoto({ idPublicacion, idFoto: img.idImg, token })));
+        
+        const resultados = await Promise.all(promesasEliminar);
+        if (resultados.some(r => !r.payload)) {
+          hayError = true;
         }
-      })
-    };
-
-    // PASO 2: Agregar fotos nuevas
-    const agregarFotos = () => {
-      if(cambios.imgAgregar.length === 0) {
-        actualizarPublicacion();
-        return;
       }
 
-      const URL_POST_Foto = `http://localhost:4002/api/publicaciones/${idPublicacion}/fotos`
-      let agregadas = 0;
-
-      cambios.imgAgregar.forEach((file, index) => {
-        const formData = new FormData()
-        formData.append("file", file)
-        formData.append("esPrincipal", "false")
-        formData.append("orden", index.toString())
-
-        const headersFormData = new Headers()
-        headersFormData.append('Authorization', `Bearer ${token}`);
-
-        fetch(URL_POST_Foto, {
-          method: "POST",
-          headers: headersFormData,
-          body: formData
-        })
-        .then(() => {
-          agregadas++;
-          if(agregadas === cambios.imgAgregar.length) {
-            actualizarPublicacion();
-          }
-        })
-        .catch(() => {
+      // PASO 2: Agregar fotos nuevas
+      if (cambios.imgAgregar.length > 0) {
+        const promesasAgregar = cambios.imgAgregar.map((file, index) => 
+          dispatch(uploadFoto({ 
+            idPublicacion, 
+            file, 
+            esPrincipal: false, 
+            orden: index, 
+            token 
+          }))
+        );
+        
+        const resultados = await Promise.all(promesasAgregar);
+        if (resultados.some(r => !r.payload)) {
           hayError = true;
-          agregadas++;
-          if(agregadas === cambios.imgAgregar.length) {
-            actualizarPublicacion();
-          }
-        })
-      })
-    };
+        }
+      }
 
-    // PASO 3: Actualizar datos de la publicación
-    const actualizarPublicacion = () => {
-      const URL_PUT_Publicacion = `http://localhost:4002/api/publicaciones/${idPublicacion}`
+      // PASO 3: Actualizar datos de la publicacion
+      const publicacionResult = await dispatch(
+        updatePublicacion({
+            idPublicacion,
+            publicacionData: {
+                titulo: cambios.titulo,
+                descripcion: cambios.descripcion,
+                ubicacion: cambios.ubicacion,
+                precio: parseFloat(cambios.precio),
+                metodoDePago: cambios.metodoDePago,
+                descuentoPorcentaje: parseInt(cambios.descuentoPorcentaje) || 0
+            },
+            token
+      }));
 
-      fetch(URL_PUT_Publicacion, {
-        method: "PUT",
-        headers: headers,
-        body: JSON.stringify({
-          titulo: cambios.titulo,
-          descripcion: cambios.descripcion,
-          ubicacion: cambios.ubicacion,
-          precio: parseFloat(cambios.precio),
-          metodoDePago: cambios.metodoDePago,
-          descuentoPorcentaje: parseInt(cambios.descuentoPorcentaje) || 0
-        })
-      })
-      .then((response) => {
-        if(!response.ok) throw new Error("Error al actualizar la publicacion.")
-        return response.json()
-      })
-      .then(() => {
-        actualizarEstado();
-      })
-      .catch(() => {
+      if (!publicacionResult.payload) {
         hayError = true;
-        alert("Error al actualizar los datos de la publicación");
-      })
-    };
+      }
 
-    // PASO 4: Actualizar estado
-    const actualizarEstado = () => {
-      const URL_PUT_Estado = `http://localhost:4002/api/publicaciones/${idPublicacion}/estado`
-
-      fetch(URL_PUT_Estado, {
-        method: "PUT",
-        headers: headers,
-        body: JSON.stringify({ estado: cambios.estado })
-      })
-      .then((response) => {
-        if(!response.ok) throw new Error("El estado no se actualizo correctamente.")
-        return response.json()
-      })
-      .then(() => {
-        actualizarImagenPrincipal();
-      })
-      .catch(() => {
-        hayError = true;
-        actualizarImagenPrincipal();
-      })
-    };
-
-    // PASO 5: Actualizar imagen principal
-    const actualizarImagenPrincipal = () => {
-      if(principalId) {
-        const URL_PUT_FotoPrincipal = `http://localhost:4002/api/publicaciones/${idPublicacion}/fotos/${principalId}/principal`
-
-        fetch(URL_PUT_FotoPrincipal, {
-          method: "PUT",
-          headers: headers
-        })
-        .then((response) => {
-          if(!response.ok) throw new Error("No se definio la imagen como principal.")
-          finalizarActualizacion();
-        })
-        .catch(() => {
+      // PASO 4: Actualizar estado si se modifico
+      if (cambios.estado !== publicacion.estado) {
+        const estadoResult = await dispatch(updateEstadoPublicacion({ 
+          idPublicacion, 
+          estado: cambios.estado, 
+          token 
+        }));
+        
+        if (!estadoResult.payload) {
           hayError = true;
-          finalizarActualizacion();
+        }
+      }
+
+      // PASO 5: Actualizar imagen principal si se cambio
+      if (principalId && principalId !== publicacion.idFotoPrincipal) {
+        const principalResult = await dispatch(setFotoPrincipal({ 
+          idPublicacion, 
+          idFoto: principalId, 
+          token 
+        }));
+        
+        if (!principalResult.payload) {
+          hayError = true;
+        }
+      }
+
+      // Finalizar
+      if (hayError) {
+
+        showModal({
+          type: 'warning',
+          title: 'Guardado con Errores',
+          message: 'Cambios guardados con algunos errores. Por favor, verifica la publicación.',
+          showCancel: false,
+          onConfirm: () => navigate(`/publicacion/${idPublicacion}`)
         })
-      } else {
-        finalizarActualizacion();
-      }
-    };
 
-    // PASO 6: Finalizar
-    const finalizarActualizacion = () => {
-      if(hayError) {
-        alert("Cambios guardados con algunos errores. Por favor, verifica la publicación.");
       } else {
-        alert("Cambios guardados exitosamente");
-      }
-      navigate(`/publicacion/${idPublicacion}`)
-    };
 
-    // Iniciar el proceso
-    eliminarFotos();
+        showModal({
+          type: 'success',
+          title: 'Éxito',
+          message: 'Cambios guardados exitosamente',
+          showCancel: false,
+          onConfirm: () => navigate(`/publicacion/${idPublicacion}`)
+        })
+      }
+    }
+
+    procesarCambios();
   }
 
   if(!publicacion) {
@@ -523,7 +496,7 @@ const PublicacionEditar = () => {
                 style={{ transform: `translateX(-${imagenActual * 100}%)` }}
               >
                 {imagenes.map((url, index) => {
-                  const seleccionada = pubSeleccionadas.some((pub) => pub.img === url.img);
+                  const seleccionada = publicacionesSeleccionadas.some((pub) => pub.img === url.img);
                   return (
                     <div
                       key={index}
@@ -582,9 +555,9 @@ const PublicacionEditar = () => {
             <div className="flex justify-center gap-4 mt-4">
               <button
                 onClick={handleEliminarClick}
-                disabled={pubSeleccionadas.length === 0}
+                disabled={publicacionesSeleccionadas.length === 0}
                 className={`font-medium px-4 py-2 rounded-md transition ${
-                  pubSeleccionadas.length > 0
+                  publicacionesSeleccionadas.length > 0
                     ? "bg-red-500 text-white hover:bg-red-600"
                     : "bg-gray-300 text-gray-500 cursor-not-allowed"
                 }`}
@@ -606,9 +579,9 @@ const PublicacionEditar = () => {
               {/* Boton seleccion imagen principal */}
               <button
                 onClick={handlePrincipalClick}
-                disabled={pubSeleccionadas.length !== 1}
+                disabled={publicacionesSeleccionadas.length !== 1}
                 className={`font-medium px-4 py-2 rounded-md transition ${
-                  pubSeleccionadas.length === 1
+                  publicacionesSeleccionadas.length === 1
                     ? "bg-[#CBDCEB] text-gray-700 hover:bg-[#b4cde2]"
                     : "bg-gray-300 text-gray-500 cursor-not-allowed"
                 }`}
@@ -643,6 +616,19 @@ const PublicacionEditar = () => {
           </button>
         </div>
       </div>
+
+      {/* Modal */}
+      <Modal
+        isOpen={modalConfig.isOpen}
+        onClose={closeModal}
+        type={modalConfig.type}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        onConfirm={modalConfig.onConfirm}
+        confirmText={modalConfig.confirmText}
+        cancelText={modalConfig.cancelText}
+        showCancel={modalConfig.showCancel}
+      />
     </div>
   );
 };

@@ -1,9 +1,8 @@
 import { Link } from 'react-router-dom';
-import { useContext } from 'react';
-import { AuthContext } from '../../context/AuthContext';
+import { useSelector } from 'react-redux';
 
 const AdminDashboard = () => {
-    const { user } = useContext(AuthContext);
+    const { user } = useSelector((state) => state.auth);
 
     return (
         <div className="min-h-screen bg-gray-100 py-8">

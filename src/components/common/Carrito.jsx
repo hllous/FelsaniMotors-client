@@ -1,37 +1,45 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import carritoService from '../../services/carritoService';
+import { useSelector, useDispatch } from 'react-redux';
+import { addToCart, removeFromCart, clearCart } from '../../redux/slices/carritoSlice';
+import Modal from './Modal';
 
 const Carrito = ({ isOpen, onClose }) => {
-  const [cartItems, setCartItems] = useState([]);
-  const [total, setTotal] = useState(0);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  
   const { user } = useSelector((state) => state.auth);
+  const { items: cartItems } = useSelector((state) => state.carrito);
+  
+  const [modalConfig, setModalConfig] = useState({ isOpen: false });
+  
+  // Calcular total
+  const total = cartItems.reduce((sum, item) => sum + item.precio, 0);
 
-  useEffect(() => {
-    if (isOpen) {
-      loadCart();
-    }
-  }, [isOpen]);
+  const showModal = (config) => {
+    setModalConfig({ ...config, isOpen: true });
+  };
 
-  const loadCart = () => {
-    const items = carritoService.getCart();
-    setCartItems(items);
-    setTotal(carritoService.calculateTotal());
+  const closeModal = () => {
+    setModalConfig({ isOpen: false });
   };
 
   // Handle de eliminar una publicacion en el carrito
   const handleRemove = (idPublicacion) => {
-    carritoService.removeFromCart(idPublicacion);
-    loadCart();
+    dispatch(removeFromCart(idPublicacion));
   };
 
   // Handle de eliminar todas las publicaciones del carrito
   const handleClear = () => {
-    carritoService.clearCart();
-    setCartItems([]);
-    setTotal(0);
+    showModal({
+      type: 'warning',
+      title: 'Vaciar Carrito',
+      message: '¿Estás seguro de que deseas vaciar todo el carrito?',
+      confirmText: 'Sí, vaciar',
+      onConfirm: () => {
+        dispatch(clearCart());
+      }
+    });
   };
 
   // Handle checkout
@@ -39,25 +47,63 @@ const Carrito = ({ isOpen, onClose }) => {
 
     // Validar si el usuario esta loggeado
     if (!user) {
-      alert('Debes iniciar sesión para completar tu compra.\n\nPor favor, inicia sesión y vuelve a intentarlo.');
-      onClose();
+      showModal({
+        type: 'warning',
+        title: 'Iniciar Sesión',
+        message: 'Debes iniciar sesión para completar tu compra.\n\nPor favor, inicia sesión y vuelve a intentarlo.',
+        showCancel: false
+      });
       return;
     }
 
-    // Validar si el usuario esta activo
-    if (!user.activo) {
-      alert('Tu cuenta esta inactiva. No puedes realizar compras. Contacta al administrador.');
-      onClose();
+    // Validar si el usuario esta activ
+    if (user.activo === 0) {
+      showModal({
+        type: 'error',
+        title: 'Cuenta Inactiva',
+        message: 'Tu cuenta esta inactiva. No puedes realizar compras. Contacta al administrador.',
+        showCancel: false
+      });
       return;
+    }
+
+    // Validar que no esté comprando su propia publicacion
+    if (idPublicacion) {
+
+      const item = cartItems.find(i => i.idPublicacion === idPublicacion)
+
+      if (item && item.idVendedor === user.idUsuario) {
+
+        showModal({
+          type: 'warning',
+          title: 'No Disponible',
+          message: 'No puedes comprar tu propia publicación.',
+          showCancel: false
+        })
+        return
+      }
+    } else {
+      
+      // Validar que ningun item sea una publicacion del usuario
+      const ownItems = cartItems.filter(item => item.idVendedor === user.idUsuario);
+      if (ownItems.length > 0) {
+
+        showModal({
+          type: 'warning',
+          title: 'No Disponible',
+          message: 'No puedes comprar tus propias publicaciones. Por favor, elimínalas del carrito.',
+          showCancel: false
+        })
+        return;
+      }
     }
 
     // Creacion de carrito (sea 1 publi o +)
     if (idPublicacion) {
       const item = cartItems.find(i => i.idPublicacion === idPublicacion);
       if (item) {
-        
-        carritoService.clearCart();
-        carritoService.addToCart(item);
+        dispatch(clearCart());
+        dispatch(addToCart(item));
       }
     }
 
@@ -68,8 +114,19 @@ const Carrito = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+    <>
+      {/* Overlay */}
+      <div 
+        className="fixed inset-0 bg-gray-600/40 z-40" 
+        onClick={onClose}
+      ></div>
+      
+      {/* Contenedor del carrito */}
+      <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+        <div 
+          className="bg-white p-6 rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-xl"
+          onClick={(e) => e.stopPropagation()}
+        >
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold text-paleta1-blue">Carrito de Compras</h2>
           <button 
@@ -192,8 +249,22 @@ const Carrito = ({ isOpen, onClose }) => {
             </div>
           </>
         )}
+        </div>
       </div>
-    </div>
+      
+      {/* Modal */}
+      <Modal
+        isOpen={modalConfig.isOpen}
+        onClose={closeModal}
+        type={modalConfig.type}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        onConfirm={modalConfig.onConfirm}
+        confirmText={modalConfig.confirmText}
+        cancelText={modalConfig.cancelText}
+        showCancel={modalConfig.showCancel}
+      />
+    </>
   );
 };
 

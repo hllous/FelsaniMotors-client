@@ -1,81 +1,58 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import authService from '../../services/authService';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchPublicaciones, deletePublicacion } from '../../redux/slices/publicacionesSlice';
+import Modal from '../common/Modal';
 
 const PublicacionesAdmin = () => {
-    const [publicaciones, setPublicaciones] = useState([]);
-    const [error, setError] = useState(null);
     const navigate = useNavigate();
+    const dispatch = useDispatch();
+    const { token } = useSelector((state) => state.auth);
+    const { items: publicaciones, error } = useSelector((state) => state.publicaciones);
+    const [modalConfig, setModalConfig] = useState({ isOpen: false });
 
-    const getAuthHeaders = () => {
-        const token = authService.getToken();
-        return {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        };
+    const showModal = (config) => {
+        setModalConfig({ ...config, isOpen: true });
+    };
+
+    const closeModal = () => {
+        setModalConfig({ isOpen: false });
     };
 
     useEffect(() => {
-        // Cargar publicaciones
-        fetch('http://localhost:4002/api/publicaciones', {
-            method: 'GET'
-        })
-            .then(response => {
-                if (!response.ok) {
-                    return response.text().then(text => {
-                        throw new Error(text || 'Error al obtener publicaciones');
-                    });
-                }
-                return response.json();
-            })
-            .then(data => {
-                setPublicaciones(data);
-                setError(null);
-            })
-            .catch((error) => {
-                setError(`Error al cargar publicaciones: ${error.message}`);
-            });
-    }, []);
+        dispatch(fetchPublicaciones());
+    }, [dispatch]);
 
-    const handleEliminarPublicacion = (id) => {
-        fetch(`http://localhost:4002/api/publicaciones/${id}`, {
-            method: 'DELETE',
-            headers: getAuthHeaders()
-        })
-            .then(response => {
-                if (!response.ok) {
-                    return response.text().then(text => {
-                        throw new Error(text || 'Error al eliminar publicación');
-                    });
-                }
-                setPublicaciones(prevPublicaciones => 
-                    prevPublicaciones.filter(pub => pub.idPublicacion !== id)
-                );
-                setError(null);
-            })
-            .catch((error) => {
-                setError(`Error al eliminar la publicación: ${error.message}`);
-            });
-    };
+    const handleEliminarPublicacion = async (id, titulo) => {
+        showModal({
+            type: 'warning',
+            title: 'Confirmar Eliminación',
+            message: `¿Estás seguro de eliminar la publicación "${titulo}"?`,
+            confirmText: 'Eliminar',
+            showCancel: true,
+            onConfirm: async () => {
+                
+                const result = await dispatch(deletePublicacion({ idPublicacion: id, token }))
 
-    if (error) {
-        return (
-            <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-                <div className="bg-white rounded-lg p-8 max-w-md w-full">
-                    <div className="text-center">
-                        <div className="text-red-600 text-5xl mb-4">⚠️</div>
-                        <h3 className="text-xl font-bold text-gray-800 mb-2">Error</h3>
-                        <p className="text-gray-600 mb-6">{error}</p>
-                        <button 
-                            onClick={() => navigate('/admin')}
-                            className="px-6 py-2 bg-paleta1-blue text-white rounded-lg hover:bg-paleta1-blue-light hover:text-gray-800 transition-colors"
-                        >
-                            Volver al Panel
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
+                if (result.payload) {
+
+                    showModal({
+                        type: 'success',
+                        title: 'Éxito',
+                        message: 'Publicación eliminada exitosamente',
+                        showCancel: false
+                    })
+                } else {
+
+                    showModal({
+                        type: 'error',
+                        title: 'Error',
+                        message: error || 'Error al eliminar la publicación. Intenta nuevamente.',
+                        showCancel: false
+                    })
+                }
+            }
+        })
     }
 
     return (
@@ -96,28 +73,6 @@ const PublicacionesAdmin = () => {
                         Volver
                     </button>
                 </div>
-
-                {/* Mensaje de error */}
-                {error && (
-                    <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
-                        <div className="flex items-center gap-3">
-                            <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <div className="flex-1">
-                                <p className="text-red-800 font-medium">{error}</p>
-                            </div>
-                            <button
-                                onClick={() => setError(null)}
-                                className="text-red-600 hover:text-red-800"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                )}
 
                 {/* Tabla de publicaciones */}
                 <div className="bg-white rounded-lg overflow-hidden">
@@ -149,42 +104,42 @@ const PublicacionesAdmin = () => {
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {publicaciones.map((pub) => (
-                                    <tr key={pub.idPublicacion}>
+                                {publicaciones.map((p) => (
+                                    <tr key={p.idPublicacion}>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                            {pub.idPublicacion}
+                                            {p.idPublicacion}
                                         </td>
                                         <td className="px-6 py-4 text-sm text-gray-900 max-w-xs">
-                                            <div className="font-semibold">{pub.titulo}</div>
+                                            <div className="font-semibold">{p.titulo}</div>
                                         </td>
                                         <td className="px-6 py-4 text-sm text-gray-700">
-                                            <div className="font-medium">{pub.nombreUsuario || 'N/A'}</div>
+                                            <div className="font-medium">{p.nombreUsuario || 'N/A'}</div>
                                         </td>
                                         <td className="px-6 py-4 text-sm text-gray-600 max-w-md">
-                                            <div className="line-clamp-2 break-words">{pub.descripcion}</div>
+                                            <div className="line-clamp-2 break-words">{p.descripcion}</div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                                pub.estado === 'DISPONIBLE' ? 'bg-green-100 text-green-800' : 
-                                                pub.estado === 'VENDIDO' ? 'bg-red-100 text-red-800' :
+                                                p.estado === 'DISPONIBLE' ? 'bg-green-100 text-green-800' : 
+                                                p.estado === 'VENDIDO' ? 'bg-red-100 text-red-800' :
                                                 'bg-yellow-100 text-yellow-800'
                                             }`}>
-                                                {pub.estado}
+                                                {p.estado}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                                            {pub.precio ? `$${pub.precio.toLocaleString('es-AR')}` : 'N/A'}
+                                            {p.precio ? `$${p.precio.toLocaleString('es-AR')}` : 'N/A'}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-center">
                                             <div className="flex gap-2 justify-center">
                                                 <button
-                                                    onClick={() => navigate(`/publicacion/${pub.idPublicacion}`)}
+                                                    onClick={() => navigate(`/publicacion/${p.idPublicacion}`)}
                                                     className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm font-medium"
                                                 >
                                                     Ver
                                                 </button>
                                                 <button
-                                                    onClick={() => handleEliminarPublicacion(pub.idPublicacion)}
+                                                    onClick={() => handleEliminarPublicacion(p.idPublicacion, p.titulo)}
                                                     className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm font-medium"
                                                 >
                                                     Eliminar
@@ -204,6 +159,19 @@ const PublicacionesAdmin = () => {
                     </div>
                 )}
             </div>
+
+            {/* Modal */}
+            <Modal
+                isOpen={modalConfig.isOpen}
+                onClose={closeModal}
+                type={modalConfig.type}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                onConfirm={modalConfig.onConfirm}
+                confirmText={modalConfig.confirmText}
+                cancelText={modalConfig.cancelText}
+                showCancel={modalConfig.showCancel}
+            />
         </div>
     );
 };

@@ -1,11 +1,13 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchPublicaciones, fetchPublicacionesByUsuario, filtrarPublicaciones } from "../../redux/slices/publicacionesSlice";
 import PublicacionCard from "./PublicacionCard";
 import PublicacionDestacada from "./PublicacionDestacada";
 
 const PublicacionList = () => {
-    const [publicaciones, setPublicaciones] = useState([]);
-    const [publicacionDestacada, setPublicacionDestacada] = useState(null);
+    const dispatch = useDispatch();
+    const { items: publicaciones, isFiltered } = useSelector((state) => state.publicaciones);
     const [searchParams] = useSearchParams();
     
     const consultaBusqueda = searchParams.get('q') || '';
@@ -20,19 +22,27 @@ const PublicacionList = () => {
         return params.toString().length > 0;
     }, [paramsString]);
 
-    const publicacionesRestantes = publicaciones.filter(p => p.idPublicacion !== publicacionDestacada?.idPublicacion);
+    // Asegurar que publicaciones sea siempre un array
+    const publicacionesArray = Array.isArray(publicaciones) ? publicaciones : [];
+    
+    // Seleccionar publicación destacada aleatoria
+    const publicacionDestacada = useMemo(() => {
+        if (publicacionesArray.length === 0) return null;
+        const randomIndex = Math.floor(Math.random() * publicacionesArray.length);
+        return publicacionesArray[randomIndex];
+    }, [publicacionesArray.length]); // Solo recalcula cuando cambia el tamaño del array
+    
+    const publicacionesRestantes = publicacionesArray.filter(p => p.idPublicacion !== publicacionDestacada?.idPublicacion);
 
     useEffect(() => {
-        let url = "http://localhost:4002/api/publicaciones";
-        
         if (userId) {
-            url = `http://localhost:4002/api/publicaciones/usuario/${userId}`;
+            dispatch(fetchPublicacionesByUsuario(userId));
         } 
         else if (consultaBusqueda.trim() !== '' || hasFiltros) {
-            const params = new URLSearchParams();
+            const params = {};
             
             if (consultaBusqueda.trim() !== '') {
-                params.append('busqueda', consultaBusqueda);
+                params.busqueda = consultaBusqueda;
             }
             
             // Agregar filtros
@@ -41,48 +51,17 @@ const PublicacionList = () => {
                 filtros.delete('q');
                 filtros.delete('userId');
                 filtros.forEach((value, key) => {
-                    params.append(key, value);
+                    params[key] = value;
                 });
             }
             
-            url = `http://localhost:4002/api/publicaciones/filtrar?${params.toString()}`;
+            dispatch(filtrarPublicaciones(params));
         }
-
-        fetch(url)
-        .then((response) => {
-            if (response.status === 204) { 
-                setPublicaciones([]);
-                return null;
-            }
-            return response.json();
-        })
-        .then((data) => {
-            if (data === null) return;
-            
-            if (data.content) {
-                setPublicaciones(data.content);
-                return;
-            }
-            
-            setPublicaciones(data || []);
-        })
-        .catch(() => {
-            setPublicaciones([]);
-        });
-
-    }, [userId, consultaBusqueda, hasFiltros, paramsString]);
-
-    // Actualizar publicacion destacada cuando cambian las publicaciones
-    useEffect(() => {
-        if (publicaciones.length > 0) {
-            const randomIndex = Math.floor(Math.random() * publicaciones.length);
-            setPublicacionDestacada(publicaciones[randomIndex]);
-        } else {
-            setPublicacionDestacada(null);
+        else if (isFiltered || publicaciones.length === 0) {
+            // Solo fetch si está filtrado O si no hay publicaciones en cache
+            dispatch(fetchPublicaciones());
         }
-    }, [publicaciones]);
-
-
+    }, [dispatch, userId, consultaBusqueda, hasFiltros, paramsString]);
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -102,29 +81,30 @@ const PublicacionList = () => {
                          'Todas las publicaciones'}
                     </h2>
                     <p className="text-gray-600">
-                        {consultaBusqueda || userId || hasFiltros ? publicaciones.length : publicacionesRestantes.length} vehículos disponibles
+                        {consultaBusqueda || userId || hasFiltros ? publicacionesArray.length : publicacionesRestantes.length} vehículos disponibles
                         {userId && ' de tus publicaciones'}
                         {consultaBusqueda && ` que coinciden con "${consultaBusqueda}"`}
                         {hasFiltros && ' según los filtros aplicados'}
                     </p>
-                    
                 </div>
 
                 {/* Grid de publicaciones */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                    {(consultaBusqueda || userId || hasFiltros ? publicaciones : publicacionesRestantes).map((publicacion) => (
-                        <PublicacionCard 
-                            key={publicacion.idPublicacion}
-                            idPublicacion={publicacion.idPublicacion}
-                            titulo={publicacion.titulo}
-                            ubicacion={publicacion.ubicacion}
-                            precio={publicacion.precio}
-                            estado={publicacion.estado}
-                            marcaAuto={publicacion.marcaAuto}
-                            modeloAuto={publicacion.modeloAuto}
-                        />
-                    ))}
-                </div>
+                {publicacionesArray.length > 0 && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                        {(consultaBusqueda || userId || hasFiltros ? publicacionesArray : publicacionesRestantes).map((publicacion) => (
+                            <PublicacionCard 
+                                key={publicacion.idPublicacion}
+                                idPublicacion={publicacion.idPublicacion}
+                                titulo={publicacion.titulo}
+                                ubicacion={publicacion.ubicacion}
+                                precio={publicacion.precio}
+                                estado={publicacion.estado}
+                                marcaAuto={publicacion.marcaAuto}
+                                modeloAuto={publicacion.modeloAuto}
+                            />
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -1,13 +1,16 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from 'react-redux';
+import { clearCart } from '../../redux/slices/carritoSlice';
+import { createTransaccion, updateTransaccionEstado } from '../../redux/slices/transaccionesSlice';
 import MetodoPagoForm from "./MetodoPagoForm";
-import { AuthContext } from '../../context/AuthContext';
-import authService from '../../services/authService';
-import carritoService from '../../services/carritoService';
+import Modal from '../common/Modal';
 
 const TransaccionForm = () => {
     const navigate = useNavigate();
-    const { user } = useContext(AuthContext);
+    const dispatch = useDispatch();
+    const { user, token } = useSelector((state) => state.auth);
+    const { items: cartItems } = useSelector((state) => state.carrito);
 
     const [transaccionData, setTransaccionData] = useState({
         metodoPago: "Visa",
@@ -17,102 +20,83 @@ const TransaccionForm = () => {
         comentarios: ""
     });
     
-    const [publicaciones, setPublicaciones] = useState([]);
-    const [total, setTotal] = useState(0);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [modalConfig, setModalConfig] = useState({ isOpen: false });
 
-    const URLTransaccion = `http://localhost:4002/api/transacciones`;
+    const publicacionesEnCarrito = cartItems;
+
+    // Calcular total con descuentos - derivado
+    const total = publicacionesEnCarrito.reduce((sum, p) => {
+        const descuento = p.descuentoPorcentaje || 0;
+        let precioFinal = p.precio;
+        if (descuento > 0) {
+            precioFinal = p.precio - (p.precio * descuento / 100);
+        }
+        return sum + precioFinal;
+    }, 0);
+
+    const showModal = (config) => {
+        setModalConfig({ ...config, isOpen: true });
+    };
+
+    const closeModal = () => {
+        setModalConfig({ isOpen: false });
+    };
 
     useEffect(() => {
-        const token = authService.getToken();
-        
-        const headers = new Headers();
-        headers.append('Content-Type', 'application/json');
-        if (token) {
-            headers.append('Authorization', `Bearer ${token}`);
-        }
 
-        // Validar si el usuario está loggeado
+        // Validar si el usuario esta loggeado
         if (!user) {
-            alert('Debes iniciar sesión para completar tu compra.\n\nPor favor, inicia sesión y vuelve a intentarlo.');
-            navigate('/');
-            return;
+            showModal({
+                type: 'warning',
+                title: 'Iniciar Sesión',
+                message: 'Debes iniciar sesión para completar tu compra.\n\nPor favor, inicia sesión y vuelve a intentarlo.',
+                showCancel: false,
+                onConfirm: () => navigate('/')
+            })
+            return
         }
 
-        // Validar si el usuario está activo
-        if (!user?.activo) {
-            alert("Tu cuenta está inactiva. No puedes realizar compras. Contacta al administrador.");
-            navigate('/');
-            return;
+        // Validar si el usuario esta activo
+        if (user?.activo === 0) {
+            showModal({
+                type: 'error',
+                title: 'Cuenta Inactiva',
+                message: 'Tu cuenta está inactiva. No puedes realizar compras. Contacta al administrador.',
+                showCancel: false,
+                onConfirm: () => navigate('/')
+            })
+            return
         }
 
-        // Cargar publicaciones desde el carrito
-        const items = carritoService.getCart();
-        
-        if (items.length === 0) {
-            alert("El carrito está vacío");
-            navigate('/');
-            return;
-        }
-
-        // Verificar que todas las publicaciones sigan disponibles
-        let publicacionesVerificadas = [];
-        let currentIndex = 0;
-
-        const verificarPublicacion = () => {
-            if (currentIndex >= items.length) {
-
-                // Verifico todas las publis
-                const vendidas = publicacionesVerificadas.filter(p => p.estado === 'V');
-                if (vendidas.length > 0) {
-                    alert(`Algunas publicaciones se vendieron. Por favor, actualiza tu carrito.`);
-                    navigate('/');
-                    return;
-                }
-                setPublicaciones(publicacionesVerificadas);
-                
-                // Calcular total con descuentos
-                const totalConDescuentos = publicacionesVerificadas.reduce((sum, p) => {
-                    const descuento = p.descuentoPorcentaje || 0;
-                    let precioFinal = p.precio;
-                    if (descuento > 0) {
-                        precioFinal = p.precio - (p.precio * descuento / 100);
-                    }
-                    return sum + precioFinal;
-                }, 0);
-                
-                setTotal(totalConDescuentos);
-                return;
-            }
-
-            const item = items[currentIndex];
-
-            fetch(`http://localhost:4002/api/publicaciones/${item.idPublicacion}`, {
-                method: "GET",
-                headers: headers
-            })
-            .then(response => {
-                if (!response.ok) {
-                    if (response.status === 403) {
-                        throw new Error('No tienes autorización. Por favor, inicia sesion nuevamente.');
-                    }
-                    throw new Error(`Error al cargar publicación ${item.idPublicacion}: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(pub => {
-                publicacionesVerificadas.push(pub);
-                currentIndex++;
-                verificarPublicacion();
-            })
-            .catch(error => {
-                alert(error.message || 'Error al cargar las publicaciones del carrito');
-                navigate('/');
+        // Validar carrito vacío
+        if (cartItems.length === 0) {
+            showModal({
+                type: 'info',
+                title: 'Carrito Vacío',
+                message: 'El carrito está vacío',
+                showCancel: false,
+                onConfirm: () => navigate('/')
             });
-        };
+            return;
+        }
+    }, [user, navigate, cartItems, dispatch]);
 
-        verificarPublicacion();
-    }, [user, navigate]);
+    // Verificar publicaciones vendidas cuando se cargan
+    useEffect(() => {
+        if (publicacionesEnCarrito.length > 0 && publicacionesEnCarrito.length === cartItems.length) {
+            const hasVendidas = publicacionesEnCarrito.some(p => p.estado === 'V');
+            if (hasVendidas) {
+                showModal({
+                    type: 'warning',
+                    title: 'Publicaciones No Disponibles',
+                    message: 'Algunas publicaciones se vendieron. Por favor, actualiza tu carrito.',
+                    showCancel: false,
+                    onConfirm: () => navigate('/')
+                });
+            }
+        }
+    }, [publicacionesEnCarrito.length, cartItems.length, navigate]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -138,35 +122,26 @@ const TransaccionForm = () => {
         return `REF-${primeraParte}-${segundaParte}`;
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setIsProcessing(true);
 
-        const token = authService.getToken();
-        const headers = new Headers();
-        headers.append('Content-Type', 'application/json');
-        headers.append('Authorization', `Bearer ${token}`);
-
         // Validar que se hayan ingresado los datos de pago
         if (!transaccionData.numeroTarjeta || !transaccionData.fechaCaducidad || !transaccionData.codigoSeguridad) {
-            alert('Por favor, completa todos los datos de la tarjeta');
+            showModal({
+                type: 'warning',
+                title: 'Datos Incompletos',
+                message: 'Por favor, completa todos los datos de la tarjeta',
+                showCancel: false
+            });
             setIsProcessing(false);
             return;
         }
 
-        // Procesar cada publicación secuencialmente
-        let transaccionesCreadas = [];
-        let currentIndex = 0;
-
-        const crearTransaccion = () => {
-            if (currentIndex >= publicaciones.length) {
-                // Todas las transacciones creadas, ahora actualizar
-                actualizarTransacciones();
-                return;
-            }
-
-            const p = publicaciones[currentIndex];
-            
+        const transaccionesCreadas = [];
+        
+        // Crear transacciones
+        for (const p of publicacionesEnCarrito) {
             // Calcular precio con descuento si existe
             const descuentoPorcentaje = p.descuentoPorcentaje || 0;
             let precioFinal = p.precio;
@@ -183,94 +158,52 @@ const TransaccionForm = () => {
                 comentarios: transaccionData.comentarios || ''
             };
 
-            fetch(URLTransaccion, {
-                method: "POST",
-                headers: headers,
-                body: JSON.stringify(transaccionRequest)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.text().then(text => {
-                        throw new Error(`Error ${response.status}: ${text}`);
-                    });
-                }
-                return response.json();
-            })
-            .then(data => {
-                transaccionesCreadas.push(data);
-                currentIndex++;
-                crearTransaccion(); // Siguiente publicación
-            })
-            .catch(() => {
-                alert("Hubo un error al procesar tu compra. Intenta nuevamente.");
-                setIsProcessing(false);
-            });
-        };
-
-        const actualizarTransacciones = () => {
-            let updateIndex = 0;
-
-            const actualizarSiguiente = () => {
-                if (updateIndex >= transaccionesCreadas.length) {
-                    // Todas actualizadas, finalizar
-                    finalizarCompra();
-                    return;
-                }
-
-                const transaccion = transaccionesCreadas[updateIndex];
-                const URLActualizarTransaccion = `http://localhost:4002/api/transacciones/${transaccion.idTransaccion}`;
-                
-                const updateRequest = {
-                    estado: 'COMPLETADA'
-                };
-
-                fetch(URLActualizarTransaccion, {
-                    method: "PUT",
-                    headers: headers,
-                    body: JSON.stringify(updateRequest)
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.text().then(text => {
-                            throw new Error(`Error al actualizar transacción ${transaccion.idTransaccion}: ${text}`);
-                        });
-                    }
-                    return response.json();
-                })
-                .then(() => {
-                    updateIndex++;
-                    actualizarSiguiente(); // Siguiente transacción
-                })
-                .catch(() => {
-                    alert("Hubo un error al procesar tu compra. Intenta nuevamente.");
-                    setIsProcessing(false);
-                });
-            };
-
-            actualizarSiguiente();
-        };
-
-        const finalizarCompra = () => {
-            // Limpiar carrito luego de comprarlo
-            carritoService.clearCart();
-
-            const mensaje = transaccionesCreadas.length === 1 
-                ? "¡Transacción exitosa!"
-                : `¡Compra exitosa! Se procesaron ${transaccionesCreadas.length} transacciones.`;
+            const transaccionResult = await dispatch(createTransaccion({ 
+                transaccionData: transaccionRequest, 
+                token 
+            }));
             
-            alert(mensaje);
-            setIsProcessing(false);
-            navigate('/');
-        };
+            if (transaccionResult.payload) {
+                transaccionesCreadas.push(transaccionResult.payload);
+            }
+        }
 
-        crearTransaccion(); // Iniciar el proceso
+        // Actualizar todas las transacciones a COMPLETADA
+        for (const transaccion of transaccionesCreadas) {
+            await dispatch(updateTransaccionEstado({ 
+                idTransaccion: transaccion.idTransaccion, 
+                estado: 'COMPLETADA', 
+                token 
+            }));
+        }
+
+        // Limpiar carrito luego de comprarlo
+        dispatch(clearCart());
+
+        let mensaje;
+        if (transaccionesCreadas.length === 1) {
+            mensaje = "¡Transacción exitosa!";
+        } else {
+            mensaje = `¡Compra exitosa! Se procesaron ${transaccionesCreadas.length} transacciones.`;
+        }
+        
+        showModal({
+            type: 'success',
+            title: 'Compra Exitosa',
+            message: mensaje,
+            showCancel: false,
+            onConfirm: () => {
+                setIsProcessing(false);
+                navigate('/');
+            }
+        });
     };
 
     const formatearPrecio = (precio) => {
         return `$${parseFloat(precio).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     };
 
-    const cantidadVehiculos = publicaciones.length;
+    const cantidadVehiculos = publicacionesEnCarrito.length;
     const esMultiple = cantidadVehiculos > 1;
 
     return (
@@ -292,7 +225,7 @@ const TransaccionForm = () => {
                 <h3 className="text-xl font-bold text-gray-800 mb-4">Resumen de compra</h3>
                 
                 <div className={`space-y-3 ${esMultiple ? 'max-h-96 overflow-y-auto' : ''}`}>
-                    {publicaciones.map((p, index) => {
+                    {publicacionesEnCarrito.map((p, index) => {
                         const descuentoPorcentaje = p.descuentoPorcentaje || 0;
                         const precioOriginal = p.precio;
                         let precioFinal = precioOriginal;
@@ -364,9 +297,9 @@ const TransaccionForm = () => {
             <div className="bg-white border border-gray-200 rounded-xl p-6">
                 <button 
                     onClick={handleSubmit}
-                    disabled={isProcessing || publicaciones.length === 0}
+                    disabled={isProcessing || publicacionesEnCarrito.length === 0}
                     className={`w-full text-white text-lg font-bold py-4 px-6 rounded-xl transition-all duration-300 hover:shadow-xl hover:scale-105 active:scale-95 ${
-                        isProcessing || publicaciones.length === 0
+                        isProcessing || publicacionesEnCarrito.length === 0
                             ? 'bg-gray-400 cursor-not-allowed' 
                             : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'
                     }`}
@@ -389,6 +322,19 @@ const TransaccionForm = () => {
                     Cancelar
                 </button>
             </div>
+
+            {/* Modal */}
+            <Modal
+                isOpen={modalConfig.isOpen}
+                onClose={closeModal}
+                type={modalConfig.type}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                onConfirm={modalConfig.onConfirm}
+                confirmText={modalConfig.confirmText}
+                cancelText={modalConfig.cancelText}
+                showCancel={modalConfig.showCancel}
+            />
         </div>
     );
 };

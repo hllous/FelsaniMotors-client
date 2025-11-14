@@ -1,21 +1,35 @@
-import { useState, useContext, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { AuthContext } from "../../context/AuthContext";
-import authService from "../../services/authService";
+import { useSelector, useDispatch } from 'react-redux';
+import { updateUsuario } from '../../redux/slices/usuariosSlice';
+import Modal from '../common/Modal';
 
 const UsuarioActualizacion = () => {
-  const { user } = useContext(AuthContext);
-  const token = authService.getToken();
+  const { user, token } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [modalConfig, setModalConfig] = useState({ isOpen: false });
+
+  const showModal = (config) => {
+    setModalConfig({ ...config, isOpen: true });
+  };
+
+  const closeModal = () => {
+    setModalConfig({ isOpen: false });
+  };
 
   useEffect(() => {
-    if (!user?.activo) {
-      alert("Tu cuenta está inactiva. No puedes modificar tu perfil.");
-      navigate('/perfil');
+    if (user?.activo === 0) {
+      showModal({
+        title: 'Cuenta Inactiva',
+        message: 'Tu cuenta está inactiva. No puedes modificar tu perfil.',
+        type: 'warning',
+        onConfirm: () => navigate('/perfil')
+      });
     }
-  }, [user, navigate]);
+  }, [user?.activo, navigate]);
 
-  const [modUsuarioData, setModUsuarioData] = useState({
+  const [newUsuarioData, setNewUsuarioData] = useState({
     nombre: "",
     apellido: "",
     telefono: "",
@@ -23,54 +37,71 @@ const UsuarioActualizacion = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setModUsuarioData({ ...modUsuarioData, [name]: value });
+    setNewUsuarioData({ ...newUsuarioData, [name]: value });
   };
 
-  const handleActualizacion = (e) => {
+  const handleActualizacion = async (e) => {
     e.preventDefault();
     
-    const URLModificarUsuario = `http://localhost:4002/api/usuarios/${user?.idUsuario}`;
-    
-    
-    const dataToUpdate = {};
-    if (modUsuarioData.nombre.trim() !== "") {
-      dataToUpdate.nombre = modUsuarioData.nombre;
+    const datosActualizados = {}
+    if (newUsuarioData.nombre.trim() !== "") {
+      datosActualizados.nombre = newUsuarioData.nombre;
     }
-    if (modUsuarioData.apellido.trim() !== "") {
-      dataToUpdate.apellido = modUsuarioData.apellido;
+    if (newUsuarioData.apellido.trim() !== "") {
+      datosActualizados.apellido = newUsuarioData.apellido;
     }
-    if (modUsuarioData.telefono.trim() !== "") {
-      dataToUpdate.telefono = modUsuarioData.telefono;
+    if (newUsuarioData.telefono.trim() !== "") {
+      datosActualizados.telefono = newUsuarioData.telefono;
     }
 
-    
-    if (Object.keys(dataToUpdate).length === 0) {
-      alert("No has ingresado ningún campo para actualizar");
+    // Verificar si hay datos para actualizar
+    const hayDatosParaActualizar = datosActualizados.nombre || datosActualizados.apellido || datosActualizados.telefono
+    if (!hayDatosParaActualizar) {
+      showModal({
+        title: 'Campos Vacíos',
+        message: 'No has ingresado ningún campo para actualizar',
+        type: 'warning'
+      })
       return;
     }
     
-    const headers = new Headers();
-    headers.append("Content-Type", "application/json");
-    headers.append("Authorization", `Bearer ${token}`);
-
-    fetch(URLModificarUsuario, {
-      method: "PUT",
-      headers: headers,
-      body: JSON.stringify(dataToUpdate),
+    const updateResult = await dispatch(updateUsuario({
+      idUsuario: user.idUsuario,
+      usuarioData: datosActualizados,
+      token
+    }));
+    
+    if (!updateResult.payload) {
+      showModal({
+        title: 'Error',
+        message: 'No se pudo actualizar el perfil. Intenta nuevamente.',
+        type: 'error'
+      });
+      return;
+    }
+    
+    showModal({
+      title: 'Éxito',
+      message: 'Perfil actualizado correctamente',
+      type: 'success',
+      onConfirm: () => navigate('/perfil')
     })
-      .then((response) => {
-        if (!response.ok) throw new Error("No se pudo actualizar el usuario.");
-        return response.json();
-      })
-      .then(() => {
-        alert("Perfil actualizado correctamente");
-        navigate('/perfil');
-      })
-      .catch(() => {});
-  };
+  }
 
   return (
     <div className="bg-white min-h-screen flex justify-center items-start py-10">
+      <Modal
+        isOpen={modalConfig.isOpen}
+        onClose={closeModal}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+        confirmText={modalConfig.confirmText}
+        cancelText={modalConfig.cancelText}
+        showCancel={modalConfig.showCancel}
+        onConfirm={modalConfig.onConfirm}
+      />
+      
       <form
         onSubmit={handleActualizacion}
         className="bg-white border border-[#cbdceb] rounded-2xl p-6 w-full max-w-md"
@@ -89,7 +120,7 @@ const UsuarioActualizacion = () => {
               name="nombre"
               type="text"
               placeholder="Nombre"
-              value={modUsuarioData.nombre}
+              value={newUsuarioData.nombre}
               onChange={handleChange}
               className="w-full border border-[#cbdceb] rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#cbdceb]"
             />
@@ -100,7 +131,7 @@ const UsuarioActualizacion = () => {
               name="apellido"
               type="text"
               placeholder="Apellido"
-              value={modUsuarioData.apellido}
+              value={newUsuarioData.apellido}
               onChange={handleChange}
               className="w-full border border-[#cbdceb] rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#cbdceb]"
             />
@@ -111,7 +142,7 @@ const UsuarioActualizacion = () => {
               name="telefono"
               type="tel"
               placeholder="1122334455"
-              value={modUsuarioData.telefono}
+              value={newUsuarioData.telefono}
               onChange={handleChange}
               className="w-full border border-[#cbdceb] rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#cbdceb]"
             />

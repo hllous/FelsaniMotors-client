@@ -1,86 +1,59 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import authService from '../../services/authService';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchUsuarios, deleteUsuario } from '../../redux/slices/usuariosSlice';
+import Modal from '../common/Modal';
 
 const UsuariosAdmin = () => {
-    const [usuarios, setUsuarios] = useState([]);
-    const [error, setError] = useState(null);
     const navigate = useNavigate();
+    const dispatch = useDispatch();
+    const { token } = useSelector((state) => state.auth);
+    const { items: usuarios, error } = useSelector((state) => state.usuarios);
+    const [modalConfig, setModalConfig] = useState({ isOpen: false });
 
-    const getAuthHeaders = () => {
-        const token = authService.getToken();
-        return {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        };
+    const showModal = (config) => {
+        setModalConfig({ ...config, isOpen: true });
+    };
+
+    const closeModal = () => {
+        setModalConfig({ isOpen: false });
     };
 
     useEffect(() => {
-        fetch('http://localhost:4002/api/usuarios', {
-            method: 'GET',
-            headers: getAuthHeaders()
-        })
-            .then(response => {
-                if (!response.ok) {
-                    return response.text().then(text => {
-                        throw new Error(text || 'Error al obtener usuarios');
-                    });
-                }
-                return response.json();
-            })
-            .then(data => {
-                setUsuarios(data);
-                setError(null);
-            })
-            .catch((error) => {
-                setError(`Error al cargar usuarios: ${error.message}`);
-            });
-    }, []);
+        dispatch(fetchUsuarios(token));
+    }, [dispatch, token]);
 
-    const handleDesactivarUsuario = (idUsuario) => {
-        fetch(`http://localhost:4002/api/usuarios/${idUsuario}`, {
-            method: 'DELETE',
-            headers: getAuthHeaders()
-        })
-            .then(response => {
-                if (!response.ok) {
-                    return response.text().then(text => {
-                        throw new Error(text || 'Error al desactivar usuario');
-                    });
+    const handleDesactivarUsuario = async (idUsuario, nombreCompleto) => {
+        showModal({
+            type: 'warning',
+            title: 'Confirmar Desactivación',
+            message: `¿Estás seguro de desactivar al usuario "${nombreCompleto}"?`,
+            confirmText: 'Desactivar',
+            showCancel: true,
+            onConfirm: async () => {
+
+                const result = await dispatch(deleteUsuario({ idUsuario, token }))
+                
+                if (result.payload) {
+                    showModal({
+                        type: 'success',
+                        title: 'Éxito',
+                        message: 'Usuario desactivado exitosamente',
+                        showCancel: false
+                    })
+
+                } else {
+                    showModal({
+                        type: 'error',
+                        title: 'Error',
+                        message: error || 'Error al desactivar el usuario. Intenta nuevamente.',
+                        showCancel: false
+                    })
+
                 }
-                setUsuarios(prevUsuarios => 
-                    prevUsuarios.map(u => 
-                        u.idUsuario === idUsuario 
-                            ? { ...u, activo: false } 
-                            : u
-                    )
-                );
-                setError(null);
-            })
-            .catch((error) => {
-                setError(`Error al desactivar el usuario: ${error.message}`);
-            });
+            }
+        })
     };
-
-    if (error) {
-        return (
-            <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-                <div className="bg-white rounded-lg p-8 max-w-md w-full">
-                    <div className="text-center">
-                        <div className="text-red-600 text-5xl mb-4">⚠️</div>
-                        <h3 className="text-xl font-bold text-gray-800 mb-2">Error</h3>
-                        <p className="text-gray-600 mb-6">{error}</p>
-                        <button 
-                            onClick={() => navigate('/admin')}
-                            className="px-6 py-2 bg-paleta1-blue text-white rounded-lg hover:bg-paleta1-blue-light hover:text-gray-800 transition-colors"
-                        >
-                            Volver al Panel
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div className="min-h-screen bg-gray-100 py-8">
@@ -101,28 +74,6 @@ const UsuariosAdmin = () => {
                         Volver
                     </button>
                 </div>
-
-                {/* Mensaje de error */}
-                {error && (
-                    <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
-                        <div className="flex items-center gap-3">
-                            <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <div className="flex-1">
-                                <p className="text-red-800 font-medium">{error}</p>
-                            </div>
-                            <button
-                                onClick={() => setError(null)}
-                                className="text-red-600 hover:text-red-800"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                )}
 
                 {/* Lista de usuarios */}
                 <div className="space-y-4">
@@ -169,7 +120,7 @@ const UsuariosAdmin = () => {
                                     <div className="flex gap-2">
                                         {usuario.activo && (
                                             <button
-                                                onClick={() => handleDesactivarUsuario(usuario.idUsuario)}
+                                                onClick={() => handleDesactivarUsuario(usuario.idUsuario, `${usuario.nombre} ${usuario.apellido}`)}
                                                 className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
                                             >
                                                 Desactivar Usuario
@@ -188,6 +139,19 @@ const UsuariosAdmin = () => {
                     </div>
                 )}
             </div>
+
+            {/* Modal */}
+            <Modal
+                isOpen={modalConfig.isOpen}
+                onClose={closeModal}
+                type={modalConfig.type}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                onConfirm={modalConfig.onConfirm}
+                confirmText={modalConfig.confirmText}
+                cancelText={modalConfig.cancelText}
+                showCancel={modalConfig.showCancel}
+            />
         </div>
     );
 };

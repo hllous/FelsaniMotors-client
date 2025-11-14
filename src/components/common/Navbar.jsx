@@ -1,40 +1,35 @@
 //Nico
 import SearchBar from './SearchBar';
 import Carrito from './Carrito';
-import { useState, useEffect } from 'react';
+import Modal from './Modal';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import LogInPopup from '../usuario/LogInPopup';
 import SignInPopup from '../usuario/SignInPopup';
 import { logout } from '../../redux/slices/authSlice';
-import carritoService from '../../services/carritoService';
 
 const Navbar = () => {
 
     const [visibleLogIn, setVisibleLogIn] = useState(false)
     const [visibleSignIn, setVisibleSignIn] = useState(false)
     const [carritoOpen, setCarritoOpen] = useState(false)
-    const [cartCount, setCartCount] = useState(0)
+    const [modalConfig, setModalConfig] = useState({ isOpen: false });
     
     const dispatch = useDispatch();
     const { isAuthenticated, user } = useSelector((state) => state.auth);
+    const { items } = useSelector((state) => state.carrito);
     const navigate = useNavigate();
 
-    // Actualizar contador del carrito
-    useEffect(() => {
-        const updateCartCount = () => {
-            setCartCount(carritoService.getCartCount());
-        };
+    const cartCount = items.length;
 
-        updateCartCount();
+    const showModal = (config) => {
+        setModalConfig({ ...config, isOpen: true });
+    };
 
-        // Actualizar cada vez que se abre/cierra el carrito
-        window.addEventListener('storage', updateCartCount);
-        
-        return () => {
-            window.removeEventListener('storage', updateCartCount);
-        };
-    }, [carritoOpen]);
+    const closeModal = () => {
+        setModalConfig({ isOpen: false });
+    };
 
     const openSignIn = () => {
         setVisibleLogIn(false)
@@ -51,6 +46,16 @@ const Navbar = () => {
     }
 
     const handleMisPublicaciones = () => {
+        if (!isAuthenticated) {
+            showModal({
+                type: 'warning',
+                title: 'Iniciar Sesión',
+                message: 'Debes iniciar sesión para ver tus publicaciones.\n\nPor favor, inicia sesión y vuelve a intentarlo.',
+                showCancel: false
+            });
+            return;
+        }
+        
         if (isAuthenticated && user?.idUsuario) {
             navigate(`/publicaciones?userId=${user.idUsuario}`);
         }
@@ -148,10 +153,7 @@ const Navbar = () => {
                     {/* Componente Carrito */}
                     <Carrito 
                         isOpen={carritoOpen} 
-                        onClose={() => {
-                            setCarritoOpen(false);
-                            setCartCount(carritoService.getCartCount());
-                        }} 
+                        onClose={() => setCarritoOpen(false)} 
                     />
 
                     {/** Panel de Admin (solo visible para administradores) */}
@@ -254,6 +256,16 @@ const Navbar = () => {
 
                 </div>
             </nav>
+
+            {/* Modal */}
+            <Modal
+                isOpen={modalConfig.isOpen}
+                onClose={closeModal}
+                type={modalConfig.type}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                showCancel={modalConfig.showCancel}
+            />
         </header>
 
     );

@@ -1,15 +1,27 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { AuthContext } from "../../context/AuthContext";
-import carritoService from "../../services/carritoService";
+import { useSelector, useDispatch } from 'react-redux';
+import { clearCart, addToCart } from "../../redux/slices/carritoSlice";
+import { fetchFotosByPublicacion } from "../../redux/slices/fotosSlice";
+import Modal from "../common/Modal";
 
-const PublicacionCard = ({ idPublicacion, titulo, ubicacion, precio, estado, marcaAuto, modeloAuto }) => {
+const PublicacionCard = ({ idPublicacion, titulo, ubicacion, precio, estado, marcaAuto, modeloAuto, idUsuario }) => {
 
     const [image, setImage] = useState("");
-    const [precioFinal, setPrecioFinal] = useState(precio);
-    const [descuentoAplicado, setDescuentoAplicado] = useState(0);
+    const [modalConfig, setModalConfig] = useState({ isOpen: false });
+    
     const navigate = useNavigate();
-    const { isAuthenticated, user } = useContext(AuthContext);
+    const dispatch = useDispatch();
+    const { isAuthenticated, user } = useSelector((state) => state.auth);
+    const { fotosByPublicacion } = useSelector((state) => state.fotos);
+
+    const showModal = (config) => {
+        setModalConfig({ ...config, isOpen: true });
+    };
+
+    const closeModal = () => {
+        setModalConfig({ isOpen: false });
+    };
 
     const handleClick = () => {
         navigate(`/publicacion/${idPublicacion}`);
@@ -18,21 +30,48 @@ const PublicacionCard = ({ idPublicacion, titulo, ubicacion, precio, estado, mar
     const handleComprar = (e) => {
         e.stopPropagation();
         if (!isAuthenticated) {
-            alert("Debes iniciar sesión para comprar");
+            showModal({
+                type: 'warning',
+                title: 'Iniciar Sesión',
+                message: 'Debes iniciar sesión para comprar',
+                showCancel: false
+            });
             return;
         }
-        if (!user?.activo) {
-            alert("Tu cuenta está inactiva. Contacta al administrador para activarla.");
+        if (user?.activo === 0) {
+            showModal({
+                type: 'error',
+                title: 'Cuenta Inactiva',
+                message: 'Tu cuenta está inactiva. Contacta al administrador para activarla.',
+                showCancel: false
+            });
             return;
         }
         if (estado === 'V') {
-            alert("Esta publicación ya fue vendida.");
+            showModal({
+                type: 'info',
+                title: 'No Disponible',
+                message: 'Esta publicación esta vendida.',
+                showCancel: false
+            });
+            return;
+        }
+        // Validar que no sea el dueño
+        if (user?.idUsuario === idUsuario) {
+            showModal({
+                type: 'warning',
+                title: 'No Disponible',
+                message: 'No puedes comprar tu propia publicación.',
+                showCancel: false
+            });
             return;
         }
         
-        carritoService.clearCart();
-        carritoService.addToCart({
+        dispatch(clearCart());
+
+        dispatch(addToCart({
             idPublicacion,
+            idVendedor: idUsuario,
             titulo,
             precio,
             marcaAuto,
@@ -40,7 +79,7 @@ const PublicacionCard = ({ idPublicacion, titulo, ubicacion, precio, estado, mar
             ubicacion,
             imagen: image,
             estado
-        });
+        }));
         
         navigate('/comprar-carrito');
     };
@@ -54,38 +93,25 @@ const PublicacionCard = ({ idPublicacion, titulo, ubicacion, precio, estado, mar
         return estadosMap[estado];
     };
 
+    // Cargar fotos
     useEffect(() => {
-        // Cargar imagen
-        fetch(`http://localhost:4002/api/publicaciones/${idPublicacion}/fotos-contenido`)
-        .then(response => response.json())
-        .then(data => {
-            if (data && data.length > 0 && data[0]?.file) {
-                setImage(`data:image/jpeg;base64,${data[0].file}`);
-            }
-        })
-        .catch(() => { 
+        if (!fotosByPublicacion[idPublicacion]) {
+            dispatch(fetchFotosByPublicacion(idPublicacion));
+        }
+    }, [idPublicacion, dispatch])
+    
+    // Obtener foto principal
+    const fotosPublicacion = fotosByPublicacion[idPublicacion];
+    
+    useEffect(() => {
+        if (fotosPublicacion && fotosPublicacion.length > 0 && fotosPublicacion[0]?.file) {
+            setImage(`data:image/jpeg;base64,${fotosPublicacion[0].file}`);
+        } else {
             setImage('');
-        });
-
-        // Obtener descuento desde el backend
-        fetch(`http://localhost:4002/api/publicaciones/${idPublicacion}`)
-        .then(response => response.json())
-        .then(data => {
-            const descuentoPorcentaje = data?.descuentoPorcentaje || 0;
-            const descuentoDecimal = descuentoPorcentaje / 100;
-            const nuevoPrecio = precio - (precio * descuentoDecimal);
-            setPrecioFinal(nuevoPrecio);
-            setDescuentoAplicado(descuentoDecimal);
-        })
-        .catch(() => {
-            setPrecioFinal(precio);
-            setDescuentoAplicado(0);
-        });
-    }, [idPublicacion, precio]);
-
-    return(
+        }
+    }, [idPublicacion, Object.keys(fotosByPublicacion).length]);    return(
         <div 
-w            className="bg-white rounded-xl overflow-hidden cursor-pointer border border-paleta1-cream"
+            className="bg-white rounded-xl overflow-hidden cursor-pointer border border-paleta1-cream"
             onClick={handleClick}
         >
             {/* Imagen */}
@@ -107,23 +133,9 @@ w            className="bg-white rounded-xl overflow-hidden cursor-pointer borde
             <div className="p-4">
                 {/* Precio */}
                 <div className="mb-2">
-                    {precioFinal !== precio ? (
-                        <>
-                            <span className="text-sm text-gray-500 line-through mr-2">
-                                ${precio?.toLocaleString()}
-                            </span>
-                            <span className="text-2xl font-bold text-green-700">
-                                ${precioFinal?.toLocaleString()}
-                            </span>
-                            <span className="text-xs text-green-600 ml-1 font-medium">
-                                (-{Math.round(descuentoAplicado * 100)}%)
-                            </span>
-                        </>
-                    ) : (
-                        <span className="text-2xl font-bold text-gray-900">
-                            ${precio?.toLocaleString()}
-                        </span>
-                    )}
+                    <span className="text-2xl font-bold text-gray-900">
+                        ${precio?.toLocaleString()}
+                    </span>
                     <span className="text-sm text-gray-500 ml-1">ARS</span>
                 </div>
 
@@ -183,6 +195,16 @@ w            className="bg-white rounded-xl overflow-hidden cursor-pointer borde
                     </div>
                 </div>
             </div>
+
+            {/* Modal */}
+            <Modal
+                isOpen={modalConfig.isOpen}
+                onClose={closeModal}
+                type={modalConfig.type}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                showCancel={modalConfig.showCancel}
+            />
         </div>
     );
 

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { register } from '../../redux/slices/authSlice';
+import Modal from '../common/Modal';
 
 const SignInPopup = ({ close, openLogIn }) => {
   const [formData, setFormData] = useState({
@@ -10,8 +11,17 @@ const SignInPopup = ({ close, openLogIn }) => {
     password: '',
     telefono: '',
   });
+  const [modalConfig, setModalConfig] = useState({ isOpen: false });
 
   const dispatch = useDispatch();
+
+  const showModal = (config) => {
+    setModalConfig({ ...config, isOpen: true });
+  };
+
+  const closeModal = () => {
+    setModalConfig({ isOpen: false });
+  };
 
   const handleChange = (e) => {
     setFormData({
@@ -29,32 +39,53 @@ const SignInPopup = ({ close, openLogIn }) => {
 
     const emailValidation = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailValidation.test(formData.email)) {
-      alert('Por favor, ingresa un email válido (ejemplo: usuario@gmail.com)');
+      showModal({
+        type: 'warning',
+        title: 'Email Inválido',
+        message: 'Por favor, ingresa un email válido (ejemplo: usuario@gmail.com)',
+        showCancel: false
+      });
       return;
     }
 
     if (!formData.nombre || !formData.apellido || !formData.password || !formData.telefono) {
-      alert('Por favor, completa todos los campos');
+      showModal({
+        type: 'warning',
+        title: 'Campos Incompletos',
+        message: 'Por favor, completa todos los campos',
+        showCancel: false
+      });
       return;
     }
 
-    try {
-      const result = await dispatch(register({
+    const result = await dispatch(register(
+      {
         email: formData.email,
         password: formData.password,
         nombre: formData.nombre,
         apellido: formData.apellido,
         telefono: parseInt(formData.telefono),
         rol: 'USER'
-      })).unwrap();
-      
-      if (result) {
-        handleClose();
       }
-    } catch (err) {
-      alert(err || 'Error al registrarse');
+    ))
+    
+    if (result.payload) {
+
+      handleClose()
+    } else {
+
+      showModal(
+        {
+          type: 'error',
+          title: 'Error al Registrarse',
+          message: 'No se pudo completar el registro. El email puede estar en uso.',
+          showCancel: false
+        }
+      )  
     }
-  };
+
+
+  }
 
   return (
     <div>
@@ -177,6 +208,16 @@ const SignInPopup = ({ close, openLogIn }) => {
           </button>
         </div>
       </div>
+
+      {/* Modal */}
+      <Modal
+        isOpen={modalConfig.isOpen}
+        onClose={closeModal}
+        type={modalConfig.type}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        showCancel={modalConfig.showCancel}
+      />
     </div>
   );
 };

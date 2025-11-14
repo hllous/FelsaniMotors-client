@@ -1,46 +1,50 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchPublicacionById, fetchFotosPublicacion } from '../../redux/slices/publicacionesSlice';
+import { fetchUsuarioById } from '../../redux/slices/usuariosSlice';
 import TransaccionEstado from "./TransaccionEstado";
-import authService from '../../services/authService';
 
 const TransaccionCard = ({ transaccion }) => {
-  const [image, setImage] = useState("https://via.placeholder.com/300x200?text=Loading...");
-  const [publicacion, setPublicacion] = useState({});
-  const [comprador, setComprador] = useState({});
-  const [vendedor, setVendedor] = useState({});
+  const dispatch = useDispatch();
+  const { token } = useSelector((state) => state.auth);
+  
+  const { currentItem: publicacion, fotosMap } = useSelector((state) => state.publicaciones);
+  const { items: usuarios } = useSelector((state) => state.usuarios);
+  
+  // Buscar comprador y vendedor en el estado de Redux
+  const comprador = usuarios.find(u => u.idUsuario === transaccion?.idComprador) || {};
+  const vendedor = usuarios.find(u => u.idUsuario === transaccion?.idVendedor) || {};
 
   useEffect(() => {
-    if (!transaccion?.idPublicacion || !transaccion?.idComprador || !transaccion?.idVendedor) return;
+    const idPublicacion = transaccion?.idPublicacion;
+    const idComprador = transaccion?.idComprador;
+    const idVendedor = transaccion?.idVendedor;
+    
+    if (!idPublicacion || !idComprador || !idVendedor) return;
 
-    const token = authService.getToken();
-    const headers = new Headers();
-    headers.append("Content-Type", "application/json");
-    headers.append("Authorization", `Bearer ${token}`);
+    // Solo fetch si no existe en cache
+    if (!publicacion || publicacion.idPublicacion !== idPublicacion) {
+      dispatch(fetchPublicacionById(idPublicacion));
+    }
+    
+    if (!fotosMap?.[idPublicacion]) {
+      dispatch(fetchFotosPublicacion(idPublicacion));
+    }
+    
+    if (!comprador?.idUsuario) {
+      dispatch(fetchUsuarioById({ idUsuario: idComprador, token }));
+    }
+    
+    if (!vendedor?.idUsuario) {
+      dispatch(fetchUsuarioById({ idUsuario: idVendedor, token }));
+    }
 
-    const URLPublicacion = `http://localhost:4002/api/publicaciones/${transaccion.idPublicacion}`;
-    const URLPublicacionFoto = `http://localhost:4002/api/publicaciones/${transaccion.idPublicacion}/fotos-contenido`;
-    const URLComprador = `http://localhost:4002/api/usuarios/${transaccion.idComprador}`;
-    const URLVendedor = `http://localhost:4002/api/usuarios/${transaccion.idVendedor}`;
+  }, [transaccion?.idPublicacion, transaccion?.idComprador, transaccion?.idVendedor, token, dispatch, publicacion?.idPublicacion, fotosMap, comprador?.idUsuario, vendedor?.idUsuario])
 
-    fetch(URLPublicacion, { method: "GET", headers })
-      .then((res) => res.json())
-      .then((data) => setPublicacion(data))
-      .catch(() => {});
-
-    fetch(URLPublicacionFoto)
-      .then((res) => res.json())
-      .then((data) => setImage(`data:image/jpeg;base64,${data[0].file}`))
-      .catch(() => {});
-
-    fetch(URLComprador, { method: "GET", headers })
-      .then((res) => res.json())
-      .then((data) => setComprador(data))
-      .catch(() => {});
-
-    fetch(URLVendedor, { method: "GET", headers })
-      .then((res) => res.json())
-      .then((data) => setVendedor(data))
-      .catch(() => {});
-  }, [transaccion]);
+  const fotos = fotosMap?.[transaccion?.idPublicacion];
+  const image = (fotos && fotos.length > 0) 
+    ? `data:image/jpeg;base64,${fotos[0].file}` 
+    : "https://via.placeholder.com/300x200?text=Sin+imagen";
 
   const formatearFecha = (fecha) => {
     if (!fecha) return "";

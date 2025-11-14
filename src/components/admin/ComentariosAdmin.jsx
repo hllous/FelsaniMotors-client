@@ -1,87 +1,82 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import authService from '../../services/authService';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchPublicaciones } from '../../redux/slices/publicacionesSlice';
+import { fetchComentariosByPublicacion, deleteComentario } from '../../redux/slices/comentariosSlice';
+import Modal from '../common/Modal';
 
 const ComentariosAdmin = () => {
-    const [comentarios, setComentarios] = useState([]);
-    const [error, setError] = useState(null);
+    const [modalConfig, setModalConfig] = useState({ isOpen: false });
     const navigate = useNavigate();
+    const dispatch = useDispatch();
+    const { items: publicaciones } = useSelector((state) => state.publicaciones);
+    const { comentariosByPublicacion } = useSelector((state) => state.comentarios);
+    const { token } = useSelector((state) => state.auth);
 
-    const getAuthHeaders = () => {
-        const token = authService.getToken();
-        return {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        };
+    const showModal = (config) => {
+        setModalConfig({ ...config, isOpen: true });
     };
 
-    useEffect(() => {
-        fetch('http://localhost:4002/api/publicaciones', {
-            method: 'GET'
-        })
-            .then(response => {
-                if (!response.ok) return;
-                return response.json();
-            })
-            .then(publicaciones => {
-                if (!publicaciones || publicaciones.length === 0) {
-                    setComentarios([]);
-                    return;
+    const closeModal = () => {
+        setModalConfig({ isOpen: false });
+    };
+
+    // Combina todos los comentarios con la publicacion - derivado de Redux
+    const comentarios = [];
+    for (const publicacion of publicaciones) {
+        const comentariosPublicacion = comentariosByPublicacion[publicacion.idPublicacion] || [];
+        for (const comentario of comentariosPublicacion) {
+            comentarios.push({
+                ...comentario,
+                publicacion: {
+                    idPublicacion: publicacion.idPublicacion,
+                    titulo: publicacion.titulo
                 }
-                
-                const comentarios = [];
-                
-                publicaciones.forEach(p => {
-                    fetch(`http://localhost:4002/api/publicaciones/${p.idPublicacion}/comentarios`, {
-                        method: 'GET'
-                    })
-                        .then(response => {
-                            if (response.ok) {
-                                return response.json();
-                            }
-                            return [];
-                        })
-                        .then(comentariosDePub => {
-                            const comentariosConPublicacion = comentariosDePub.map(com => ({
-                                ...com,
-                                publicacion: {
-                                    idPublicacion: p.idPublicacion,
-                                    titulo: p.titulo
-                                }
-                            }));
-                            comentarios.push(...comentariosConPublicacion);
-                            setComentarios([...comentarios]);
-                        });
-                });
             });
-    }, []);
-
-    const handleEliminarComentario = (idComentario, usuario, idPublicacion) => {
-        if (!window.confirm(`¿Estás seguro de eliminar el comentario de ${usuario}?`)) {
-            return;
         }
+    }
 
-        const urlComentarioPublicacion = `http://localhost:4002/api/publicaciones/${idPublicacion}/comentarios/${idComentario}`;
+    useEffect(() => {
+        dispatch(fetchPublicaciones());
+    }, [dispatch]);
 
-        fetch(urlComentarioPublicacion, {
-            method: 'DELETE',
-            headers: getAuthHeaders()
-        })
-            .then(response => {
-                if (response.ok) {
-                    setComentarios(prevComentarios => 
-                        prevComentarios.filter(com => com.idComentario !== idComentario)
-                    );
-                    alert('Comentario eliminado exitosamente');
+    useEffect(() => {
+        if (publicaciones && publicaciones.length > 0) {
+            // Fetch comentarios solo si no existen en cache
+            publicaciones.forEach(p => {
+                if (!comentariosByPublicacion[p.idPublicacion]) {
+                    dispatch(fetchComentariosByPublicacion(p.idPublicacion));
+                }
+            });
+        }
+    }, [publicaciones.length, dispatch, comentariosByPublicacion]);
+
+    const handleEliminarComentario = async (idComentario, usuario, idPublicacion) => {
+        showModal({
+            type: 'warning',
+            title: 'Confirmar Eliminación',
+            message: `¿Estás seguro de eliminar el comentario de ${usuario}?`,
+            confirmText: 'Eliminar',
+            showCancel: true,
+            onConfirm: async () => {
+                const result = await dispatch(deleteComentario({ idPublicacion, idComentario, token }));
+                if (result.payload) {
+                    showModal({
+                        type: 'success',
+                        title: 'Éxito',
+                        message: 'Comentario eliminado exitosamente',
+                        showCancel: false
+                    });
                 } else {
-                    return response.text().then(text => {
-                        throw new Error(text || 'Error al eliminar el comentario');
+                    showModal({
+                        type: 'error',
+                        title: 'Error',
+                        message: 'Error al eliminar el comentario. Intenta nuevamente.',
+                        showCancel: false
                     });
                 }
-            })
-            .catch((error) => {
-                setError(`Error al eliminar el comentario: ${error.message}`);
-            });
+            }
+        });
     };
 
     return (
@@ -103,28 +98,6 @@ const ComentariosAdmin = () => {
                         Volver
                     </button>
                 </div>
-
-                {/* Mensaje de error */}
-                {error && (
-                    <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
-                        <div className="flex items-center gap-3">
-                            <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <div className="flex-1">
-                                <p className="text-red-800 font-medium">{error}</p>
-                            </div>
-                            <button
-                                onClick={() => setError(null)}
-                                className="text-red-600 hover:text-red-800"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                )}
 
                 {/* Lista de comentarios */}
                 <div className="space-y-4">
@@ -208,6 +181,19 @@ const ComentariosAdmin = () => {
                     </div>
                 )}
             </div>
+
+            {/* Modal */}
+            <Modal
+                isOpen={modalConfig.isOpen}
+                onClose={closeModal}
+                type={modalConfig.type}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                onConfirm={modalConfig.onConfirm}
+                confirmText={modalConfig.confirmText}
+                cancelText={modalConfig.cancelText}
+                showCancel={modalConfig.showCancel}
+            />
         </div>
     );
 };

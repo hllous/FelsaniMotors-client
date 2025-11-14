@@ -1,29 +1,19 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { AuthContext } from "../../context/AuthContext";
-import authService from "../../services/authService";
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchPublicacionesUsuario } from '../../redux/slices/publicacionesSlice';
 
 const UsuarioPublicaciones = () => {
-  const { user } = useContext(AuthContext);
-  const token = authService.getToken();
+  const { user, token } = useSelector((state) => state.auth);
+  const { misPublicaciones: publicaciones } = useSelector((state) => state.publicaciones);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [publicaciones, setPublicaciones] = useState([]);
 
   useEffect(() => {
-    const URLPublicaciones = `http://localhost:4002/api/publicaciones/usuario/${user?.idUsuario}`;
-    
-    const headers = new Headers();
-    headers.append("Content-Type", "application/json");
-    headers.append("Authorization", `Bearer ${token}`);
-
-    fetch(URLPublicaciones, { method: "GET", headers: headers })
-      .then((response) => {
-        if (!response.ok) throw new Error("Error al obtener publicaciones");
-        return response.json();
-      })
-      .then((data) => setPublicaciones(data))
-      .catch(() => {});
-  }, [user?.idUsuario, token]);
+    if (user?.idUsuario) {
+      dispatch(fetchPublicacionesUsuario(user.idUsuario));
+    }
+  }, [user?.idUsuario, dispatch]);
 
   const handleClick = (idPublicacion) => {
     navigate(`/publicacion/${idPublicacion}`);

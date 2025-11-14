@@ -1,19 +1,33 @@
-import { useState, useContext, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { AuthContext } from "../../context/AuthContext";
-import authService from "../../services/authService";
+import { useSelector, useDispatch } from 'react-redux';
+import { cambiarContrasena } from '../../redux/slices/usuariosSlice';
+import Modal from '../common/Modal';
 
 const CambioContrasena = () => {
-  const { user } = useContext(AuthContext);
-  const token = authService.getToken();
+  const { user, token } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [modalConfig, setModalConfig] = useState({ isOpen: false });
+
+  const showModal = (config) => {
+    setModalConfig({ ...config, isOpen: true });
+  };
+
+  const closeModal = () => {
+    setModalConfig({ isOpen: false });
+  };
 
   useEffect(() => {
-    if (!user?.activo) {
-      alert("Tu cuenta está inactiva. No puedes cambiar tu contraseña.");
-      navigate('/perfil');
+    if (user?.activo === 0) {
+      showModal({
+        title: 'Cuenta Inactiva',
+        message: 'Tu cuenta está inactiva. No puedes cambiar tu contraseña.',
+        type: 'warning',
+        onConfirm: () => navigate('/perfil')
+      });
     }
-  }, [user, navigate]);
+  }, [user?.activo, navigate]);
 
   const [contrasenaUpdate, setContrasenaUpdate] = useState({
     contrasenaActual: "",
@@ -25,30 +39,47 @@ const CambioContrasena = () => {
     setContrasenaUpdate({ ...contrasenaUpdate, [name]: value });
   };
 
-  const handleCambio = (e) => {
+  const handleCambio = async (e) => {
     e.preventDefault();
     
-    const URLContrasenaUpdate = `http://localhost:4002/api/usuarios/${user?.idUsuario}/cambiar-contrasena`;
+    const result = await dispatch(cambiarContrasena({
+      idUsuario: user.idUsuario,
+      oldPassword: contrasenaUpdate.contrasenaActual,
+      newPassword: contrasenaUpdate.nuevaContrasena,
+      token
+    }));
     
-    const headers = new Headers();
-    headers.append("Content-Type", "application/json");
-    headers.append("Authorization", `Bearer ${token}`);
-
-    fetch(URLContrasenaUpdate, {
-      method: "PUT",
-      headers: headers,
-      body: JSON.stringify(contrasenaUpdate),
-    })
-      .then((response) => {
-        if (!response.ok) throw new Error("Error al actualizar contraseña.");
-        alert("Contraseña actualizada correctamente");
-        navigate('/perfil');
-      })
-      .catch(() => {});
+    if (!result.payload) {
+      showModal({
+        title: 'Error',
+        message: 'No se pudo cambiar la contraseña. Verifica que la contraseña actual sea correcta.',
+        type: 'error'
+      });
+      return;
+    }
+    
+    showModal({
+      title: 'Éxito',
+      message: 'Contraseña actualizada correctamente',
+      type: 'success',
+      onConfirm: () => navigate('/perfil')
+    });
   };
 
   return (
     <div className="bg-white min-h-screen flex justify-center items-start py-10">
+      <Modal
+        isOpen={modalConfig.isOpen}
+        onClose={closeModal}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+        confirmText={modalConfig.confirmText}
+        cancelText={modalConfig.cancelText}
+        showCancel={modalConfig.showCancel}
+        onConfirm={modalConfig.onConfirm}
+      />
+      
       <form
         onSubmit={handleCambio}
         className="bg-white border border-[#cbdceb] rounded-2xl p-6 w-full max-w-md"

@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchOpcionesFiltro } from '../../redux/slices/publicacionesSlice';
 
 const Filter = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [searchParams] = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
+  const { opcionesFiltro } = useSelector((state) => state.publicaciones);
   
   const [filters, setFilters] = useState({
     marca: [],
@@ -49,25 +53,34 @@ const Filter = () => {
   };
 
   useEffect(() => {
-    fetch('http://localhost:4002/api/publicaciones/filtros/opciones')
-      .then(response => response.json())
-      .then(data => {
-        setFilterOptions({
-          marca: data.marcas || [],
-          modelo: data.modelos || [],
-          anio: data.anios?.map(String) || [],
-          estado: data.estados || [],
-          kilometraje: ['0-50000', '50000-100000', '100000-150000', '150000-200000', '200000-999999999'],
-          combustible: data.combustibles || [],
-          tipoCategoria: data.tipoCategorias || [],
-          tipoCaja: data.tipoCajas || [],
-          motor: data.motores || [],
-          estadoPublicacion: ['A', 'V', 'P']
-        })
+    // Solo fetch si no existe en cache
+    if (!opcionesFiltro) {
+      dispatch(fetchOpcionesFiltro());
+    }
+  }, [dispatch, opcionesFiltro]);
 
-      })
-      .catch(() => {});
-  }, [])
+  useEffect(() => {
+    if (opcionesFiltro && opcionesFiltro.marcas) {
+      setFilterOptions(prev => {
+        const newOptions = {
+          marca: opcionesFiltro.marcas || [],
+          modelo: opcionesFiltro.modelos || [],
+          anio: opcionesFiltro.anios?.map(String) || [],
+          estado: opcionesFiltro.estados || [],
+          kilometraje: ['0-50000', '50000-100000', '100000-150000', '150000-200000', '200000-999999999'],
+          combustible: opcionesFiltro.combustibles || [],
+          tipoCategoria: opcionesFiltro.tipoCategorias || [],
+          tipoCaja: opcionesFiltro.tipoCajas || [],
+          motor: opcionesFiltro.motores || [],
+          estadoPublicacion: ['A', 'V', 'P']
+        };
+        if (JSON.stringify(prev) !== JSON.stringify(newOptions)) {
+          return newOptions;
+        }
+        return prev;
+      });
+    }
+  }, [opcionesFiltro]);
 
   const [openDropdowns, setOpenDropdowns] = useState({});
 
@@ -125,11 +138,11 @@ const Filter = () => {
       params.append('q', textoBusqueda);
     }
     
-    for (const key in filters) {
+    Object.keys(filters).forEach(key => {
       filters[key].forEach(value => {
         params.append(key, value);
       });
-    }
+    });
     
     navigate(`/publicaciones?${params.toString()}`);
     setIsOpen(false);
@@ -152,10 +165,10 @@ const Filter = () => {
     return labels[key] || key;
   };
 
-  let activeFiltersCount = 0;
-  for (const key in filters) {
-    activeFiltersCount += filters[key].length;
-  }
+  // Contar filtros activos
+  const activeFiltersCount = Object.keys(filters).reduce((total, key) => {
+    return total + filters[key].length;
+  }, 0);
 
   return (
     <div className="relative">
@@ -232,7 +245,7 @@ const Filter = () => {
               <div className="flex-1 overflow-y-auto p-6">
                 {/* Lista expandible de filtros */}
                 <div className="space-y-2">
-                  {Object.keys(filters).map((filterKey) => (
+                  {Object.keys(filterOptions).map((filterKey) => (
                     <div key={filterKey} className="relative">
                       {/* Botón de categoría de filtro */}
                       <div
@@ -323,11 +336,9 @@ const Filter = () => {
                     <div className="flex flex-wrap gap-2">
 
                       {/* Mostrar en pantalla filtros activos */}
-                      {(() => {
-                        const tags = [];
-                        for (const key in filters) {
-                          filters[key].forEach((value) => {
-
+                      {Object.keys(filterOptions)
+                        .flatMap((key) => 
+                          filters[key].map((value) => {
                             // Para kilometraje y estadoPublicacion, mostrar valor formateado
                             let displayValue = value;
                             if (key === 'kilometraje') {
@@ -336,7 +347,7 @@ const Filter = () => {
                               displayValue = estadoPublicacionDisplay[value] || value;
                             }
                             
-                            tags.push(
+                            return (
                               <span
                                 key={`${key}-${value}`}
                                 className="inline-flex items-center gap-1 px-2 py-1 bg-paleta1-blue text-white text-xs rounded-full"
@@ -352,10 +363,9 @@ const Filter = () => {
                                 </button>
                               </span>
                             );
-                          });
-                        }
-                        return tags;
-                      })()}
+                          })
+                        )
+                      }
                     </div>
                   </div>
                 )}

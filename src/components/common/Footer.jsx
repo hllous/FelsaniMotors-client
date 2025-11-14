@@ -2,7 +2,6 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 const Footer = () => {
-  const currentYear = new Date().getFullYear();
   const githubRepoUrl = "https://github.com/hllous/FelsaniMotors-client";
 
   return (
@@ -112,11 +111,6 @@ const Footer = () => {
 
         {/* Línea divisoria */}
         <div className="mt-8 pt-8 border-t border-paleta1-blue-light">
-          <div className="flex justify-center items-center">
-            <p className="text-sm text-gray-800">
-              © {currentYear} Felsani Motors. Todos los derechos reservados.
-            </p>
-          </div>
         </div>
       </div>
     </footer>
