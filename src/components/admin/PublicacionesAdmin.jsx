@@ -20,8 +20,10 @@ const PublicacionesAdmin = () => {
     };
 
     useEffect(() => {
-        dispatch(fetchPublicaciones());
-    }, [dispatch]);
+        if (publicaciones.length === 0) {
+            dispatch(fetchPublicaciones());
+        }
+    }, [publicaciones.length]);
 
     const handleEliminarPublicacion = async (id, titulo) => {
         showModal({

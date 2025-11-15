@@ -61,7 +61,7 @@ const PublicacionList = () => {
             // Solo fetch si está filtrado O si no hay publicaciones en cache
             dispatch(fetchPublicaciones());
         }
-    }, [dispatch, userId, consultaBusqueda, hasFiltros, paramsString]);
+    }, [userId, consultaBusqueda, hasFiltros, paramsString]);
 
     return (
         <div className="min-h-screen bg-gray-50">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchOpcionesFiltro } from '../../redux/slices/publicacionesSlice';
@@ -23,19 +23,6 @@ const Filter = () => {
     estadoPublicacion: []
   });
 
-  const [filterOptions, setFilterOptions] = useState({
-    marca: [],
-    modelo: [],
-    anio: [],
-    estado: [],
-    kilometraje: [],
-    combustible: [],
-    tipoCategoria: [],
-    tipoCaja: [],
-    motor: [],
-    estadoPublicacion: ['A', 'V', 'P']
-  });
-
   // Mapeo para mostrar valores
   const kilometrajeDisplay = {
     '0-50000': '0-50.000 km',
@@ -52,33 +39,39 @@ const Filter = () => {
     'P': 'Pausada'
   };
 
-  useEffect(() => {
-    // Solo fetch si no existe en cache
-    if (!opcionesFiltro) {
-      dispatch(fetchOpcionesFiltro());
+  const filterOptions = useMemo(() => {
+    if (!opcionesFiltro || !opcionesFiltro.marcas) {
+      return {
+        marca: [],
+        modelo: [],
+        anio: [],
+        estado: [],
+        kilometraje: ['0-50000', '50000-100000', '100000-150000', '150000-200000', '200000-999999999'],
+        combustible: [],
+        tipoCategoria: [],
+        tipoCaja: [],
+        motor: [],
+        estadoPublicacion: ['A', 'V', 'P']
+      };
     }
-  }, [dispatch, opcionesFiltro]);
+    
+    return {
+      marca: opcionesFiltro.marcas || [],
+      modelo: opcionesFiltro.modelos || [],
+      anio: opcionesFiltro.anios?.map(String) || [],
+      estado: opcionesFiltro.estados || [],
+      kilometraje: ['0-50000', '50000-100000', '100000-150000', '150000-200000', '200000-999999999'],
+      combustible: opcionesFiltro.combustibles || [],
+      tipoCategoria: opcionesFiltro.tipoCategorias || [],
+      tipoCaja: opcionesFiltro.tipoCajas || [],
+      motor: opcionesFiltro.motores || [],
+      estadoPublicacion: ['A', 'V', 'P']
+    };
+  }, [opcionesFiltro]);
 
   useEffect(() => {
-    if (opcionesFiltro && opcionesFiltro.marcas) {
-      setFilterOptions(prev => {
-        const newOptions = {
-          marca: opcionesFiltro.marcas || [],
-          modelo: opcionesFiltro.modelos || [],
-          anio: opcionesFiltro.anios?.map(String) || [],
-          estado: opcionesFiltro.estados || [],
-          kilometraje: ['0-50000', '50000-100000', '100000-150000', '150000-200000', '200000-999999999'],
-          combustible: opcionesFiltro.combustibles || [],
-          tipoCategoria: opcionesFiltro.tipoCategorias || [],
-          tipoCaja: opcionesFiltro.tipoCajas || [],
-          motor: opcionesFiltro.motores || [],
-          estadoPublicacion: ['A', 'V', 'P']
-        };
-        if (JSON.stringify(prev) !== JSON.stringify(newOptions)) {
-          return newOptions;
-        }
-        return prev;
-      });
+    if (!opcionesFiltro) {
+      dispatch(fetchOpcionesFiltro());
     }
   }, [opcionesFiltro]);
 

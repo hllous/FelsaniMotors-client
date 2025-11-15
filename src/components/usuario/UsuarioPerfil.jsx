@@ -17,7 +17,7 @@ const UsuarioPerfil = () => {
         token 
       }));
     }
-  }, [idUsuarioToFetch, token, dispatch]);
+  }, [idUsuarioToFetch, token]);
 
   return (
     <div className="bg-white flex justify-center items-start py-10">

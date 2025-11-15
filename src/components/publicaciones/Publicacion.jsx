@@ -150,7 +150,7 @@ const Publicacion = () => {
             const imagenesFormateadas = fotos.map(foto => `data:image/jpeg;base64,${foto.file}`);
             setImagenes(imagenesFormateadas);
         }
-    }, [idPublicacion, Object.keys(fotosByPublicacion).length]);
+    }, [idPublicacion, fotosByPublicacion[idPublicacion]]);
 
     useEffect(() => {
         if (isAuthenticated && user && publicacionData) {

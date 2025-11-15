@@ -27,7 +27,7 @@ const CambioContrasena = () => {
         onConfirm: () => navigate('/perfil')
       });
     }
-  }, [user?.activo, navigate]);
+  }, [user?.activo]);
 
   const [contrasenaUpdate, setContrasenaUpdate] = useState({
     contrasenaActual: "",

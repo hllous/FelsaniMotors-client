@@ -20,8 +20,10 @@ const UsuariosAdmin = () => {
     };
 
     useEffect(() => {
-        dispatch(fetchUsuarios(token));
-    }, [dispatch, token]);
+        if (usuarios.length === 0) {
+            dispatch(fetchUsuarios(token));
+        }
+    }, [usuarios.length]);
 
     const handleDesactivarUsuario = async (idUsuario, nombreCompleto) => {
         showModal({

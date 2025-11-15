@@ -12,7 +12,7 @@ const TransaccionList = () => {
         if (user?.idUsuario && token) {
             dispatch(fetchTransaccionesUsuario({ idUsuario: user.idUsuario, token }));
         }
-    }, [user?.idUsuario, token, dispatch]);
+    }, [user?.idUsuario, token]);
 
     return(
         <div className="bg-paleta1-cream-light min-h-screen py-10 px-6">

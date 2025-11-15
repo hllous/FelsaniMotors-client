@@ -27,7 +27,7 @@ const UsuarioActualizacion = () => {
         onConfirm: () => navigate('/perfil')
       });
     }
-  }, [user?.activo, navigate]);
+  }, [user?.activo]);
 
   const [newUsuarioData, setNewUsuarioData] = useState({
     nombre: "",

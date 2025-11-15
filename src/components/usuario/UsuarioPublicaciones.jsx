@@ -13,7 +13,7 @@ const UsuarioPublicaciones = () => {
     if (user?.idUsuario) {
       dispatch(fetchPublicacionesUsuario(user.idUsuario));
     }
-  }, [user?.idUsuario, dispatch]);
+  }, [user?.idUsuario]);
 
   const handleClick = (idPublicacion) => {
     navigate(`/publicacion/${idPublicacion}`);

@@ -21,7 +21,7 @@ const ComentariosAdmin = () => {
         setModalConfig({ isOpen: false });
     };
 
-    // Combina todos los comentarios con la publicacion - derivado de Redux
+    // Combina todos los comentarios con la publicacion
     const comentarios = [];
     for (const publicacion of publicaciones) {
         const comentariosPublicacion = comentariosByPublicacion[publicacion.idPublicacion] || [];
@@ -38,7 +38,7 @@ const ComentariosAdmin = () => {
 
     useEffect(() => {
         dispatch(fetchPublicaciones());
-    }, [dispatch]);
+    }, []);
 
     useEffect(() => {
         if (publicaciones && publicaciones.length > 0) {
@@ -49,7 +49,7 @@ const ComentariosAdmin = () => {
                 }
             });
         }
-    }, [publicaciones.length, dispatch, comentariosByPublicacion]);
+    }, [publicaciones.length]);
 
     const handleEliminarComentario = async (idComentario, usuario, idPublicacion) => {
         showModal({

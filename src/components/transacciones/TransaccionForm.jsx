@@ -80,7 +80,7 @@ const TransaccionForm = () => {
             });
             return;
         }
-    }, [user, navigate, cartItems, dispatch]);
+    }, [user, cartItems]);
 
     // Verificar publicaciones vendidas cuando se cargan
     useEffect(() => {
@@ -96,7 +96,7 @@ const TransaccionForm = () => {
                 });
             }
         }
-    }, [publicacionesEnCarrito.length, cartItems.length, navigate]);
+    }, [publicacionesEnCarrito.length, cartItems.length]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;

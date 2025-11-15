@@ -37,7 +37,7 @@ const PublicacionForm = () => {
         if (!tiposCaja || tiposCaja.length === 0) {
             dispatch(fetchTiposCaja());
         }
-    }, [dispatch, marcas?.length, estados?.length, combustibles?.length, tiposCaja?.length]);
+    }, [marcas?.length, estados?.length, combustibles?.length, tiposCaja?.length]);
 
     // Estructura JSON de endpoints
     const [autoData, setAutoData] = useState({
@@ -90,7 +90,7 @@ const PublicacionForm = () => {
                 onConfirm: () => navigate('/')
             });
         }
-    }, [user, navigate]);
+    }, [user]);
 
     // Conexion a Back, con Bearer Token
 

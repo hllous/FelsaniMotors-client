@@ -98,7 +98,7 @@ const PublicacionCard = ({ idPublicacion, titulo, ubicacion, precio, estado, mar
         if (!fotosByPublicacion[idPublicacion]) {
             dispatch(fetchFotosByPublicacion(idPublicacion));
         }
-    }, [idPublicacion, dispatch])
+    }, [idPublicacion, dispatch, fotosByPublicacion[idPublicacion]])
     
     // Obtener foto principal
     const fotosPublicacion = fotosByPublicacion[idPublicacion];
@@ -109,7 +109,8 @@ const PublicacionCard = ({ idPublicacion, titulo, ubicacion, precio, estado, mar
         } else {
             setImage('');
         }
-    }, [idPublicacion, Object.keys(fotosByPublicacion).length]);    return(
+    }, [fotosPublicacion]);    
+    return(
         <div 
             className="bg-white rounded-xl overflow-hidden cursor-pointer border border-paleta1-cream"
             onClick={handleClick}

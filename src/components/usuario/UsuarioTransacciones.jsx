@@ -14,7 +14,7 @@ const UsuarioTransacciones = () => {
     if (user?.idUsuario && token) {
       dispatch(fetchTransaccionesUsuario({ idUsuario: user.idUsuario, token }));
     }
-  }, [user?.idUsuario, token, dispatch]);
+  }, [user?.idUsuario, token]);
 
   return (
     <div className="bg-[#f5efe6] min-h-screen py-10 px-6">
