@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { fetchUsuarios, deleteUsuario } from '../../redux/slices/usuariosSlice';
+import { fetchUsuarios, deleteUsuario, activateUsuario } from '../../redux/slices/usuariosSlice';
 import Modal from '../common/Modal';
 
 const UsuariosAdmin = () => {
@@ -49,6 +49,38 @@ const UsuariosAdmin = () => {
                         type: 'error',
                         title: 'Error',
                         message: error || 'Error al desactivar el usuario. Intenta nuevamente.',
+                        showCancel: false
+                    })
+
+                }
+            }
+        })
+    };
+
+    const handleActivarUsuario = async (idUsuario, nombreCompleto) => {
+        showModal({
+            type: 'info',
+            title: 'Confirmar Activación',
+            message: `¿Estás seguro de activar al usuario "${nombreCompleto}"?`,
+            confirmText: 'Activar',
+            showCancel: true,
+            onConfirm: async () => {
+
+                const result = await dispatch(activateUsuario({ idUsuario, token }))
+                
+                if (result.payload) {
+                    showModal({
+                        type: 'success',
+                        title: 'Éxito',
+                        message: 'Usuario activado exitosamente',
+                        showCancel: false
+                    })
+
+                } else {
+                    showModal({
+                        type: 'error',
+                        title: 'Error',
+                        message: error || 'Error al activar el usuario. Intenta nuevamente.',
                         showCancel: false
                     })
 
@@ -120,12 +152,19 @@ const UsuariosAdmin = () => {
                                     </div>
                                     
                                     <div className="flex gap-2">
-                                        {usuario.activo && (
+                                        {usuario.activo ? (
                                             <button
                                                 onClick={() => handleDesactivarUsuario(usuario.idUsuario, `${usuario.nombre} ${usuario.apellido}`)}
                                                 className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
                                             >
                                                 Desactivar Usuario
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() => handleActivarUsuario(usuario.idUsuario, `${usuario.nombre} ${usuario.apellido}`)}
+                                                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+                                            >
+                                                Activar Usuario
                                             </button>
                                         )}
                                     </div>

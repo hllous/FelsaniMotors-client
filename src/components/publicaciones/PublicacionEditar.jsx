@@ -52,7 +52,8 @@ const PublicacionEditar = () => {
     if (!fotosByPublicacion[idPublicacion]) {
       dispatch(fetchFotosByPublicacion(idPublicacion));
     }
-  }, [idPublicacion, dispatch, publicacion?.idPublicacion, fotosByPublicacion]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idPublicacion, publicacion?.idPublicacion, fotosByPublicacion]);
 
   // Inicializar cambios
   useEffect(() => {

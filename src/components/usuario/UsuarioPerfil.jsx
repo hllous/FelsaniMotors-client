@@ -1,30 +1,16 @@
-import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux";
-import { fetchUsuarioById } from "../../redux/slices/usuariosSlice";
+import { useSelector } from "react-redux";
 
 const UsuarioPerfil = () => {
-  const { user, token } = useSelector((state) => state.auth);
-  const { currentItem: usuarioData } = useSelector((state) => state.usuarios);
-  const idUsuarioToFetch = useSelector((state) => state.auth.user?.idUsuario);
-  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (idUsuarioToFetch && token) {
-      dispatch(fetchUsuarioById({ 
-        idUsuario: idUsuarioToFetch, 
-        token 
-      }));
-    }
-  }, [idUsuarioToFetch, token]);
 
   return (
     <div className="bg-white flex justify-center items-start py-10">
       <div className="bg-white border border-[#cbdceb] rounded-2xl p-6 max-w-3xl w-full">
         <div className="flex items-center justify-between mb-6 border-b border-[#cbdceb] pb-4">
           <h3 className="text-2xl font-semibold text-gray-800">
-            {usuarioData?.nombre} {usuarioData?.apellido}
+            {user?.nombre} {user?.apellido}
           </h3>
           <button
             onClick={() => navigate('/perfil/actualizar')}
@@ -37,20 +23,20 @@ const UsuarioPerfil = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-gray-700">
           <div>
             <p className="text-sm text-gray-500">E-mail</p>
-            <p>{usuarioData?.email}</p>
+            <p>{user?.email}</p>
           </div>
           <div>
             <p className="text-sm text-gray-500">Teléfono</p>
-            <p>{usuarioData?.telefono}</p>
+            <p>{user?.telefono}</p>
           </div>
           <div>
             <p className="text-sm text-gray-500">Rol</p>
-            <p>{usuarioData?.rol}</p>
+            <p>{user?.rol}</p>
           </div>
           <div>
             <p className="text-sm text-gray-500">Activo</p>
             <p>
-              {usuarioData?.activo ? "Sí" : "No"}
+              {user?.activo ? "Sí" : "No"}
             </p>
           </div>
         </div>

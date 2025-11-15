@@ -47,6 +47,17 @@ export const deleteUsuario = createAsyncThunk('usuarios/delete', async ({ idUsua
     return idUsuario
 })
 
+// Activar usuario
+export const activateUsuario = createAsyncThunk('usuarios/activate', async ({ idUsuario, token }) => {
+    const { data } = await axios.patch(
+        `${URL}/api/usuarios/${idUsuario}/activar`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+    )
+
+    return data
+})
+
 // Cambiar contraseña
 export const cambiarContrasena = createAsyncThunk('usuarios/cambiarContrasena', async ({ idUsuario, contrasenaActual, contrasenaNueva, token }) => {
     
@@ -144,6 +155,25 @@ const usuariosSlice = createSlice({
             }
         })
         .addCase(deleteUsuario.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.error.message;
+        })
+
+    // Activate usuario
+    builder
+        .addCase(activateUsuario.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        })
+        .addCase(activateUsuario.fulfilled, (state, action) => {
+            state.loading = false;
+            // Update usuario in items array
+            const index = state.items.findIndex(u => u.idUsuario === action.payload.idUsuario);
+            if (index !== -1) {
+                state.items[index] = action.payload;
+            }
+        })
+        .addCase(activateUsuario.rejected, (state, action) => {
             state.loading = false;
             state.error = action.error.message;
         })

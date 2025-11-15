@@ -4,13 +4,14 @@ import { useSelector, useDispatch } from 'react-redux';
 import { fetchPublicacionesUsuario } from '../../redux/slices/publicacionesSlice';
 
 const UsuarioPublicaciones = () => {
-  const { user, token } = useSelector((state) => state.auth);
+  const { user } = useSelector((state) => state.auth);
   const { misPublicaciones: publicaciones } = useSelector((state) => state.publicaciones);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (user?.idUsuario) {
+      // Siempre refetch para mostrar publicaciones actualizadas
       dispatch(fetchPublicacionesUsuario(user.idUsuario));
     }
   }, [user?.idUsuario]);

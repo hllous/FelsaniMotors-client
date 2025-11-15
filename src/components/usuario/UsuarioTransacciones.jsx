@@ -11,10 +11,11 @@ const UsuarioTransacciones = () => {
   const { items: transacciones } = useSelector((state) => state.transacciones);
 
   useEffect(() => {
-    if (user?.idUsuario && token) {
+    if (user?.idUsuario) {
+      // Siempre fetch las transacciones del usuario actual
       dispatch(fetchTransaccionesUsuario({ idUsuario: user.idUsuario, token }));
     }
-  }, [user?.idUsuario, token]);
+  }, [user?.idUsuario]);
 
   return (
     <div className="bg-[#f5efe6] min-h-screen py-10 px-6">

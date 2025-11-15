@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from 'react-redux';
 import { clearCart } from '../../redux/slices/carritoSlice';
-import { createTransaccion, updateTransaccionEstado } from '../../redux/slices/transaccionesSlice';
+import { createTransaccion } from '../../redux/slices/transaccionesSlice';
+import { fetchPublicaciones } from '../../redux/slices/publicacionesSlice';
 import MetodoPagoForm from "./MetodoPagoForm";
 import Modal from '../common/Modal';
 
@@ -69,7 +70,7 @@ const TransaccionForm = () => {
             return
         }
 
-        // Validar carrito vacío
+        // Validar carrito vacío SOLO al montar el componente
         if (cartItems.length === 0) {
             showModal({
                 type: 'info',
@@ -78,9 +79,8 @@ const TransaccionForm = () => {
                 showCancel: false,
                 onConfirm: () => navigate('/')
             });
-            return;
         }
-    }, [user, cartItems]);
+    }, [user]); // Solo depende de user, no de cartItems
 
     // Verificar publicaciones vendidas cuando se cargan
     useEffect(() => {
@@ -146,16 +146,16 @@ const TransaccionForm = () => {
             const descuentoPorcentaje = p.descuentoPorcentaje || 0;
             let precioFinal = p.precio;
             if (descuentoPorcentaje > 0) {
-                precioFinal = p.precio - (p.precio * descuentoPorcentaje / 100);
+                precioFinal = p.precio * (1 - descuentoPorcentaje / 100);
             }
             
             const transaccionRequest = {
                 idPublicacion: p.idPublicacion,
                 idComprador: user.idUsuario,
-                monto: precioFinal,
-                metodoPago: `${transaccionData.metodoPago} **** ${transaccionData.numeroTarjeta.slice(-4)}`,
+                monto: precioFinal, // Precio con descuento aplicado (o precio original si descuento = 0)
+                metodoPago: transaccionData.metodoPago.toUpperCase().replace(/\s+/g, '_'), // Ej: "Visa" -> "VISA"
                 referenciaPago: generarReferenciaPago(),
-                comentarios: transaccionData.comentarios || ''
+                comentarios: transaccionData.comentarios || null
             };
 
             const transaccionResult = await dispatch(createTransaccion({ 
@@ -165,20 +165,26 @@ const TransaccionForm = () => {
             
             if (transaccionResult.payload) {
                 transaccionesCreadas.push(transaccionResult.payload);
+            } else {
+                // Si hay error en alguna transacción, mostrar mensaje
+                showModal({
+                    type: 'error',
+                    title: 'Error en la Transacción',
+                    message: transaccionResult.error?.message || 'No se pudo procesar la transacción. Verifica que la publicación esté disponible y el monto sea correcto.',
+                    showCancel: false,
+                    onConfirm: () => setIsProcessing(false)
+                });
+                return;
             }
         }
 
-        // Actualizar todas las transacciones a COMPLETADA
-        for (const transaccion of transaccionesCreadas) {
-            await dispatch(updateTransaccionEstado({ 
-                idTransaccion: transaccion.idTransaccion, 
-                estado: 'COMPLETADA', 
-                token 
-            }));
-        }
+        // Las transacciones ya se crean con estado "COMPLETADA", no es necesario actualizarlas
 
         // Limpiar carrito luego de comprarlo
         dispatch(clearCart());
+
+        // Actualizar publicaciones para reflejar el cambio de estado (las compradas ahora estarán como "Vendida")
+        dispatch(fetchPublicaciones());
 
         let mensaje;
         if (transaccionesCreadas.length === 1) {

@@ -20,7 +20,9 @@ const Filter = () => {
     tipoCategoria: [],
     tipoCaja: [],
     motor: [],
-    estadoPublicacion: []
+    estadoPublicacion: [],
+    precioMin: '',
+    precioMax: ''
   });
 
   // Mapeo para mostrar valores
@@ -34,9 +36,9 @@ const Filter = () => {
 
   // Mapeo para mostrar estados de publicacion
   const estadoPublicacionDisplay = {
-    'A': 'Activa',
+    'A': 'Disponible',
     'V': 'Vendida',
-    'P': 'Pausada'
+    'I': 'Pausada'
   };
 
   const filterOptions = useMemo(() => {
@@ -51,7 +53,7 @@ const Filter = () => {
         tipoCategoria: [],
         tipoCaja: [],
         motor: [],
-        estadoPublicacion: ['A', 'V', 'P']
+        estadoPublicacion: ['A', 'V', 'I']
       };
     }
     
@@ -65,7 +67,7 @@ const Filter = () => {
       tipoCategoria: opcionesFiltro.tipoCategorias || [],
       tipoCaja: opcionesFiltro.tipoCajas || [],
       motor: opcionesFiltro.motores || [],
-      estadoPublicacion: ['A', 'V', 'P']
+      estadoPublicacion: ['A', 'V', 'I']
     };
   }, [opcionesFiltro]);
 
@@ -74,6 +76,43 @@ const Filter = () => {
       dispatch(fetchOpcionesFiltro());
     }
   }, [opcionesFiltro]);
+
+  // Inicializar filtros desde searchParams
+  useEffect(() => {
+    const newFilters = {
+      marca: [],
+      modelo: [],
+      anio: [],
+      estado: [],
+      kilometraje: [],
+      combustible: [],
+      tipoCategoria: [],
+      tipoCaja: [],
+      motor: [],
+      estadoPublicacion: [],
+      precioMin: '',
+      precioMax: ''
+    };
+
+    // Leer cada parámetro de la URL usando getAll para obtener múltiples valores
+    for (const key of Object.keys(newFilters)) {
+      if (key === 'precioMin' || key === 'precioMax') {
+        // Precio: leer valor único
+        const value = searchParams.get(key);
+        if (value) {
+          newFilters[key] = value;
+        }
+      } else {
+        // Arrays: leer múltiples valores
+        const values = searchParams.getAll(key);
+        if (values.length > 0) {
+          newFilters[key] = values;
+        }
+      }
+    }
+
+    setFilters(newFilters);
+  }, [searchParams]);
 
   const [openDropdowns, setOpenDropdowns] = useState({});
 
@@ -118,7 +157,9 @@ const Filter = () => {
       tipoCategoria: [],
       tipoCaja: [],
       motor: [],
-      estadoPublicacion: []
+      estadoPublicacion: [],
+      precioMin: '',
+      precioMax: ''
     });
   };
 
@@ -131,10 +172,19 @@ const Filter = () => {
       params.append('q', textoBusqueda);
     }
     
+    // Enviar múltiples parámetros con el mismo nombre para cada valor (arrays)
     Object.keys(filters).forEach(key => {
-      filters[key].forEach(value => {
-        params.append(key, value);
-      });
+      if (key === 'precioMin' || key === 'precioMax') {
+        // Precio: enviar solo si tiene valor
+        if (filters[key]) {
+          params.append(key, filters[key]);
+        }
+      } else if (filters[key].length > 0) {
+        // Arrays: agregar cada valor como un parámetro separado
+        filters[key].forEach(value => {
+          params.append(key, value);
+        });
+      }
     });
     
     navigate(`/publicaciones?${params.toString()}`);
@@ -160,6 +210,9 @@ const Filter = () => {
 
   // Contar filtros activos
   const activeFiltersCount = Object.keys(filters).reduce((total, key) => {
+    if (key === 'precioMin' || key === 'precioMax') {
+      return total + (filters[key] ? 1 : 0);
+    }
     return total + filters[key].length;
   }, 0);
 
@@ -236,6 +289,33 @@ const Filter = () => {
 
               {/* PRINCIPAl */}
               <div className="flex-1 overflow-y-auto p-6">
+                {/* Filtro de Precio */}
+                <div className="mb-4 p-4 bg-white border border-paleta1-blue-light rounded-lg">
+                  <h3 className="text-sm font-semibold text-paleta1-blue mb-3">Rango de Precio</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-gray-600 block mb-1">Precio Mínimo</label>
+                      <input
+                        type="number"
+                        placeholder="$ 0"
+                        value={filters.precioMin}
+                        onChange={(e) => setFilters(prev => ({ ...prev, precioMin: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-paleta1-blue focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-600 block mb-1">Precio Máximo</label>
+                      <input
+                        type="number"
+                        placeholder="$ 999999"
+                        value={filters.precioMax}
+                        onChange={(e) => setFilters(prev => ({ ...prev, precioMax: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-paleta1-blue focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 {/* Lista expandible de filtros */}
                 <div className="space-y-2">
                   {Object.keys(filterOptions).map((filterKey) => (
@@ -327,6 +407,23 @@ const Filter = () => {
                       Filtros Activos ({activeFiltersCount})
                     </h3>
                     <div className="flex flex-wrap gap-2">
+
+                      {/* Mostrar rango de precio si está activo */}
+                      {(filters.precioMin || filters.precioMax) && (
+                        <span
+                          className="inline-flex items-center gap-1 px-2 py-1 bg-paleta1-blue text-white text-xs rounded-full"
+                        >
+                          Precio: ${filters.precioMin || '0'} - ${filters.precioMax || '∞'}
+                          <button
+                            onClick={() => setFilters(prev => ({ ...prev, precioMin: '', precioMax: '' }))}
+                            className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </span>
+                      )}
 
                       {/* Mostrar en pantalla filtros activos */}
                       {Object.keys(filterOptions)

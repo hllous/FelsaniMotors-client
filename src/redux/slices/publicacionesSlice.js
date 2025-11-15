@@ -24,7 +24,21 @@ export const fetchPublicacionesByUsuario = createAsyncThunk('publicaciones/fetch
 // Filtrar publicaciones
 export const filtrarPublicaciones = createAsyncThunk('publicaciones/filtrar', async (params) => {
     
-    const queryString = new URLSearchParams(params).toString()
+    const queryParams = new URLSearchParams();
+    
+    // Construir queryString manejando arrays correctamente
+    Object.keys(params).forEach(key => {
+        const value = params[key];
+        if (Array.isArray(value)) {
+            // Si es array, agregar cada valor como parámetro separado
+            value.forEach(v => queryParams.append(key, v));
+        } else {
+            // Si es string/número, agregar normalmente
+            queryParams.append(key, value);
+        }
+    });
+    
+    const queryString = queryParams.toString();
     const { data } = await axios.get(`${URL}/api/publicaciones/filtrar?${queryString}`)
 
     return data

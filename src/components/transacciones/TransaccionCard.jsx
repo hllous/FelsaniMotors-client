@@ -1,50 +1,29 @@
 import { useEffect } from "react";
 import { useSelector, useDispatch } from 'react-redux';
-import { fetchPublicacionById, fetchFotosPublicacion } from '../../redux/slices/publicacionesSlice';
-import { fetchUsuarioById } from '../../redux/slices/usuariosSlice';
+import { fetchFotosByPublicacion } from '../../redux/slices/fotosSlice';
 import TransaccionEstado from "./TransaccionEstado";
 
 const TransaccionCard = ({ transaccion }) => {
   const dispatch = useDispatch();
-  const { token } = useSelector((state) => state.auth);
   
-  const { currentItem: publicacion, fotosMap } = useSelector((state) => state.publicaciones);
-  const { items: usuarios } = useSelector((state) => state.usuarios);
-  
-  // Buscar comprador y vendedor en el estado de Redux
-  const comprador = usuarios.find(u => u.idUsuario === transaccion?.idComprador) || {};
-  const vendedor = usuarios.find(u => u.idUsuario === transaccion?.idVendedor) || {};
+  const { fotosByPublicacion } = useSelector((state) => state.fotos);
 
   useEffect(() => {
     const idPublicacion = transaccion?.idPublicacion;
-    const idComprador = transaccion?.idComprador;
-    const idVendedor = transaccion?.idVendedor;
     
-    if (!idPublicacion || !idComprador || !idVendedor) return;
+    if (!idPublicacion) return;
+    
+    // Solo fetch fotos si no están en caché
+    if (!fotosByPublicacion?.[idPublicacion]) {
+      dispatch(fetchFotosByPublicacion(idPublicacion));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transaccion?.idPublicacion]);
 
-    // Solo fetch si no existe en cache
-    if (!publicacion || publicacion.idPublicacion !== idPublicacion) {
-      dispatch(fetchPublicacionById(idPublicacion));
-    }
-    
-    if (!fotosMap?.[idPublicacion]) {
-      dispatch(fetchFotosPublicacion(idPublicacion));
-    }
-    
-    if (!comprador?.idUsuario) {
-      dispatch(fetchUsuarioById({ idUsuario: idComprador, token }));
-    }
-    
-    if (!vendedor?.idUsuario) {
-      dispatch(fetchUsuarioById({ idUsuario: idVendedor, token }));
-    }
-
-  }, [transaccion?.idPublicacion, transaccion?.idComprador, transaccion?.idVendedor, token, dispatch, publicacion?.idPublicacion, fotosMap, comprador?.idUsuario, vendedor?.idUsuario])
-
-  const fotos = fotosMap?.[transaccion?.idPublicacion];
-  const image = (fotos && fotos.length > 0) 
+  const fotos = fotosByPublicacion?.[transaccion?.idPublicacion];
+  const image = (fotos && fotos.length > 0 && fotos[0]?.file) 
     ? `data:image/jpeg;base64,${fotos[0].file}` 
-    : "https://via.placeholder.com/300x200?text=Sin+imagen";
+    : null;
 
   const formatearFecha = (fecha) => {
     if (!fecha) return "";
@@ -102,7 +81,7 @@ const TransaccionCard = ({ transaccion }) => {
             {image ? (
               <img
                 src={image}
-                alt={publicacion.titulo}
+                alt={transaccion?.tituloPublicacion || "Producto"}
                 className="w-full h-full object-cover border border-gray-200"
               />
             ) : (
@@ -113,7 +92,7 @@ const TransaccionCard = ({ transaccion }) => {
           </div>
           <div className="flex-1">
             <p className="text-sm font-medium text-gray-900 mb-1">
-              {publicacion.titulo || "Cargando..."}
+              {transaccion?.tituloPublicacion || "Cargando..."}
             </p>
           </div>
         </div>
@@ -124,22 +103,14 @@ const TransaccionCard = ({ transaccion }) => {
           <div>
             <p className="text-sm font-medium text-gray-900 mb-1">Vendedor</p>
             <p className="text-sm text-gray-600">
-              {vendedor.nombre && vendedor.apellido
-                ? `${vendedor.nombre} ${vendedor.apellido}`
-                : "Cargando..."}
+              {transaccion?.nombreVendedor || "Cargando..."}
             </p>
-            <p className="text-xs text-gray-500">{vendedor.email}</p>
-            <p className="text-xs text-gray-500">{vendedor.telefono}</p>
           </div>
           <div className="text-right">
             <p className="text-sm font-medium text-gray-900 mb-1">Comprador</p>
             <p className="text-sm text-gray-600">
-              {comprador.nombre && comprador.apellido
-                ? `${comprador.nombre} ${comprador.apellido}`
-                : "Cargando..."}
+              {transaccion?.nombreComprador || "Cargando..."}
             </p>
-            <p className="text-xs text-gray-500">{comprador.email}</p>
-            <p className="text-xs text-gray-500">{comprador.telefono}</p>
           </div>
         </div>
       </div>

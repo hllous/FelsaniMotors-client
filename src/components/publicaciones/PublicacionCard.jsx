@@ -5,7 +5,7 @@ import { clearCart, addToCart } from "../../redux/slices/carritoSlice";
 import { fetchFotosByPublicacion } from "../../redux/slices/fotosSlice";
 import Modal from "../common/Modal";
 
-const PublicacionCard = ({ idPublicacion, titulo, ubicacion, precio, estado, marcaAuto, modeloAuto, idUsuario }) => {
+const PublicacionCard = ({ idPublicacion, titulo, ubicacion, precio, estado, marcaAuto, modeloAuto, idUsuario, descuentoPorcentaje }) => {
 
     const [image, setImage] = useState("");
     const [modalConfig, setModalConfig] = useState({ isOpen: false });
@@ -56,6 +56,15 @@ const PublicacionCard = ({ idPublicacion, titulo, ubicacion, precio, estado, mar
             });
             return;
         }
+        if (estado === 'I') {
+            showModal({
+                type: 'info',
+                title: 'No Disponible',
+                message: 'Esta publicación está inactiva.',
+                showCancel: false
+            });
+            return;
+        }
         // Validar que no sea el dueño
         if (user?.idUsuario === idUsuario) {
             showModal({
@@ -87,8 +96,9 @@ const PublicacionCard = ({ idPublicacion, titulo, ubicacion, precio, estado, mar
     const formatearEstado = (estado) => {
         const estadosMap = {
             'A': 'Disponible',
-            'V': 'Vendido',
-            'P': 'Pausado'
+            'V': 'Vendida',
+            'P': 'Pausada',
+            'I': 'Pausada'
         };
         return estadosMap[estado];
     };
@@ -98,7 +108,8 @@ const PublicacionCard = ({ idPublicacion, titulo, ubicacion, precio, estado, mar
         if (!fotosByPublicacion[idPublicacion]) {
             dispatch(fetchFotosByPublicacion(idPublicacion));
         }
-    }, [idPublicacion, dispatch, fotosByPublicacion[idPublicacion]])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [idPublicacion, fotosByPublicacion[idPublicacion]])
     
     // Obtener foto principal
     const fotosPublicacion = fotosByPublicacion[idPublicacion];
@@ -134,10 +145,31 @@ const PublicacionCard = ({ idPublicacion, titulo, ubicacion, precio, estado, mar
             <div className="p-4">
                 {/* Precio */}
                 <div className="mb-2">
-                    <span className="text-2xl font-bold text-gray-900">
-                        ${precio?.toLocaleString()}
-                    </span>
-                    <span className="text-sm text-gray-500 ml-1">ARS</span>
+                    {descuentoPorcentaje && descuentoPorcentaje > 0 ? (
+                        <>
+                            <div className="flex items-center gap-2">
+                                <span className="text-lg font-medium text-gray-500 line-through">
+                                    ${precio?.toLocaleString()}
+                                </span>
+                                <span className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded">
+                                    {descuentoPorcentaje}% OFF
+                                </span>
+                            </div>
+                            <div>
+                                <span className="text-2xl font-bold text-gray-900">
+                                    ${((precio * (100 - descuentoPorcentaje)) / 100).toLocaleString()}
+                                </span>
+                                <span className="text-sm text-gray-500 ml-1">ARS</span>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <span className="text-2xl font-bold text-gray-900">
+                                ${precio?.toLocaleString()}
+                            </span>
+                            <span className="text-sm text-gray-500 ml-1">ARS</span>
+                        </>
+                    )}
                 </div>
 
                 {/* Título */}
@@ -163,24 +195,22 @@ const PublicacionCard = ({ idPublicacion, titulo, ubicacion, precio, estado, mar
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         estado === 'V' 
                             ? 'bg-red-100 text-red-800' 
+                            : estado === 'I'
+                            ? 'bg-gray-100 text-gray-800'
                             : 'bg-green-100 text-green-800'
                     }`}>
                         {formatearEstado(estado)}
                     </span>
                 </div>
 
-                {/* Envío gratis simulado (estilo ML) */}
+                {/* Botón de compra */}
                 <div className="mt-3 pt-3 border-t border-paleta1-cream-light">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center text-green-600 text-sm">
-                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                            <span className="font-medium">Inspección incluida</span>
-                        </div>
-                        {estado === 'V' ? (
-                            <div className="bg-red-100 text-red-700 text-xs font-semibold px-3 py-1.5 rounded-lg">
-                                VENDIDO
+                    <div className="flex items-center justify-end">
+                        {(estado === 'V' || estado === 'I') ? (
+                            <div className={`text-xs font-semibold px-3 py-1.5 rounded-lg ${
+                                estado === 'V' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'
+                            }`}>
+                                {estado === 'V' ? 'VENDIDA' : 'PAUSADA'}
                             </div>
                         ) : (
                             <button

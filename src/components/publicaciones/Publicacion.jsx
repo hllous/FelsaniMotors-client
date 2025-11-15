@@ -53,8 +53,9 @@ const Publicacion = () => {
     const formatearEstado = (estado) => {
         const estadosMap = {
             'A': 'Disponible',
-            'V': 'Vendido',
-            'P': 'Pausado'
+            'V': 'Vendida',
+            'P': 'Pausada',
+            'I': 'Pausada'
         };
         return estadosMap[estado];
     };
@@ -92,6 +93,15 @@ const Publicacion = () => {
                 type: 'info',
                 title: 'No Disponible',
                 message: 'Esta publicación ya fue vendida.',
+                showCancel: false
+            });
+            return;
+        }
+        if (publicacion?.estado === 'I') {
+            showModal({
+                type: 'info',
+                title: 'No Disponible',
+                message: 'Esta publicación está inactiva.',
                 showCancel: false
             });
             return;
@@ -136,13 +146,15 @@ const Publicacion = () => {
         if (!fotosByPublicacion[idPublicacion]) {
             dispatch(fetchFotosByPublicacion(idPublicacion));
         }
-    }, [idPublicacion, dispatch, publicacionData?.idPublicacion]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [idPublicacion, publicacionData?.idPublicacion]);
 
     useEffect(() => {
         if (idAutoToFetch && (!autoData || autoData.idAuto !== idAutoToFetch)) {
             dispatch(fetchAutoById(idAutoToFetch));
         }
-    }, [idAutoToFetch, dispatch, autoData?.idAuto]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [idAutoToFetch, autoData?.idAuto]);
 
     useEffect(() => {
         const fotos = fotosByPublicacion[idPublicacion];
@@ -230,9 +242,25 @@ const Publicacion = () => {
                         {/* Título y precio destacados */}
                         <div>
                             <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-3">{publicacion.titulo}</h1>
-                            <div className="text-3xl lg:text-4xl font-bold text-paleta1-blue mb-4">
-                                ${publicacion.precio?.toLocaleString()} ARS
-                            </div>
+                            {publicacion.descuentoPorcentaje && publicacion.descuentoPorcentaje > 0 ? (
+                                <>
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <span className="text-xl text-gray-500 line-through">
+                                            ${publicacion.precio?.toLocaleString()} ARS
+                                        </span>
+                                        <span className="bg-green-500 text-white text-sm font-bold px-3 py-1 rounded">
+                                            {publicacion.descuentoPorcentaje}% OFF
+                                        </span>
+                                    </div>
+                                    <div className="text-3xl lg:text-4xl font-bold text-paleta1-blue mb-4">
+                                        ${((publicacion.precio * (100 - publicacion.descuentoPorcentaje)) / 100).toLocaleString()} ARS
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="text-3xl lg:text-4xl font-bold text-paleta1-blue mb-4">
+                                    ${publicacion.precio?.toLocaleString()} ARS
+                                </div>
+                            )}
                             <div className="flex items-center gap-3 mb-4">
                                 <span className="bg-white text-paleta1-blue px-3 py-1 rounded-full text-sm font-medium border border-paleta1-blue">
                                     {formatearEstado(publicacion.estado)}
@@ -263,10 +291,12 @@ const Publicacion = () => {
                                         <span className="font-medium text-paleta1-blue text-sm">{publicacion.año}</span>
                                     </div>
                                 )}
-                                <div className="flex flex-col">
-                                    <span className="text-xs text-gray-500">Estado</span>
-                                    <span className="font-medium text-paleta1-blue text-sm">{formatearEstado(publicacion.estado)}</span>
-                                </div>
+                                {publicacion.estadoAuto && (
+                                    <div className="flex flex-col">
+                                        <span className="text-xs text-gray-500">Estado del Auto</span>
+                                        <span className="font-medium text-paleta1-blue text-sm">{publicacion.estadoAuto}</span>
+                                    </div>
+                                )}
                                 <div className="flex flex-col">
                                     <span className="text-xs text-gray-500">Ubicación</span>
                                     <span className="font-medium text-paleta1-blue text-sm">{publicacion.ubicacion}</span>
@@ -443,10 +473,12 @@ const Publicacion = () => {
                                         <span className="font-medium text-gray-900">{publicacion.anio}</span>
                                     </div>
                                 )}
-                                <div>
-                                    <span className="text-sm text-gray-500 block">Estado</span>
-                                    <span className="font-medium text-gray-900">{formatearEstado(publicacion.estadoAuto || publicacion.estado)}</span>
-                                </div>
+                                {publicacion.estadoAuto && (
+                                    <div>
+                                        <span className="text-sm text-gray-500 block">Estado del Auto</span>
+                                        <span className="font-medium text-gray-900">{publicacion.estadoAuto}</span>
+                                    </div>
+                                )}
                                 {publicacion.kilometraje && (
                                     <div>
                                         <span className="text-sm text-gray-500 block">Kilometraje</span>

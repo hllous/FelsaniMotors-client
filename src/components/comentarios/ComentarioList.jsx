@@ -31,7 +31,8 @@ const ComentarioList = ({ idPublicacion }) => {
             dispatch(fetchComentariosByPublicacion(idPublicacion));
         }
         setError(null);
-    }, [idPublicacion, dispatch, comentariosByPublicacion]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [idPublicacion, comentariosByPublicacion]);
 
     // POST comentario
     const handleCrearComentario = async (texto) => {

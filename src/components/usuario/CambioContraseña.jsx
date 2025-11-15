@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from 'react-redux';
 import { cambiarContrasena } from '../../redux/slices/usuariosSlice';
@@ -18,17 +18,6 @@ const CambioContrasena = () => {
     setModalConfig({ isOpen: false });
   };
 
-  useEffect(() => {
-    if (user?.activo === 0) {
-      showModal({
-        title: 'Cuenta Inactiva',
-        message: 'Tu cuenta está inactiva. No puedes cambiar tu contraseña.',
-        type: 'warning',
-        onConfirm: () => navigate('/perfil')
-      });
-    }
-  }, [user?.activo]);
-
   const [contrasenaUpdate, setContrasenaUpdate] = useState({
     contrasenaActual: "",
     nuevaContrasena: "",
@@ -44,8 +33,8 @@ const CambioContrasena = () => {
     
     const result = await dispatch(cambiarContrasena({
       idUsuario: user.idUsuario,
-      oldPassword: contrasenaUpdate.contrasenaActual,
-      newPassword: contrasenaUpdate.nuevaContrasena,
+      contrasenaActual: contrasenaUpdate.contrasenaActual,
+      contrasenaNueva: contrasenaUpdate.nuevaContrasena,
       token
     }));
     

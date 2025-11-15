@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from 'react-redux';
 import { updateUsuario } from '../../redux/slices/usuariosSlice';
@@ -17,17 +17,6 @@ const UsuarioActualizacion = () => {
   const closeModal = () => {
     setModalConfig({ isOpen: false });
   };
-
-  useEffect(() => {
-    if (user?.activo === 0) {
-      showModal({
-        title: 'Cuenta Inactiva',
-        message: 'Tu cuenta está inactiva. No puedes modificar tu perfil.',
-        type: 'warning',
-        onConfirm: () => navigate('/perfil')
-      });
-    }
-  }, [user?.activo]);
 
   const [newUsuarioData, setNewUsuarioData] = useState({
     nombre: "",

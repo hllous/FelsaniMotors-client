@@ -26,7 +26,8 @@ const PublicacionDestacada = ({ publicacion }) => {
         if (!fotosByPublicacion[publicacion.idPublicacion]) {
             dispatch(fetchFotosByPublicacion(publicacion.idPublicacion));
         }
-    }, [publicacion.idPublicacion, dispatch, fotosByPublicacion]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [publicacion.idPublicacion, fotosByPublicacion]);
     
     useEffect(() => {
         const fotos = fotosByPublicacion[publicacion.idPublicacion];

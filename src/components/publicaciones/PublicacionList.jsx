@@ -25,14 +25,24 @@ const PublicacionList = () => {
     // Asegurar que publicaciones sea siempre un array
     const publicacionesArray = Array.isArray(publicaciones) ? publicaciones : [];
     
-    // Seleccionar publicación destacada aleatoria
-    const publicacionDestacada = useMemo(() => {
-        if (publicacionesArray.length === 0) return null;
-        const randomIndex = Math.floor(Math.random() * publicacionesArray.length);
-        return publicacionesArray[randomIndex];
-    }, [publicacionesArray.length]); // Solo recalcula cuando cambia el tamaño del array
+    // Filtrar publicaciones para home (sin vendidas ni pausadas si no hay filtros)
+    const publicacionesFiltradas = useMemo(() => {
+        if (consultaBusqueda || userId || hasFiltros) {
+            // Si hay filtros, búsqueda o userId, mostrar todas
+            return publicacionesArray;
+        }
+        // En home, solo mostrar disponibles (A)
+        return publicacionesArray.filter(p => p.estado === 'A');
+    }, [publicacionesArray, consultaBusqueda, userId, hasFiltros]);
     
-    const publicacionesRestantes = publicacionesArray.filter(p => p.idPublicacion !== publicacionDestacada?.idPublicacion);
+    // Seleccionar publicación destacada aleatoria (solo de disponibles)
+    const publicacionDestacada = useMemo(() => {
+        if (publicacionesFiltradas.length === 0) return null;
+        const randomIndex = Math.floor(Math.random() * publicacionesFiltradas.length);
+        return publicacionesFiltradas[randomIndex];
+    }, [publicacionesFiltradas.length]); // Solo recalcula cuando cambia el tamaño del array
+    
+    const publicacionesRestantes = publicacionesFiltradas.filter(p => p.idPublicacion !== publicacionDestacada?.idPublicacion);
 
     useEffect(() => {
         if (userId) {
@@ -50,8 +60,18 @@ const PublicacionList = () => {
                 const filtros = new URLSearchParams(paramsString);
                 filtros.delete('q');
                 filtros.delete('userId');
-                filtros.forEach((value, key) => {
-                    params[key] = value;
+                
+                // Agrupar valores múltiples en arrays
+                const filterKeys = new Set(filtros.keys());
+                filterKeys.forEach(key => {
+                    const values = filtros.getAll(key);
+                    if (values.length > 1) {
+                        // Múltiples valores: guardar como array
+                        params[key] = values;
+                    } else if (values.length === 1) {
+                        // Un solo valor: guardar como string
+                        params[key] = values[0];
+                    }
                 });
             }
             
@@ -81,7 +101,7 @@ const PublicacionList = () => {
                          'Todas las publicaciones'}
                     </h2>
                     <p className="text-gray-600">
-                        {consultaBusqueda || userId || hasFiltros ? publicacionesArray.length : publicacionesRestantes.length} vehículos disponibles
+                        {consultaBusqueda || userId || hasFiltros ? publicacionesFiltradas.length : publicacionesRestantes.length} vehículos disponibles
                         {userId && ' de tus publicaciones'}
                         {consultaBusqueda && ` que coinciden con "${consultaBusqueda}"`}
                         {hasFiltros && ' según los filtros aplicados'}
@@ -89,9 +109,9 @@ const PublicacionList = () => {
                 </div>
 
                 {/* Grid de publicaciones */}
-                {publicacionesArray.length > 0 && (
+                {publicacionesFiltradas.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                        {(consultaBusqueda || userId || hasFiltros ? publicacionesArray : publicacionesRestantes).map((publicacion) => (
+                        {(consultaBusqueda || userId || hasFiltros ? publicacionesFiltradas : publicacionesRestantes).map((publicacion) => (
                             <PublicacionCard 
                                 key={publicacion.idPublicacion}
                                 idPublicacion={publicacion.idPublicacion}
@@ -101,6 +121,8 @@ const PublicacionList = () => {
                                 estado={publicacion.estado}
                                 marcaAuto={publicacion.marcaAuto}
                                 modeloAuto={publicacion.modeloAuto}
+                                idUsuario={publicacion.idUsuario}
+                                descuentoPorcentaje={publicacion.descuentoPorcentaje}
                             />
                         ))}
                     </div>
