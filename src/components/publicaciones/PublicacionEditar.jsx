@@ -72,7 +72,7 @@ const PublicacionEditar = () => {
       // Establecer estado
       if(publicacion.estado === 'A') setNuevoEstado('Disponible');
       else if(publicacion.estado === 'V') setNuevoEstado('Vendido');
-      else if(publicacion.estado === 'P') setNuevoEstado('Pausado');
+      else if(publicacion.estado === 'I') setNuevoEstado('Pausado');
     }
   }, [publicacion]);
 
@@ -187,7 +187,7 @@ const PublicacionEditar = () => {
       } else if(value === "Vendido") {
         currentEstado = "V"
       } else if(value === "Pausado") {
-        currentEstado = "P"
+        currentEstado = "I"
       }
     setCambios({
       ...cambios,
