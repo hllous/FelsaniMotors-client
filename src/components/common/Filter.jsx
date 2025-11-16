@@ -72,10 +72,8 @@ const Filter = () => {
   }, [opcionesFiltro]);
 
   useEffect(() => {
-    if (!opcionesFiltro) {
-      dispatch(fetchOpcionesFiltro());
-    }
-  }, [opcionesFiltro]);
+    dispatch(fetchOpcionesFiltro());
+  }, []);
 
   // Inicializar filtros desde searchParams
   useEffect(() => {
@@ -95,7 +93,7 @@ const Filter = () => {
     };
 
     // Leer cada parámetro de la URL usando getAll para obtener múltiples valores
-    for (const key of Object.keys(newFilters)) {
+    for (const key in newFilters) {
       if (key === 'precioMin' || key === 'precioMax') {
         // Precio: leer valor único
         const value = searchParams.get(key);
@@ -173,7 +171,7 @@ const Filter = () => {
     }
     
     // Enviar múltiples parámetros con el mismo nombre para cada valor (arrays)
-    Object.keys(filters).forEach(key => {
+    for (const key in filters) {
       if (key === 'precioMin' || key === 'precioMax') {
         // Precio: enviar solo si tiene valor
         if (filters[key]) {
@@ -185,7 +183,7 @@ const Filter = () => {
           params.append(key, value);
         });
       }
-    });
+    }
     
     navigate(`/publicaciones?${params.toString()}`);
     setIsOpen(false);
@@ -209,12 +207,14 @@ const Filter = () => {
   };
 
   // Contar filtros activos
-  const activeFiltersCount = Object.keys(filters).reduce((total, key) => {
+  let activeFiltersCount = 0;
+  for (const key in filters) {
     if (key === 'precioMin' || key === 'precioMax') {
-      return total + (filters[key] ? 1 : 0);
+      activeFiltersCount += filters[key] ? 1 : 0;
+    } else {
+      activeFiltersCount += filters[key].length;
     }
-    return total + filters[key].length;
-  }, 0);
+  }
 
   return (
     <div className="relative">
@@ -318,7 +318,12 @@ const Filter = () => {
 
                 {/* Lista expandible de filtros */}
                 <div className="space-y-2">
-                  {Object.keys(filterOptions).map((filterKey) => (
+                  {(() => {
+                    let filterKeys = [];
+                    for (const key in filterOptions) {
+                      filterKeys = [...filterKeys, key];
+                    }
+                    return filterKeys.map((filterKey) => (
                     <div key={filterKey} className="relative">
                       {/* Botón de categoría de filtro */}
                       <div
@@ -397,7 +402,8 @@ const Filter = () => {
                         </div>
                       )}
                     </div>
-                  ))}
+                  ));
+                  })()}
                 </div>
 
                 {/* Resumen de filtros */}
@@ -426,36 +432,35 @@ const Filter = () => {
                       )}
 
                       {/* Mostrar en pantalla filtros activos */}
-                      {Object.keys(filterOptions)
-                        .flatMap((key) => 
-                          filters[key].map((value) => {
-                            // Para kilometraje y estadoPublicacion, mostrar valor formateado
+                      {(() => {
+                        let badges = [];
+                        for (const key in filterOptions) {
+                          filters[key].forEach((value) => {
                             let displayValue = value;
                             if (key === 'kilometraje') {
                               displayValue = kilometrajeDisplay[value] || value;
                             } else if (key === 'estadoPublicacion') {
                               displayValue = estadoPublicacionDisplay[value] || value;
                             }
-                            
-                            return (
-                              <span
-                                key={`${key}-${value}`}
-                                className="inline-flex items-center gap-1 px-2 py-1 bg-paleta1-blue text-white text-xs rounded-full"
+                            const element = <span
+                              key={`${key}-${value}`}
+                              className="inline-flex items-center gap-1 px-2 py-1 bg-paleta1-blue text-white text-xs rounded-full"
+                            >
+                              {getFilterLabel(key)}: {displayValue}
+                              <button
+                                onClick={() => handleCheckboxChange(key, value)}
+                                className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
                               >
-                                {getFilterLabel(key)}: {displayValue}
-                                <button
-                                  onClick={() => handleCheckboxChange(key, value)}
-                                  className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
-                                >
-                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                  </svg>
-                                </button>
-                              </span>
-                            );
-                          })
-                        )
-                      }
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </span>;
+                            badges = [...badges, element];
+                          });
+                        }
+                        return badges;
+                      })()}
                     </div>
                   </div>
                 )}

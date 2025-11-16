@@ -23,11 +23,8 @@ const PublicacionDestacada = ({ publicacion }) => {
     };
     
     useEffect(() => {
-        if (!fotosByPublicacion[publicacion.idPublicacion]) {
-            dispatch(fetchFotosByPublicacion(publicacion.idPublicacion));
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [publicacion.idPublicacion, fotosByPublicacion]);
+        dispatch(fetchFotosByPublicacion(publicacion.idPublicacion));
+    }, [publicacion.idPublicacion]);
     
     useEffect(() => {
         const fotos = fotosByPublicacion[publicacion.idPublicacion];
@@ -36,7 +33,7 @@ const PublicacionDestacada = ({ publicacion }) => {
         } else {
             setImage('');
         }
-    }, [publicacion.idPublicacion, Object.keys(fotosByPublicacion).length]);
+    }, [publicacion.idPublicacion, fotosByPublicacion[publicacion.idPublicacion]?.length]);
 
     return(
         <div 

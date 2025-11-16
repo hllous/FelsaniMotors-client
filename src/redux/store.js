@@ -39,10 +39,6 @@ export const store = configureStore({
                     ...state.fotos,
                     fotosByPublicacion: '<<LARGE_OBJECT>>',
                 } : state.fotos,
-                publicaciones: state.publicaciones ? {
-                    ...state.publicaciones,
-                    fotosMap: '<<LARGE_OBJECT>>',
-                } : state.publicaciones,
             };
         },
     },

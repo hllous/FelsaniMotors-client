@@ -100,7 +100,7 @@ const fotosSlice = createSlice({
             state.loading = false;
             const idPublicacion = action.meta.arg.idPublicacion;
             if (state.fotosByPublicacion[idPublicacion]) {
-                state.fotosByPublicacion[idPublicacion].push(action.payload);
+                state.fotosByPublicacion[idPublicacion] = [...state.fotosByPublicacion[idPublicacion], action.payload];
             }
         })
         .addCase(uploadFoto.rejected, (state, action) => {

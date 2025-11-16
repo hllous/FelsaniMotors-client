@@ -63,7 +63,8 @@ export const updateTransaccionEstado = createAsyncThunk('transacciones/updateEst
 const transaccionesSlice = createSlice({
     name: 'transacciones',
     initialState: {
-        items: [],
+        items: [],              // TODAS las transacciones
+        misTransacciones: [],   // Transacciones del usuario actual
         currentItem: null,
         loading: false,
         error: null,
@@ -101,7 +102,7 @@ const transaccionesSlice = createSlice({
         })
         .addCase(fetchTransaccionesUsuario.fulfilled, (state, action) => {
             state.loading = false;
-            state.items = action.payload;
+            state.misTransacciones = action.payload;
         })
         .addCase(fetchTransaccionesUsuario.rejected, (state, action) => {
             state.loading = false;
@@ -131,7 +132,13 @@ const transaccionesSlice = createSlice({
         })
         .addCase(createTransaccion.fulfilled, (state, action) => {
             state.loading = false;
-            state.items.push(action.payload);
+            // Agregar a misTransacciones (el que crea es comprador)
+            state.misTransacciones = [...state.misTransacciones, action.payload];
+            
+            // Si items tiene datos (admin viendo), también agregar
+            if (state.items.length > 0) {
+                state.items = [...state.items, action.payload];
+            }
             state.currentItem = action.payload;
         })
         .addCase(createTransaccion.rejected, (state, action) => {
@@ -148,10 +155,17 @@ const transaccionesSlice = createSlice({
         .addCase(updateTransaccionEstado.fulfilled, (state, action) => {
             state.loading = false;
             state.currentItem = action.payload;
+            
             // Update in items array
-            const index = state.items.findIndex(t => t.idTransaccion === action.payload.idTransaccion);
-            if (index !== -1) {
-                state.items[index] = action.payload;
+            const indexItems = state.items.findIndex(t => t.idTransaccion === action.payload.idTransaccion);
+            if (indexItems !== -1) {
+                state.items[indexItems] = action.payload;
+            }
+            
+            // Update in misTransacciones array
+            const indexMis = state.misTransacciones.findIndex(t => t.idTransaccion === action.payload.idTransaccion);
+            if (indexMis !== -1) {
+                state.misTransacciones[indexMis] = action.payload;
             }
         })
         .addCase(updateTransaccionEstado.rejected, (state, action) => {

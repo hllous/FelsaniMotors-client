@@ -17,7 +17,6 @@ const TransaccionCard = ({ transaccion }) => {
     if (!fotosByPublicacion?.[idPublicacion]) {
       dispatch(fetchFotosByPublicacion(idPublicacion));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transaccion?.idPublicacion]);
 
   const fotos = fotosByPublicacion?.[transaccion?.idPublicacion];

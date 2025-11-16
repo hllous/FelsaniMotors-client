@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import ComentarioForm from './ComentarioForm';
+import Modal from '../common/Modal';
 
 const ComentarioItem = ({ 
     comentario, 
@@ -10,7 +11,7 @@ const ComentarioItem = ({
 }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [isReplying, setIsReplying] = useState(false);
-    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [modalConfig, setModalConfig] = useState({ isOpen: false });
     
     const { isAuthenticated, user } = useSelector((state) => state.auth);
     const currentUserId = user?.idUsuario;
@@ -22,22 +23,30 @@ const ComentarioItem = ({
     const canDelete = isAuthenticated && (isOwner || isAdmin);
     const canReply = isAuthenticated;
 
+    const showModal = (config) => {
+        setModalConfig({ ...config, isOpen: true });
+    };
+
+    const closeModal = () => {
+        setModalConfig({ isOpen: false });
+    };
+
     const handleEdit = (nuevoTexto) => {
         return handleEditarComentario(comentario.idComentario, nuevoTexto)
             .then(() => setIsEditing(false));
     };
 
     const handleDeleteClick = () => {
-        setShowDeleteConfirm(true);
-    };
-
-    const handleConfirmDelete = () => {
-        setShowDeleteConfirm(false);
-        handleEliminarComentario(comentario.idComentario);
-    };
-
-    const handleCancelDelete = () => {
-        setShowDeleteConfirm(false);
+        showModal({
+            type: 'warning',
+            title: 'Confirmar Eliminación',
+            message: '¿Estás seguro de que deseas eliminar este comentario?',
+            confirmText: 'Eliminar',
+            showCancel: true,
+            onConfirm: () => {
+                handleEliminarComentario(comentario.idComentario);
+            }
+        });
     };
 
     const handleReply = (textoRespuesta) => {
@@ -148,30 +157,17 @@ const ComentarioItem = ({
                 </>
             )}
 
-            {/* Popup de confirmacion de eliminacion */}
-            {showDeleteConfirm && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 border border-paleta1-blue-light">
-                        <p className="text-gray-700 mb-8 leading-relaxed">
-                            ¿Estás seguro de que deseas eliminar este comentario?
-                        </p>
-                        <div className="flex gap-3 justify-end">
-                            <button
-                                onClick={handleCancelDelete}
-                                className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium border border-gray-300"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={handleConfirmDelete}
-                                className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
-                            >
-                                Eliminar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Modal */}
+            <Modal
+                isOpen={modalConfig.isOpen}
+                onClose={closeModal}
+                type={modalConfig.type}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                onConfirm={modalConfig.onConfirm}
+                confirmText={modalConfig.confirmText}
+                showCancel={modalConfig.showCancel}
+            />
         </div>
     );
 };

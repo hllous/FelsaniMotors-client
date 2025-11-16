@@ -14,7 +14,10 @@ const Carrito = ({ isOpen, onClose }) => {
   const [modalConfig, setModalConfig] = useState({ isOpen: false });
   
   // Calcular total
-  const total = cartItems.reduce((sum, item) => sum + item.precio, 0);
+  let total = 0;
+  for (const item of cartItems) {
+    total += item.precio;
+  }
 
   const showModal = (config) => {
     setModalConfig({ ...config, isOpen: true });

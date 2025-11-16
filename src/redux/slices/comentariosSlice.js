@@ -97,17 +97,15 @@ const comentariosSlice = createSlice({
             state.loading = true;
             state.error = null;
         })
-        .addCase(createComentario.fulfilled, (state, action) => {
+    .addCase(createComentario.fulfilled, (state, action) => {
 
-            state.loading = false;
+        state.loading = false;
 
-            const { idPublicacion, comentario } = action.payload;
-            if (!state.comentariosByPublicacion[idPublicacion]) {
-                state.comentariosByPublicacion[idPublicacion] = [];
-            }
-            state.comentariosByPublicacion[idPublicacion].push(comentario);
-
-        })
+        const { idPublicacion, comentario } = action.payload;
+        if (!state.comentariosByPublicacion[idPublicacion]) {
+            state.comentariosByPublicacion[idPublicacion] = [];
+        }
+        state.comentariosByPublicacion[idPublicacion] = [...state.comentariosByPublicacion[idPublicacion], comentario];        })
         .addCase(createComentario.rejected, (state, action) => {
             state.loading = false;
             state.error = action.error.message;
@@ -184,10 +182,9 @@ const comentariosSlice = createSlice({
                 if (comentario) {
                     
                     if (!comentario.respuestas) {
-
                         comentario.respuestas = [];
                     }
-                    comentario.respuestas.push(respuesta);
+                    comentario.respuestas = [...comentario.respuestas, respuesta];
                 }
             }
         })

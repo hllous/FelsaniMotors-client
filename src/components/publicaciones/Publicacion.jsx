@@ -137,23 +137,14 @@ const Publicacion = () => {
     useEffect(() => {
         if (!idPublicacion) return;
         
-        // Solo hacer fetch si no existe en Redux o es diferente
-        if (!publicacionData || publicacionData.idPublicacion !== idPublicacion) {
-            dispatch(fetchPublicacionById(idPublicacion));
-        }
-        
-        // Solo hacer fetch de fotos si no existen en Redux
-        if (!fotosByPublicacion[idPublicacion]) {
-            dispatch(fetchFotosByPublicacion(idPublicacion));
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [idPublicacion, publicacionData?.idPublicacion]);
+        dispatch(fetchPublicacionById(idPublicacion));
+        dispatch(fetchFotosByPublicacion(idPublicacion));
+    }, [idPublicacion]);
 
     useEffect(() => {
         if (idAutoToFetch && (!autoData || autoData.idAuto !== idAutoToFetch)) {
             dispatch(fetchAutoById(idAutoToFetch));
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [idAutoToFetch, autoData?.idAuto]);
 
     useEffect(() => {
@@ -162,7 +153,7 @@ const Publicacion = () => {
             const imagenesFormateadas = fotos.map(foto => `data:image/jpeg;base64,${foto.file}`);
             setImagenes(imagenesFormateadas);
         }
-    }, [idPublicacion, fotosByPublicacion[idPublicacion]]);
+    }, [idPublicacion, fotosByPublicacion[idPublicacion]?.length]);
 
     useEffect(() => {
         if (isAuthenticated && user && publicacionData) {
@@ -475,11 +466,11 @@ const Publicacion = () => {
                                 )}
                                 {publicacion.estadoAuto && (
                                     <div>
-                                        <span className="text-sm text-gray-500 block">Estado del Auto</span>
+                                        <span className="text-sm text-gray-500 block">Estado</span>
                                         <span className="font-medium text-gray-900">{publicacion.estadoAuto}</span>
                                     </div>
                                 )}
-                                {publicacion.kilometraje && (
+                                {(publicacion.kilometraje !== null && publicacion.kilometraje !== undefined) && (
                                     <div>
                                         <span className="text-sm text-gray-500 block">Kilometraje</span>
                                         <span className="font-medium text-gray-900">{publicacion.kilometraje?.toLocaleString()} km</span>

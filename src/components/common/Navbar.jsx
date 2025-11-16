@@ -62,6 +62,16 @@ const Navbar = () => {
     }
 
     const handleCrearPublicacion = () => {
+        if (!isAuthenticated) {
+            showModal({
+                type: 'warning',
+                title: 'Iniciar Sesión',
+                message: 'Debes iniciar sesión para crear una publicación.\n\nPor favor, inicia sesión y vuelve a intentarlo.',
+                showCancel: false
+            });
+            return;
+        }
+        
         navigate('/crear-publicacion');
     };
 

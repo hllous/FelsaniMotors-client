@@ -27,7 +27,7 @@ const carritoSlice = createSlice({
             }
 
             // Agregar al carrito
-            state.items.push(item);
+            state.items = [...state.items, item];
             state.error = null;
         },
 

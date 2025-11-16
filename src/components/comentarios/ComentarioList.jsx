@@ -26,13 +26,9 @@ const ComentarioList = ({ idPublicacion }) => {
 
     // GET comentarios
     useEffect(() => {
-        // Solo fetch si no existen en cache
-        if (!comentariosByPublicacion[idPublicacion]) {
-            dispatch(fetchComentariosByPublicacion(idPublicacion));
-        }
+        dispatch(fetchComentariosByPublicacion(idPublicacion));
         setError(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [idPublicacion, comentariosByPublicacion]);
+    }, [idPublicacion]);
 
     // POST comentario
     const handleCrearComentario = async (texto) => {

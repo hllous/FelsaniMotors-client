@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from 'react-redux';
 import { clearCart } from '../../redux/slices/carritoSlice';
 import { createTransaccion } from '../../redux/slices/transaccionesSlice';
-import { fetchPublicaciones } from '../../redux/slices/publicacionesSlice';
 import MetodoPagoForm from "./MetodoPagoForm";
 import Modal from '../common/Modal';
 
@@ -12,6 +11,7 @@ const TransaccionForm = () => {
     const dispatch = useDispatch();
     const { user, token } = useSelector((state) => state.auth);
     const { items: cartItems } = useSelector((state) => state.carrito);
+    const { loading } = useSelector((state) => state.transacciones);
 
     const [transaccionData, setTransaccionData] = useState({
         metodoPago: "Visa",
@@ -21,20 +21,18 @@ const TransaccionForm = () => {
         comentarios: ""
     });
     
-    const [isProcessing, setIsProcessing] = useState(false);
     const [modalConfig, setModalConfig] = useState({ isOpen: false });
 
-    const publicacionesEnCarrito = cartItems;
-
     // Calcular total con descuentos - derivado
-    const total = publicacionesEnCarrito.reduce((sum, p) => {
+    let total = 0;
+    for (const p of cartItems) {
         const descuento = p.descuentoPorcentaje || 0;
         let precioFinal = p.precio;
         if (descuento > 0) {
             precioFinal = p.precio - (p.precio * descuento / 100);
         }
-        return sum + precioFinal;
-    }, 0);
+        total += precioFinal;
+    }
 
     const showModal = (config) => {
         setModalConfig({ ...config, isOpen: true });
@@ -45,25 +43,12 @@ const TransaccionForm = () => {
     };
 
     useEffect(() => {
-
         // Validar si el usuario esta loggeado
         if (!user) {
             showModal({
                 type: 'warning',
                 title: 'Iniciar Sesión',
                 message: 'Debes iniciar sesión para completar tu compra.\n\nPor favor, inicia sesión y vuelve a intentarlo.',
-                showCancel: false,
-                onConfirm: () => navigate('/')
-            })
-            return
-        }
-
-        // Validar si el usuario esta activo
-        if (user?.activo === 0) {
-            showModal({
-                type: 'error',
-                title: 'Cuenta Inactiva',
-                message: 'Tu cuenta está inactiva. No puedes realizar compras. Contacta al administrador.',
                 showCancel: false,
                 onConfirm: () => navigate('/')
             })
@@ -80,12 +65,12 @@ const TransaccionForm = () => {
                 onConfirm: () => navigate('/')
             });
         }
-    }, [user]); // Solo depende de user, no de cartItems
+    }, [user]);
 
     // Verificar publicaciones vendidas cuando se cargan
     useEffect(() => {
-        if (publicacionesEnCarrito.length > 0 && publicacionesEnCarrito.length === cartItems.length) {
-            const hasVendidas = publicacionesEnCarrito.some(p => p.estado === 'V');
+        if (cartItems.length > 0) {
+            const hasVendidas = cartItems.some(p => p.estado === 'V');
             if (hasVendidas) {
                 showModal({
                     type: 'warning',
@@ -96,7 +81,7 @@ const TransaccionForm = () => {
                 });
             }
         }
-    }, [publicacionesEnCarrito.length, cartItems.length]);
+    }, [cartItems]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -124,7 +109,6 @@ const TransaccionForm = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setIsProcessing(true);
 
         // Validar que se hayan ingresado los datos de pago
         if (!transaccionData.numeroTarjeta || !transaccionData.fechaCaducidad || !transaccionData.codigoSeguridad) {
@@ -134,14 +118,13 @@ const TransaccionForm = () => {
                 message: 'Por favor, completa todos los datos de la tarjeta',
                 showCancel: false
             });
-            setIsProcessing(false);
             return;
         }
 
         const transaccionesCreadas = [];
         
         // Crear transacciones
-        for (const p of publicacionesEnCarrito) {
+        for (const p of cartItems) {
             // Calcular precio con descuento si existe
             const descuentoPorcentaje = p.descuentoPorcentaje || 0;
             let precioFinal = p.precio;
@@ -171,8 +154,7 @@ const TransaccionForm = () => {
                     type: 'error',
                     title: 'Error en la Transacción',
                     message: transaccionResult.error?.message || 'No se pudo procesar la transacción. Verifica que la publicación esté disponible y el monto sea correcto.',
-                    showCancel: false,
-                    onConfirm: () => setIsProcessing(false)
+                    showCancel: false
                 });
                 return;
             }
@@ -198,10 +180,7 @@ const TransaccionForm = () => {
             title: 'Compra Exitosa',
             message: mensaje,
             showCancel: false,
-            onConfirm: () => {
-                setIsProcessing(false);
-                navigate('/');
-            }
+            onConfirm: () => navigate('/')
         });
     };
 
@@ -209,7 +188,7 @@ const TransaccionForm = () => {
         return `$${parseFloat(precio).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     };
 
-    const cantidadVehiculos = publicacionesEnCarrito.length;
+    const cantidadVehiculos = cartItems.length;
     const esMultiple = cantidadVehiculos > 1;
 
     return (
@@ -231,7 +210,7 @@ const TransaccionForm = () => {
                 <h3 className="text-xl font-bold text-gray-800 mb-4">Resumen de compra</h3>
                 
                 <div className={`space-y-3 ${esMultiple ? 'max-h-96 overflow-y-auto' : ''}`}>
-                    {publicacionesEnCarrito.map((p, index) => {
+                    {cartItems.map((p, index) => {
                         const descuentoPorcentaje = p.descuentoPorcentaje || 0;
                         const precioOriginal = p.precio;
                         let precioFinal = precioOriginal;
@@ -303,14 +282,14 @@ const TransaccionForm = () => {
             <div className="bg-white border border-gray-200 rounded-xl p-6">
                 <button 
                     onClick={handleSubmit}
-                    disabled={isProcessing || publicacionesEnCarrito.length === 0}
+                    disabled={loading || cartItems.length === 0}
                     className={`w-full text-white text-lg font-bold py-4 px-6 rounded-xl transition-all duration-300 hover:shadow-xl hover:scale-105 active:scale-95 ${
-                        isProcessing || publicacionesEnCarrito.length === 0
+                        loading || cartItems.length === 0
                             ? 'bg-gray-400 cursor-not-allowed' 
                             : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'
                     }`}
                 >
-                    {isProcessing 
+                    {loading 
                         ? '⏳ Procesando...' 
                         : esMultiple 
                             ? `🛒 Finalizar Compra (${cantidadVehiculos} vehículos)` 
@@ -322,7 +301,7 @@ const TransaccionForm = () => {
                 </p>
                 <button
                     onClick={() => navigate('/')}
-                    disabled={isProcessing}
+                    disabled={loading}
                     className="w-full mt-3 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium disabled:opacity-50"
                 >
                     Cancelar

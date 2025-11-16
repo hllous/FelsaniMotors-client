@@ -108,8 +108,7 @@ const PublicacionCard = ({ idPublicacion, titulo, ubicacion, precio, estado, mar
         if (!fotosByPublicacion[idPublicacion]) {
             dispatch(fetchFotosByPublicacion(idPublicacion));
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [idPublicacion, fotosByPublicacion[idPublicacion]])
+    }, [idPublicacion])
     
     // Obtener foto principal
     const fotosPublicacion = fotosByPublicacion[idPublicacion];

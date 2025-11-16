@@ -24,20 +24,11 @@ const PublicacionForm = () => {
 
     // Cargar catalogo
     useEffect(() => {
-        // Solo fetch si no existe en cache
-        if (!marcas || marcas.length === 0) {
-            dispatch(fetchMarcas());
-        }
-        if (!estados || estados.length === 0) {
-            dispatch(fetchEstados());
-        }
-        if (!combustibles || combustibles.length === 0) {
-            dispatch(fetchCombustibles());
-        }
-        if (!tiposCaja || tiposCaja.length === 0) {
-            dispatch(fetchTiposCaja());
-        }
-    }, [marcas?.length, estados?.length, combustibles?.length, tiposCaja?.length]);
+        dispatch(fetchMarcas());
+        dispatch(fetchEstados());
+        dispatch(fetchCombustibles());
+        dispatch(fetchTiposCaja());
+    }, []);
 
     // Estructura JSON de endpoints
     const [autoData, setAutoData] = useState({
@@ -91,12 +82,6 @@ const PublicacionForm = () => {
             });
         }
     }, [user]);
-
-    // Conexion a Back, con Bearer Token
-
-    const AUTO_URL = "http://localhost:4002/api/autos";
-    const PUBLICACION_URL = "http://localhost:4002/api/publicaciones";
-    
     const USUARIO_ID = user?.idUsuario;
 
     const handleAutoChange = (e) => {

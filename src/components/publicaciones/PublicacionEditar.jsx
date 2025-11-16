@@ -44,16 +44,11 @@ const PublicacionEditar = () => {
     descuentoPorcentaje: 0
   });
 
-  // Cargar publicación y fotos
+  // Cargar publicacion y fotos
   useEffect(() => {
-    if (!publicacion || publicacion.idPublicacion !== idPublicacion) {
-      dispatch(fetchPublicacionById(idPublicacion));
-    }
-    if (!fotosByPublicacion[idPublicacion]) {
-      dispatch(fetchFotosByPublicacion(idPublicacion));
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idPublicacion, publicacion?.idPublicacion, fotosByPublicacion]);
+    dispatch(fetchPublicacionById(idPublicacion));
+    dispatch(fetchFotosByPublicacion(idPublicacion));
+  }, [idPublicacion]);
 
   // Inicializar cambios
   useEffect(() => {
@@ -92,7 +87,7 @@ const PublicacionEditar = () => {
       }));
       setImagenes(imagenesFormateadas);
     }
-  }, [idPublicacion, Object.keys(fotosByPublicacion).length]);
+  }, [idPublicacion, fotosByPublicacion[idPublicacion]?.length]);
 
   const cantidad = imagenes.length;
 
@@ -107,7 +102,15 @@ const PublicacionEditar = () => {
   // handles
 
   const onFotoClick = (url) => {
-    if (publicacionesSeleccionadas.some((pub) => url.img === pub.img)) {
+    let estaSeleccionada = false;
+    for (const pub of publicacionesSeleccionadas) {
+      if (url.img === pub.img) {
+        estaSeleccionada = true;
+        break;
+      }
+    }
+    
+    if (estaSeleccionada) {
       setPublicacionesSeleccionadas(publicacionesSeleccionadas.filter((pub) => pub.img !== url.img));
     } else {
       setPublicacionesSeleccionadas([...publicacionesSeleccionadas, url]);
@@ -136,7 +139,16 @@ const PublicacionEditar = () => {
     }
 
     setCambios({ ...cambios, imgBorrar: [...cambios.imgBorrar, ...publicacionesSeleccionadas] });
-    const resto = imagenes.filter((img) => !publicacionesSeleccionadas.some((pub) => pub.img === img.img));
+    const resto = imagenes.filter((img) => {
+      let estaEnSeleccionadas = false;
+      for (const pub of publicacionesSeleccionadas) {
+        if (pub.img === img.img) {
+          estaEnSeleccionadas = true;
+          break;
+        }
+      }
+      return !estaEnSeleccionadas;
+    });
     setImagenes(resto);
     setPublicacionesSeleccionadas([]);
     
@@ -284,8 +296,11 @@ const PublicacionEditar = () => {
           .map(img => dispatch(deleteFoto({ idPublicacion, idFoto: img.idImg, token })));
         
         const resultados = await Promise.all(promesasEliminar);
-        if (resultados.some(r => !r.payload)) {
-          hayError = true;
+        for (const r of resultados) {
+          if (!r.payload) {
+            hayError = true;
+            break;
+          }
         }
       }
 
@@ -302,8 +317,11 @@ const PublicacionEditar = () => {
         );
         
         const resultados = await Promise.all(promesasAgregar);
-        if (resultados.some(r => !r.payload)) {
-          hayError = true;
+        for (const r of resultados) {
+          if (!r.payload) {
+            hayError = true;
+            break;
+          }
         }
       }
 
@@ -497,7 +515,14 @@ const PublicacionEditar = () => {
                 style={{ transform: `translateX(-${imagenActual * 100}%)` }}
               >
                 {imagenes.map((url, index) => {
-                  const seleccionada = publicacionesSeleccionadas.some((pub) => pub.img === url.img);
+                  let seleccionada = false;
+                  for (const pub of publicacionesSeleccionadas) {
+                    if (pub.img === url.img) {
+                      seleccionada = true;
+                      break;
+                    }
+                  }
+                  
                   return (
                     <div
                       key={index}

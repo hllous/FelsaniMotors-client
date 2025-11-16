@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import TransaccionForm from '../components/transacciones/TransaccionForm';
-import TransaccionList from '../components/transacciones/TransaccionList';
+import UsuarioTransacciones from '../components/usuario/UsuarioTransacciones';
 
 const TransaccionView = () => {
     const { isAuthenticated } = useSelector((state) => state.auth);
@@ -16,7 +16,7 @@ const TransaccionView = () => {
             {/* Form de compra desde carrito */}
             <Route path="/" element={<TransaccionForm />} />
             
-            <Route path="/mis-transacciones" element={<TransaccionList />} />
+            <Route path="/mis-transacciones" element={<UsuarioTransacciones />} />
         </Routes>
     );
 };

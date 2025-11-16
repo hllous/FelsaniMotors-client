@@ -98,7 +98,7 @@ const autosSlice = createSlice({
         })
         .addCase(createAuto.fulfilled, (state, action) => {
             state.loading = false;
-            state.items.push(action.payload);
+            state.items = [...state.items, action.payload];
             state.currentItem = action.payload;
         })
         .addCase(createAuto.rejected, (state, action) => {

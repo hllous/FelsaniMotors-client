@@ -22,32 +22,33 @@ const ComentariosAdmin = () => {
     };
 
     // Combina todos los comentarios con la publicacion
-    const comentarios = [];
+    let comentarios = [];
     for (const publicacion of publicaciones) {
         const comentariosPublicacion = comentariosByPublicacion[publicacion.idPublicacion] || [];
         for (const comentario of comentariosPublicacion) {
-            comentarios.push({
+            comentarios = [...comentarios, {
                 ...comentario,
                 publicacion: {
                     idPublicacion: publicacion.idPublicacion,
                     titulo: publicacion.titulo
                 }
-            });
+            }];
         }
     }
 
     useEffect(() => {
-        dispatch(fetchPublicaciones());
+        if (publicaciones.length === 0) {
+            dispatch(fetchPublicaciones());
+        }
     }, []);
 
     useEffect(() => {
         if (publicaciones && publicaciones.length > 0) {
-            // Fetch comentarios solo si no existen en cache
-            publicaciones.forEach(p => {
+            for (const p of publicaciones) {
                 if (!comentariosByPublicacion[p.idPublicacion]) {
                     dispatch(fetchComentariosByPublicacion(p.idPublicacion));
                 }
-            });
+            }
         }
     }, [publicaciones.length]);
 

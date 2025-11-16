@@ -7,7 +7,7 @@ import PublicacionDestacada from "./PublicacionDestacada";
 
 const PublicacionList = () => {
     const dispatch = useDispatch();
-    const { items: publicaciones, isFiltered } = useSelector((state) => state.publicaciones);
+    const { items: publicaciones } = useSelector((state) => state.publicaciones);
     const [searchParams] = useSearchParams();
     
     const consultaBusqueda = searchParams.get('q') || '';
@@ -77,8 +77,8 @@ const PublicacionList = () => {
             
             dispatch(filtrarPublicaciones(params));
         }
-        else if (isFiltered || publicaciones.length === 0) {
-            // Solo fetch si está filtrado O si no hay publicaciones en cache
+        else {
+            // Fetch todas las publicaciones
             dispatch(fetchPublicaciones());
         }
     }, [userId, consultaBusqueda, hasFiltros, paramsString]);

@@ -27,7 +27,7 @@ export const filtrarPublicaciones = createAsyncThunk('publicaciones/filtrar', as
     const queryParams = new URLSearchParams();
     
     // Construir queryString manejando arrays correctamente
-    Object.keys(params).forEach(key => {
+    for (const key in params) {
         const value = params[key];
         if (Array.isArray(value)) {
             // Si es array, agregar cada valor como parámetro separado
@@ -36,7 +36,7 @@ export const filtrarPublicaciones = createAsyncThunk('publicaciones/filtrar', as
             // Si es string/número, agregar normalmente
             queryParams.append(key, value);
         }
-    });
+    }
     
     const queryString = queryParams.toString();
     const { data } = await axios.get(`${URL}/api/publicaciones/filtrar?${queryString}`)
@@ -138,45 +138,6 @@ export const deletePublicacion = createAsyncThunk('publicaciones/delete', async 
     return idPublicacion
 })
 
-// Obtener fotos de una publicacion
-export const fetchFotosPublicacion = createAsyncThunk('publicaciones/fetchFotos', async (idPublicacion) => {
-
-    const { data } = await axios.get(`${URL}/api/publicaciones/${idPublicacion}/fotos`)
-
-    return { idPublicacion, fotos: data }
-})
-
-// Eliminar foto de publicacion
-export const deleteFoto = createAsyncThunk('publicaciones/deleteFoto', async ({ idPublicacion, idImg, token }) => {
-
-    await axios.delete(
-        `${URL}/api/publicaciones/${idPublicacion}/fotos/${idImg}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-    )
-
-    return { idPublicacion, idImg }
-})
-
-// Agregar foto a publicacion
-export const addFoto = createAsyncThunk('publicaciones/addFoto', async ({ idPublicacion, file, esPrincipal, orden, token }) => {
-
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('esPrincipal', esPrincipal ? 'true' : 'false')
-    formData.append('orden', orden.toString())
-
-    const { data } = await axios.post(
-        `${URL}/api/publicaciones/${idPublicacion}/fotos`,
-        formData,
-        { headers: { 
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data'
-        } }
-    )
-
-    return { idPublicacion, foto: data }
-})
-
 // Actualizar estado de publicacion
 export const updateEstadoPublicacion = createAsyncThunk('publicaciones/updateEstado', async ({ idPublicacion, estado, token }) => {
 
@@ -209,11 +170,10 @@ const publicacionesSlice = createSlice({
         items: [],
         currentItem: null,
         misPublicaciones: [],
-        fotosMap: {}, // { idPublicacion: [fotos] }
         opcionesFiltro: null, // Opciones para filtros
         loading: false,
         error: null,
-        isFiltered: false, // Flag para saber si items está filtrado o es todo
+        isFiltered: false, // Flag para saber si items esta filtrado o es todo
     },
     reducers: {
         clearError: (state) => {
@@ -311,8 +271,8 @@ const publicacionesSlice = createSlice({
         })
         .addCase(createPublicacion.fulfilled, (state, action) => {
             state.loading = false;
-            state.items.push(action.payload);
-            state.misPublicaciones.push(action.payload);
+            state.items = [...state.items, action.payload];
+            state.misPublicaciones = [...state.misPublicaciones, action.payload];
         })
         .addCase(createPublicacion.rejected, (state, action) => {
             state.loading = false;
@@ -359,40 +319,6 @@ const publicacionesSlice = createSlice({
         .addCase(deletePublicacion.rejected, (state, action) => {
             state.loading = false;
             state.error = action.error.message;
-        })
-
-    // Fetch fotos
-    builder
-        .addCase(fetchFotosPublicacion.pending, (state) => {
-            state.loading = true;
-            state.error = null;
-        })
-        .addCase(fetchFotosPublicacion.fulfilled, (state, action) => {
-            state.loading = false;
-            state.fotosMap[action.payload.idPublicacion] = action.payload.fotos;
-        })
-        .addCase(fetchFotosPublicacion.rejected, (state, action) => {
-            state.loading = false;
-            state.error = action.error.message;
-        })
-
-    // Delete foto
-    builder
-        .addCase(deleteFoto.fulfilled, (state, action) => {
-            const { idPublicacion, idImg } = action.payload;
-            if (state.fotosMap[idPublicacion]) {
-                state.fotosMap[idPublicacion] = state.fotosMap[idPublicacion].filter(f => f.idImg !== idImg);
-            }
-        })
-
-    // Add foto
-    builder
-        .addCase(addFoto.fulfilled, (state, action) => {
-            const { idPublicacion, foto } = action.payload;
-            if (!state.fotosMap[idPublicacion]) {
-                state.fotosMap[idPublicacion] = [];
-            }
-            state.fotosMap[idPublicacion].push(foto);
         })
 
     // Update estado
