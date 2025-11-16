@@ -5,28 +5,52 @@ const URL = 'http://localhost:4002';
 
 // --------------- THUNKS ---------------
 
-export const fetchMarcas = createAsyncThunk('catalogo/fetchMarcas', async () => {
-    const { data } = await axios.get(`${URL}/api/catalogos/marcas`)
+export const fetchMarcas = createAsyncThunk('catalogo/fetchMarcas', async (_, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.get(`${URL}/api/catalogos/marcas`)
 
-    return data
+        return data
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al obtener marcas'
+        );
+    }
 })
 
-export const fetchEstados = createAsyncThunk('catalogo/fetchEstados', async () => {
-    const { data } = await axios.get(`${URL}/api/catalogos/estados`)
+export const fetchEstados = createAsyncThunk('catalogo/fetchEstados', async (_, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.get(`${URL}/api/catalogos/estados`)
 
-    return data
+        return data
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al obtener estados'
+        );
+    }
 })
 
-export const fetchCombustibles = createAsyncThunk('catalogo/fetchCombustibles', async () => {
-    const { data } = await axios.get(`${URL}/api/catalogos/combustibles`)
+export const fetchCombustibles = createAsyncThunk('catalogo/fetchCombustibles', async (_, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.get(`${URL}/api/catalogos/combustibles`)
 
-    return data
+        return data
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al obtener combustibles'
+        );
+    }
 })
 
-export const fetchTiposCaja = createAsyncThunk('catalogo/fetchTiposCaja', async () => {
-    const { data } = await axios.get(`${URL}/api/catalogos/tipos-caja`)
+export const fetchTiposCaja = createAsyncThunk('catalogo/fetchTiposCaja', async (_, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.get(`${URL}/api/catalogos/tipos-caja`)
 
-    return data
+        return data
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al obtener tipos de caja'
+        );
+    }
 })
 
 // --------------- SLICE ---------------
@@ -56,7 +80,7 @@ const catalogoSlice = createSlice({
         })
         .addCase(fetchMarcas.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message;
+            state.error = action.payload;
         })
 
     // ESTADOS
@@ -71,7 +95,7 @@ const catalogoSlice = createSlice({
         })
         .addCase(fetchEstados.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message;
+            state.error = action.payload;
         })
 
     // COMBUSTIBLES
@@ -86,7 +110,7 @@ const catalogoSlice = createSlice({
         })
         .addCase(fetchCombustibles.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message;
+            state.error = action.payload;
         })
 
     // TIPOS DE CAJA
@@ -101,7 +125,7 @@ const catalogoSlice = createSlice({
         })
         .addCase(fetchTiposCaja.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message;
+            state.error = action.payload;
         })
     }
     

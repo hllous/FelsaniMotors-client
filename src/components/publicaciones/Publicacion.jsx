@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from 'react-redux';
 import { addToCart, clearCart } from "../../redux/slices/carritoSlice";
-import { fetchPublicacionById } from "../../redux/slices/publicacionesSlice";
 import { fetchFotosByPublicacion } from "../../redux/slices/fotosSlice";
 import { fetchAutoById } from "../../redux/slices/autosSlice";
 import Modal from "../common/Modal";
@@ -15,10 +14,16 @@ const Publicacion = () => {
     const dispatch = useDispatch();
     const { isAuthenticated, user } = useSelector((state) => state.auth);
     const { items: cartItems } = useSelector((state) => state.carrito);
-    const { currentItem: publicacionData } = useSelector((state) => state.publicaciones);
-    const { currentItem: autoData } = useSelector((state) => state.autos);
+    const { items: publicacionesItems } = useSelector((state) => state.publicaciones);
+    const { items: autosItems } = useSelector((state) => state.autos);
     const { fotosByPublicacion } = useSelector((state) => state.fotos);
-    const idAutoToFetch = useSelector((state) => state.publicaciones.currentItem?.idAuto);
+    
+    // Buscar la publicación en items[]
+    const publicacionData = publicacionesItems.find(p => p.idPublicacion === idPublicacion);
+    const idAutoToFetch = publicacionData?.idAuto;
+    
+    // Buscar el auto en items[]
+    const autoData = autosItems.find(a => a.idAuto === idAutoToFetch);
     
     const [imagenes, setImagenes] = useState([]);
     const [imagenSeleccionada, setImagenSeleccionada] = useState(0);
@@ -137,15 +142,18 @@ const Publicacion = () => {
     useEffect(() => {
         if (!idPublicacion) return;
         
-        dispatch(fetchPublicacionById(idPublicacion));
-        dispatch(fetchFotosByPublicacion(idPublicacion));
+        // Solo fetch fotos si no existen en cache
+        if (!fotosByPublicacion[idPublicacion]) {
+            dispatch(fetchFotosByPublicacion(idPublicacion));
+        }
     }, [idPublicacion]);
 
     useEffect(() => {
-        if (idAutoToFetch && (!autoData || autoData.idAuto !== idAutoToFetch)) {
+        // Fetch auto individual si no existe en items[]
+        if (idAutoToFetch && !autoData) {
             dispatch(fetchAutoById(idAutoToFetch));
         }
-    }, [idAutoToFetch, autoData?.idAuto]);
+    }, [idAutoToFetch, autoData]);
 
     useEffect(() => {
         const fotos = fotosByPublicacion[idPublicacion];

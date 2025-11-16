@@ -23,7 +23,10 @@ const PublicacionDestacada = ({ publicacion }) => {
     };
     
     useEffect(() => {
-        dispatch(fetchFotosByPublicacion(publicacion.idPublicacion));
+        // Solo hacer fetch si no hay fotos cargadas
+        if (!fotosByPublicacion[publicacion.idPublicacion]) {
+            dispatch(fetchFotosByPublicacion(publicacion.idPublicacion));
+        }
     }, [publicacion.idPublicacion]);
     
     useEffect(() => {

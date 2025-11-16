@@ -72,7 +72,7 @@ const ComentariosAdmin = () => {
                     showModal({
                         type: 'error',
                         title: 'Error',
-                        message: 'Error al eliminar el comentario. Intenta nuevamente.',
+                        message: result.error?.message || 'Error al eliminar el comentario. Intenta nuevamente.',
                         showCancel: false
                     });
                 }

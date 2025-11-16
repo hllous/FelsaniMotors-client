@@ -6,55 +6,75 @@ const URL = 'http://localhost:4002';
 // --------------- THUNKS ---------------
 
 // Obtener fotos de una publicacion
-export const fetchFotosByPublicacion = createAsyncThunk('fotos/fetchByPublicacion', async (idPublicacion) => {
-
-    const { data } = await axios.get(`${URL}/api/publicaciones/${idPublicacion}/fotos-contenido`)
-    
-    return data
+export const fetchFotosByPublicacion = createAsyncThunk('fotos/fetchByPublicacion', async (idPublicacion, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.get(`${URL}/api/publicaciones/${idPublicacion}/fotos-contenido`)
+        
+        return data
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al obtener fotos'
+        );
+    }
 })
 
 // Subir foto a una publicacion
-export const uploadFoto = createAsyncThunk('fotos/upload', async ({ idPublicacion, file, esPrincipal, orden, token }) => {
-    
-    const formData = new FormData();
-    
-    formData.append('file', file);
-    formData.append('esPrincipal', esPrincipal.toString());
-    formData.append('orden', orden.toString());
+export const uploadFoto = createAsyncThunk('fotos/upload', async ({ idPublicacion, file, esPrincipal, orden, token }, { rejectWithValue }) => {
+    try {
+        const formData = new FormData();
+        
+        formData.append('file', file);
+        formData.append('esPrincipal', esPrincipal.toString());
+        formData.append('orden', orden.toString());
 
-    const { data } = await axios.post(
-        `${URL}/api/publicaciones/${idPublicacion}/fotos`,
-        formData,
-        { headers: { 
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data'
-        } }
-    )
-    
-    return data
+        const { data } = await axios.post(
+            `${URL}/api/publicaciones/${idPublicacion}/fotos`,
+            formData,
+            { headers: { 
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'multipart/form-data'
+            } }
+        )
+        
+        return data
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al subir foto'
+        );
+    }
 })
 
 // Eliminar foto de una publicacion
-export const deleteFoto = createAsyncThunk('fotos/delete', async ({ idPublicacion, idFoto, token }) => {
-    
-  await axios.delete(
-        `${URL}/api/publicaciones/${idPublicacion}/fotos/${idFoto}`,
-        { headers: {Authorization: `Bearer ${token}`} }
-    )
-    
-    return idFoto
+export const deleteFoto = createAsyncThunk('fotos/delete', async ({ idPublicacion, idFoto, token }, { rejectWithValue }) => {
+    try {
+        await axios.delete(
+            `${URL}/api/publicaciones/${idPublicacion}/fotos/${idFoto}`,
+            { headers: {Authorization: `Bearer ${token}`} }
+        )
+        
+        return idFoto
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al eliminar foto'
+        );
+    }
 })
 
 // Marcar foto como principal
-export const setFotoPrincipal = createAsyncThunk('fotos/setPrincipal', async ({ idPublicacion, idFoto, token }) => {
-    
-    const { data } = await axios.put(
-        `${URL}/api/publicaciones/${idPublicacion}/fotos/${idFoto}/principal`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-    )
-    
-    return data
+export const setFotoPrincipal = createAsyncThunk('fotos/setPrincipal', async ({ idPublicacion, idFoto, token }, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.put(
+            `${URL}/api/publicaciones/${idPublicacion}/fotos/${idFoto}/principal`,
+            {},
+            { headers: { Authorization: `Bearer ${token}` } }
+        )
+        
+        return data
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al marcar foto como principal'
+        );
+    }
 })
 
 // --------------- SLICE ---------------
@@ -87,7 +107,7 @@ const fotosSlice = createSlice({
         })
         .addCase(fetchFotosByPublicacion.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message;
+            state.error = action.payload;
         })
     
     // Upload foto
@@ -105,7 +125,7 @@ const fotosSlice = createSlice({
         })
         .addCase(uploadFoto.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message;
+            state.error = action.payload;
         })
     
     // Delete foto
@@ -125,7 +145,7 @@ const fotosSlice = createSlice({
         })
         .addCase(deleteFoto.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message;
+            state.error = action.payload;
         })
     
     // Set principal
@@ -146,7 +166,7 @@ const fotosSlice = createSlice({
         })
         .addCase(setFotoPrincipal.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message;
+            state.error = action.payload;
         })
     }
 });

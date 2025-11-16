@@ -6,38 +6,62 @@ const URL = 'http://localhost:4002';
 // --------------- THUNKS ---------------
 
 // Obtener todos los autos
-export const fetchAutos = createAsyncThunk('autos/fetchAll', async () => {
-    const { data } = await axios.get(`${URL}/api/autos`)
-    
-    return data
+export const fetchAutos = createAsyncThunk('autos/fetchAll', async (_, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.get(`${URL}/api/autos`)
+        
+        return data
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al obtener autos'
+        );
+    }
 })
 
 // Obtener auto por ID
-export const fetchAutoById = createAsyncThunk('autos/fetchById', async (idAuto) => {
-    const { data } = await axios.get(`${URL}/api/autos/${idAuto}`)
-    
-    return data
+export const fetchAutoById = createAsyncThunk('autos/fetchById', async (idAuto, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.get(`${URL}/api/autos/${idAuto}`)
+        
+        return data
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al obtener auto'
+        );
+    }
 })
 
 // Crear nuevo auto
-export const createAuto = createAsyncThunk('autos/create', async ({ autoData, token }) => {
-    const { data } = await axios.post(
-        `${URL}/api/autos`,
-        autoData,
-        { headers: { Authorization: `Bearer ${token}` } }
-    )
-    
-    return data
+export const createAuto = createAsyncThunk('autos/create', async ({ autoData, token }, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.post(
+            `${URL}/api/autos`,
+            autoData,
+            { headers: { Authorization: `Bearer ${token}` } }
+        )
+        
+        return data
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al crear auto'
+        );
+    }
 })
 
 // Eliminar auto
-export const deleteAuto = createAsyncThunk('autos/delete', async ({ idAuto, token }) => {
-    await axios.delete(
-        `${URL}/api/autos/${idAuto}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-    )
-    
-    return idAuto
+export const deleteAuto = createAsyncThunk('autos/delete', async ({ idAuto, token }, { rejectWithValue }) => {
+    try {
+        await axios.delete(
+            `${URL}/api/autos/${idAuto}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+        )
+        
+        return idAuto
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al eliminar auto'
+        );
+    }
 })
 
 // --------------- SLICE ---------------
@@ -46,18 +70,10 @@ const autosSlice = createSlice({
     name: 'autos',
     initialState: {
         items: [],
-        currentItem: null,
         loading: false,
         error: null,
     },
-    reducers: {
-        clearCurrentAuto: (state) => {
-            state.currentItem = null;
-        },
-        clearError: (state) => {
-            state.error = null;
-        },
-    },
+    reducers: {},
     extraReducers: (builder) => {
     
     // Fetch all autos
@@ -72,7 +88,7 @@ const autosSlice = createSlice({
         })
         .addCase(fetchAutos.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message;
+            state.error = action.payload;
         })
     
     // Fetch auto by ID
@@ -83,13 +99,21 @@ const autosSlice = createSlice({
         })
         .addCase(fetchAutoById.fulfilled, (state, action) => {
             state.loading = false;
-            state.currentItem = action.payload;
+            
+            // Agrega a item si no existe, o actualizar si existe
+            const index = state.items.findIndex(a => a.idAuto === action.payload.idAuto);
+            if (index !== -1) {
+                state.items[index] = action.payload;
+            } else {
+                state.items = [...state.items, action.payload];
+            }
         })
         .addCase(fetchAutoById.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message;
+            state.error = action.payload;
         })
     
+
     // Create auto
     builder
         .addCase(createAuto.pending, (state) => {
@@ -99,11 +123,10 @@ const autosSlice = createSlice({
         .addCase(createAuto.fulfilled, (state, action) => {
             state.loading = false;
             state.items = [...state.items, action.payload];
-            state.currentItem = action.payload;
         })
         .addCase(createAuto.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message;
+            state.error = action.payload;
         })
     
     // Delete auto
@@ -115,17 +138,12 @@ const autosSlice = createSlice({
         .addCase(deleteAuto.fulfilled, (state, action) => {
             state.loading = false;
             state.items = state.items.filter(auto => auto.idAuto !== action.payload);
-            if (state.currentItem?.idAuto === action.payload) {
-                state.currentItem = null;
-            }
         })
         .addCase(deleteAuto.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message;
+            state.error = action.payload;
         })
     }
 });
-
-export const { clearCurrentAuto, clearError } = autosSlice.actions;
 
 export default autosSlice.reducer;

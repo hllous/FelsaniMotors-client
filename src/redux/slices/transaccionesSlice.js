@@ -6,56 +6,85 @@ const URL = 'http://localhost:4002';
 // --------------- THUNKS ---------------
 
 // GET todas las transacciones
-export const fetchAllTransacciones = createAsyncThunk('transacciones/fetchAllTransacciones', async (token) => {
-    const { data } = await axios.get(
-        `${URL}/api/transacciones`,
-        { headers: { Authorization: `Bearer ${token}` } }
-    )
+export const fetchAllTransacciones = createAsyncThunk('transacciones/fetchAllTransacciones', async (token, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.get(
+            `${URL}/api/transacciones`,
+            { headers: { Authorization: `Bearer ${token}` } }
+        )
 
-    return data
+        return data
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al obtener transacciones'
+        );
+    }
 })
 
 // GET transacciones del usuario
-export const fetchTransaccionesUsuario = createAsyncThunk('transacciones/fetchTransaccionesUsuario', async ({ idUsuario, token }) => {
+export const fetchTransaccionesUsuario = createAsyncThunk('transacciones/fetchTransaccionesUsuario', async ({ idUsuario, token }, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.get(
+            `${URL}/api/transacciones/usuario/${idUsuario}`,
+            { headers: {Authorization: `Bearer ${token}`} }
+        )
 
-    const { data } = await axios.get(
-        `${URL}/api/transacciones/usuario/${idUsuario}`,
-        { headers: {Authorization: `Bearer ${token}`} }
-    )
-
-    return data
+        return data
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al obtener transacciones del usuario'
+        );
+    }
 })
 
 // GET transaccion por ID
-export const fetchTransaccionById = createAsyncThunk('transacciones/fetchById', async ({ idTransaccion, token }) => {
-    const { data } = await axios.get(
-        `${URL}/api/transacciones/${idTransaccion}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-    )
+export const fetchTransaccionById = createAsyncThunk('transacciones/fetchById', async ({ idTransaccion, token }, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.get(
+            `${URL}/api/transacciones/${idTransaccion}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+        )
 
-    return data
+        return data
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al obtener transacción'
+        );
+    }
 })
 
 // POST transaccion
-export const createTransaccion = createAsyncThunk('transacciones/create', async ({ transaccionData, token }) => {
-    const { data } = await axios.post(
-        `${URL}/api/transacciones`,
-        transaccionData,
-        { headers: { Authorization: `Bearer ${token}` } }
-    )
+export const createTransaccion = createAsyncThunk('transacciones/create', async ({ transaccionData, token }, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.post(
+            `${URL}/api/transacciones`,
+            transaccionData,
+            { headers: { Authorization: `Bearer ${token}` } }
+        )
 
-    return data
+        return data
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al crear transacción'
+        );
+    }
 })
 
 // PUT estado de transaccion
-export const updateTransaccionEstado = createAsyncThunk('transacciones/updateEstado', async ({ idTransaccion, estado, token }) => {
-    const { data } = await axios.put(
-        `${URL}/api/transacciones/${idTransaccion}/estado`,
-        { estado },
-        { headers: { Authorization: `Bearer ${token}` } }
-    )
+export const updateTransaccionEstado = createAsyncThunk('transacciones/updateEstado', async ({ idTransaccion, estado, token }, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.put(
+            `${URL}/api/transacciones/${idTransaccion}/estado`,
+            { estado },
+            { headers: { Authorization: `Bearer ${token}` } }
+        )
 
-    return data
+        return data
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al actualizar estado de transacción'
+        );
+    }
 })
 
 // --------------- SLICE ---------------
@@ -63,20 +92,12 @@ export const updateTransaccionEstado = createAsyncThunk('transacciones/updateEst
 const transaccionesSlice = createSlice({
     name: 'transacciones',
     initialState: {
-        items: [],              // TODAS las transacciones
+        items: [],              // Todas las transacciones (admin)
         misTransacciones: [],   // Transacciones del usuario actual
-        currentItem: null,
         loading: false,
         error: null,
     },
-    reducers: {
-        clearError: (state) => {
-            state.error = null;
-        },
-        clearCurrentItem: (state) => {
-            state.currentItem = null;
-        }
-    },
+    reducers: {},
     extraReducers: (builder) => {
 
     // GET todas las transacciones
@@ -91,7 +112,7 @@ const transaccionesSlice = createSlice({
         })
         .addCase(fetchAllTransacciones.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message;
+            state.error = action.payload;
         })
 
     // GET mis transacciones
@@ -106,7 +127,7 @@ const transaccionesSlice = createSlice({
         })
         .addCase(fetchTransaccionesUsuario.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message;
+            state.error = action.payload;
         })
 
     // GET transaccion by ID
@@ -117,11 +138,18 @@ const transaccionesSlice = createSlice({
         })
         .addCase(fetchTransaccionById.fulfilled, (state, action) => {
             state.loading = false;
-            state.currentItem = action.payload;
+            
+            // Agregar a items si no existe, o actualizar si existe
+            const index = state.items.findIndex(t => t.idTransaccion === action.payload.idTransaccion);
+            if (index !== -1) {
+                state.items[index] = action.payload;
+            } else {
+                state.items = [...state.items, action.payload];
+            }
         })
         .addCase(fetchTransaccionById.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message;
+            state.error = action.payload;
         })
 
     // POST transaccion
@@ -139,11 +167,10 @@ const transaccionesSlice = createSlice({
             if (state.items.length > 0) {
                 state.items = [...state.items, action.payload];
             }
-            state.currentItem = action.payload;
         })
         .addCase(createTransaccion.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message;
+            state.error = action.payload;
         })
 
     // PUT estado transaccion
@@ -154,7 +181,6 @@ const transaccionesSlice = createSlice({
         })
         .addCase(updateTransaccionEstado.fulfilled, (state, action) => {
             state.loading = false;
-            state.currentItem = action.payload;
             
             // Update in items array
             const indexItems = state.items.findIndex(t => t.idTransaccion === action.payload.idTransaccion);
@@ -170,12 +196,10 @@ const transaccionesSlice = createSlice({
         })
         .addCase(updateTransaccionEstado.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message;
+            state.error = action.payload;
         })
     }
     
 });
-
-export const { clearError, clearCurrentItem } = transaccionesSlice.actions;
 
 export default transaccionesSlice.reducer;

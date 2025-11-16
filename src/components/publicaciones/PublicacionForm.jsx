@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from 'react-redux';
 import { createPublicacion } from '../../redux/slices/publicacionesSlice';
+import { createAuto } from '../../redux/slices/autosSlice';
+import { uploadFoto } from '../../redux/slices/fotosSlice';
 import { fetchMarcas, fetchEstados, fetchCombustibles, fetchTiposCaja } from '../../redux/slices/catalogoSlice';
 import Modal from '../common/Modal';
 
@@ -137,6 +139,40 @@ const PublicacionForm = () => {
             setIsSubmitting(false);
             return;
         }
+
+        // Validar valores numéricos no negativos
+        if (autoData.kilometraje && parseFloat(autoData.kilometraje) < 0) {
+            showModal({
+                type: 'warning',
+                title: 'Valor Inválido',
+                message: 'El kilometraje no puede ser negativo',
+                showCancel: false
+            });
+            setIsSubmitting(false);
+            return;
+        }
+
+        if (autoData.capacidadTanque && parseFloat(autoData.capacidadTanque) < 0) {
+            showModal({
+                type: 'warning',
+                title: 'Valor Inválido',
+                message: 'La capacidad del tanque no puede ser negativa',
+                showCancel: false
+            });
+            setIsSubmitting(false);
+            return;
+        }
+
+        if (parseFloat(publicacionData.precio) < 0) {
+            showModal({
+                type: 'warning',
+                title: 'Valor Inválido',
+                message: 'El precio no puede ser negativo',
+                showCancel: false
+            });
+            setIsSubmitting(false);
+            return;
+        }
         
         // Preparar datos del auto
         const autoDataRequest = {
@@ -170,25 +206,70 @@ const PublicacionForm = () => {
             orden: index
         }));
         
-        // Dispatch de Redux
-        const result = await dispatch(createPublicacion({
+        // PASO 1: Crear el auto
+        const autoResult = await dispatch(createAuto({
             autoData: autoDataRequest,
-            publicacionData: publicacionDataRequest,
-            fotos: fotosConMetadata,
             token
         }));
         
-        if (!result.payload) {
-
+        if (!autoResult.payload) {
+            showModal({
+                type: 'error',
+                title: 'Error al Crear Auto',
+                message: autoResult.error?.message || 'No se pudo crear el auto. Verifica los datos.',
+                showCancel: false
+            });
+            setIsSubmitting(false);
+            return;
+        }
+        
+        const idAuto = autoResult.payload.idAuto;
+        
+        // PASO 2: Crear la publicacion
+        const publicacionResult = await dispatch(createPublicacion({
+            publicacionData: { ...publicacionDataRequest, idAuto },
+            token
+        }));
+        
+        if (!publicacionResult.payload) {
             showModal({
                 type: 'error',
                 title: 'Error al Crear Publicación',
-                message: 'No se pudo crear la publicación. Verifica los datos e intenta nuevamente.',
+                message: publicacionResult.error?.message || 'No se pudo crear la publicación. Verifica los datos.',
                 showCancel: false
             });
-            
             setIsSubmitting(false);
             return;
+        }
+        
+        const idPublicacion = publicacionResult.payload.idPublicacion;
+        
+        // PASO 3: Subir fotos
+        if (fotosConMetadata.length > 0) {
+            let fotosSubidas = 0;
+            
+            for (const { file, esPrincipal, orden } of fotosConMetadata) {
+                const fotoResult = await dispatch(uploadFoto({
+                    idPublicacion,
+                    file,
+                    esPrincipal,
+                    orden,
+                    token
+                }));
+                
+                if (fotoResult.payload) {
+                    fotosSubidas++;
+                }
+            }
+            
+            if (fotosSubidas === 0) {
+                showModal({
+                    type: 'warning',
+                    title: 'Publicación Creada',
+                    message: 'La publicación se creó pero no se pudieron subir las fotos. Puedes subirlas después.',
+                    showCancel: false
+                });
+            }
         }
         
         // Limpiar formulario

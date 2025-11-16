@@ -37,6 +37,18 @@ const SignInPopup = ({ close, openLogIn }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Validar campos vacíos primero
+    if (!formData.nombre || !formData.apellido || !formData.email || !formData.password || !formData.telefono) {
+      showModal({
+        type: 'warning',
+        title: 'Campos Incompletos',
+        message: 'Por favor, completa todos los campos',
+        showCancel: false
+      });
+      return;
+    }
+
+    // Validar formato de email
     const emailValidation = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailValidation.test(formData.email)) {
       showModal({
@@ -48,11 +60,23 @@ const SignInPopup = ({ close, openLogIn }) => {
       return;
     }
 
-    if (!formData.nombre || !formData.apellido || !formData.password || !formData.telefono) {
+    // Validar longitud de contraseña
+    if (formData.password.length < 6) {
       showModal({
         type: 'warning',
-        title: 'Campos Incompletos',
-        message: 'Por favor, completa todos los campos',
+        title: 'Contraseña Muy Corta',
+        message: 'La contraseña debe tener al menos 6 caracteres',
+        showCancel: false
+      });
+      return;
+    }
+
+    // Validar que teléfono solo contenga números
+    if (!/^\d+$/.test(formData.telefono)) {
+      showModal({
+        type: 'warning',
+        title: 'Teléfono Inválido',
+        message: 'El teléfono solo puede contener números',
         showCancel: false
       });
       return;
@@ -78,7 +102,7 @@ const SignInPopup = ({ close, openLogIn }) => {
         {
           type: 'error',
           title: 'Error al Registrarse',
-          message: 'No se pudo completar el registro. El email puede estar en uso.',
+          message: result.error?.message || 'No se pudo completar el registro. El email puede estar en uso.',
           showCancel: false
         }
       )  
@@ -123,7 +147,6 @@ const SignInPopup = ({ close, openLogIn }) => {
                   onChange={handleChange}
                   className="w-full border border-gray-300 bg-[#f2f5f6] rounded px-3 py-2 focus:outline-none"
                   placeholder="Nombre"
-                  required
                 />
               </div>
 
@@ -138,7 +161,6 @@ const SignInPopup = ({ close, openLogIn }) => {
                   onChange={handleChange}
                   className="w-full border border-gray-300 bg-[#f2f5f6] rounded px-3 py-2 focus:outline-none"
                   placeholder="Apellido"
-                  required
                 />
               </div>
             </div>
@@ -148,13 +170,12 @@ const SignInPopup = ({ close, openLogIn }) => {
                 Email
               </label>
               <input
-                type="email"
+                type="text"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
                 className="w-full border border-gray-300 bg-[#f2f5f6] rounded px-3 py-2 focus:outline-none"
                 placeholder="ejemplo@gmail.com"
-                required
               />
             </div>
 
@@ -169,8 +190,6 @@ const SignInPopup = ({ close, openLogIn }) => {
                 onChange={handleChange}
                 className="w-full border border-gray-300 bg-[#f2f5f6] rounded px-3 py-2 focus:outline-none"
                 placeholder="contraseña"
-                required
-                minLength="6"
               />
             </div>
 
@@ -185,7 +204,6 @@ const SignInPopup = ({ close, openLogIn }) => {
                 onChange={handleChange}
                 className="w-full border border-gray-300 bg-[#f2f5f6] rounded px-3 py-2 focus:outline-none"
                 placeholder="1122334455"
-                required
               />
             </div>
 

@@ -63,7 +63,7 @@ const UsuarioActualizacion = () => {
     if (!updateResult.payload) {
       showModal({
         title: 'Error',
-        message: 'No se pudo actualizar el perfil. Intenta nuevamente.',
+        message: updateResult.error?.message || 'No se pudo actualizar el perfil. Intenta nuevamente.',
         type: 'error'
       });
       return;

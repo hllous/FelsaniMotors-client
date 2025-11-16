@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { fetchPublicacionById, updatePublicacion, deletePublicacion, updateEstadoPublicacion } from '../../redux/slices/publicacionesSlice';
+import { updatePublicacion, deletePublicacion, updateEstadoPublicacion } from '../../redux/slices/publicacionesSlice';
 import { fetchFotosByPublicacion, uploadFoto, deleteFoto, setFotoPrincipal } from '../../redux/slices/fotosSlice';
 import Modal from '../common/Modal';
 
@@ -13,8 +13,9 @@ const PublicacionEditar = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { token } = useSelector((state) => state.auth);
-  const { currentItem: publicacion } = useSelector((state) => state.publicaciones);
+  const { items: publicacionesItems } = useSelector((state) => state.publicaciones);
   const { fotosByPublicacion } = useSelector((state) => state.fotos);
+  const publicacion = publicacionesItems.find(p => p.idPublicacion === idPublicacion);
 
   const [imagenes, setImagenes] = useState([]) 
   const [imagenActual, setImagenActual] = useState(0);
@@ -44,10 +45,11 @@ const PublicacionEditar = () => {
     descuentoPorcentaje: 0
   });
 
-  // Cargar publicacion y fotos
+  // Cargar fotos
   useEffect(() => {
-    dispatch(fetchPublicacionById(idPublicacion));
-    dispatch(fetchFotosByPublicacion(idPublicacion));
+    if (!fotosByPublicacion[idPublicacion]) {
+      dispatch(fetchFotosByPublicacion(idPublicacion));
+    }
   }, [idPublicacion]);
 
   // Inicializar cambios
@@ -72,7 +74,7 @@ const PublicacionEditar = () => {
       else if(publicacion.estado === 'V') setNuevoEstado('Vendido');
       else if(publicacion.estado === 'P') setNuevoEstado('Pausado');
     }
-  }, [idPublicacion]);
+  }, [publicacion]);
 
   // Convertir fotos
   useEffect(() => {
@@ -247,7 +249,7 @@ const PublicacionEditar = () => {
           showModal({
             type: 'error',
             title: 'Error',
-            message: 'Error al eliminar la publicación',
+            message: result.error?.message || 'Error al eliminar la publicación',
             showCancel: false
           });
         }
@@ -399,7 +401,15 @@ const PublicacionEditar = () => {
   if(!publicacion) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F5EFE6]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        <div className="bg-white rounded-lg p-6 text-center">
+          <p className="text-gray-700">Publicación no encontrada</p>
+          <button
+            onClick={() => navigate('/')}
+            className="mt-4 px-4 py-2 bg-[#CBDCEB] text-gray-700 rounded-lg hover:bg-[#b4cde2]"
+          >
+            Volver a Home
+          </button>
+        </div>
       </div>
     )
   }

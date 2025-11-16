@@ -49,7 +49,7 @@ const PublicacionesAdmin = () => {
                     showModal({
                         type: 'error',
                         title: 'Error',
-                        message: error || 'Error al eliminar la publicación. Intenta nuevamente.',
+                        message: result.error?.message || 'Error al eliminar la publicación. Intenta nuevamente.',
                         showCancel: false
                     })
                 }

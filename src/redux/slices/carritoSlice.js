@@ -42,16 +42,11 @@ const carritoSlice = createSlice({
         clearCart: (state) => {
             state.items = [];
             state.error = null;
-        },
-
-        // Limpia solo el error
-        clearError: (state) => {
-            state.error = null;
         }
     }
 });
 
-export const { addToCart, removeFromCart, clearCart, clearError } = carritoSlice.actions;
+export const { addToCart, removeFromCart, clearCart } = carritoSlice.actions;
 
 export default carritoSlice.reducer;
 

@@ -48,7 +48,7 @@ const UsuariosAdmin = () => {
                     showModal({
                         type: 'error',
                         title: 'Error',
-                        message: error || 'Error al desactivar el usuario. Intenta nuevamente.',
+                        message: result.error?.message || 'Error al desactivar el usuario. Intenta nuevamente.',
                         showCancel: false
                     })
 
@@ -80,7 +80,7 @@ const UsuariosAdmin = () => {
                     showModal({
                         type: 'error',
                         title: 'Error',
-                        message: error || 'Error al activar el usuario. Intenta nuevamente.',
+                        message: result.error?.message || 'Error al activar el usuario. Intenta nuevamente.',
                         showCancel: false
                     })
 

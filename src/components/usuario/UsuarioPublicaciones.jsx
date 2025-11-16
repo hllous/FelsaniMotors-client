@@ -1,20 +1,23 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from 'react-redux';
-import { fetchPublicacionesUsuario } from '../../redux/slices/publicacionesSlice';
+import { fetchPublicaciones } from '../../redux/slices/publicacionesSlice';
 
 const UsuarioPublicaciones = () => {
   const { user } = useSelector((state) => state.auth);
-  const { misPublicaciones: publicaciones } = useSelector((state) => state.publicaciones);
+  const { items } = useSelector((state) => state.publicaciones);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  
+  // Filtrar publicaciones del usuario
+  const publicaciones = items.filter(p => p.idUsuario === user?.idUsuario);
 
   useEffect(() => {
-    if (user?.idUsuario) {
-      // Siempre refetch para mostrar publicaciones actualizadas
-      dispatch(fetchPublicacionesUsuario(user.idUsuario));
+    // Solo fetch si items esta vacio
+    if (items.length === 0) {
+      dispatch(fetchPublicaciones());
     }
-  }, [user?.idUsuario]);
+  }, [items.length]);
 
   const handleClick = (idPublicacion) => {
     navigate(`/publicacion/${idPublicacion}`);

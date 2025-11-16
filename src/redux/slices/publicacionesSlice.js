@@ -6,160 +6,153 @@ const URL = 'http://localhost:4002';
 // --------------- THUNKS ---------------
 
 // Obtener todas las publicaciones
-export const fetchPublicaciones = createAsyncThunk('publicaciones/fetchAll', async () => {
-    
-    const { data } = await axios.get(`${URL}/api/publicaciones`)
+export const fetchPublicaciones = createAsyncThunk('publicaciones/fetchAll', async (_, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.get(`${URL}/api/publicaciones`)
 
-    return data
-})
-
-// Obtener publicaciones por usuario
-export const fetchPublicacionesByUsuario = createAsyncThunk('publicaciones/fetchByUsuario', async (idUsuario) => {
-    
-    const { data } = await axios.get(`${URL}/api/publicaciones/usuario/${idUsuario}`)
-
-    return data
+        return data
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al obtener publicaciones'
+        );
+    }
 })
 
 // Filtrar publicaciones
-export const filtrarPublicaciones = createAsyncThunk('publicaciones/filtrar', async (params) => {
-    
-    const queryParams = new URLSearchParams();
-    
-    // Construir queryString manejando arrays correctamente
-    for (const key in params) {
-        const value = params[key];
-        if (Array.isArray(value)) {
-            // Si es array, agregar cada valor como parámetro separado
-            value.forEach(v => queryParams.append(key, v));
-        } else {
-            // Si es string/número, agregar normalmente
-            queryParams.append(key, value);
-        }
-    }
-    
-    const queryString = queryParams.toString();
-    const { data } = await axios.get(`${URL}/api/publicaciones/filtrar?${queryString}`)
+export const filtrarPublicaciones = createAsyncThunk('publicaciones/filtrar', async (busqueda, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.get(`${URL}/api/publicaciones/filtrar`, { params: busqueda })
 
-    return data
+        return data
+        
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al filtrar publicaciones'
+        );
+    }
 })
 
 // Obtener opciones de filtro disponibles
-export const fetchOpcionesFiltro = createAsyncThunk('publicaciones/fetchOpcionesFiltro', async () => {
-    
-    const { data } = await axios.get(`${URL}/api/publicaciones/filtros/opciones`)
+export const fetchOpcionesFiltro = createAsyncThunk('publicaciones/fetchOpcionesFiltro', async (_, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.get(`${URL}/api/publicaciones/filtros/opciones`)
 
-    return data
+        return data
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al obtener opciones de filtro'
+        );
+    }
 })
 
 // Obtener publicacion por ID
-export const fetchPublicacionById = createAsyncThunk('publicaciones/fetchById', async (idPublicacion) => {
-    
-    const { data } = await axios.get(`${URL}/api/publicaciones/${idPublicacion}`)
+export const fetchPublicacionById = createAsyncThunk('publicaciones/fetchById', async (idPublicacion, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.get(`${URL}/api/publicaciones/${idPublicacion}`)
 
-    return data
+        return data
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al obtener publicación'
+        );
+    }
 })
 
 // Obtener publicaciones del usuario
-export const fetchPublicacionesUsuario = createAsyncThunk('publicaciones/fetchPublicacionesUsuario', async (idUsuario) => {
-    
-    const { data } = await axios.get(`${URL}/api/publicaciones/usuario/${idUsuario}`)
+export const fetchPublicacionesUsuario = createAsyncThunk('publicaciones/fetchPublicacionesUsuario', async (idUsuario, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.get(`${URL}/api/publicaciones/usuario/${idUsuario}`)
 
-    return data
+        return data
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al obtener publicaciones del usuario'
+        );
+    }
 })
 
 // Crear publicacion
-export const createPublicacion = createAsyncThunk('publicaciones/create', async ({ autoData, publicacionData, fotos, token }) => {
-    // ORDEN ES IMPORTANTE
-
-    // 1. Crear el auto
-    const autoResponse = await axios.post(
-        `${URL}/api/autos`,
-        autoData,
-        { headers: { Authorization: `Bearer ${token}` } }
-    )
-
-    const idAuto = autoResponse.data.idAuto
-
-    // 2. Crear la publicacion
-    const publicacionResponse = await axios.post(
-        `${URL}/api/publicaciones`,
-        { ...publicacionData, idAuto },
-        { headers: { Authorization: `Bearer ${token}` } }
-    )
-
-    const idPublicacion = publicacionResponse.data.idPublicacion
-
-    // 3. Subir fotos si existen
-    if (fotos && fotos.length > 0) {
-
-        const upload = fotos.map(({ file, esPrincipal, orden }) => {
-
-            const formFotoData = new FormData()
-            formFotoData.append('file', file)
-            formFotoData.append('esPrincipal', esPrincipal ? 'true' : 'false')
-            formFotoData.append('orden', orden.toString())
-            return axios.post(
-                `${URL}/api/publicaciones/${idPublicacion}/fotos`,
-                formFotoData,
-                { headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'multipart/form-data'} }
-                )
-            }
+export const createPublicacion = createAsyncThunk('publicaciones/create', async ({ publicacionData, token }, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.post(
+            `${URL}/api/publicaciones`,
+            publicacionData,
+            { headers: { Authorization: `Bearer ${token}` } }
         )
 
-        await Promise.all(upload)
+        return data
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al crear publicación'
+        );
     }
-
-    return publicacionResponse.data
 })
 
 // Actualizar publicacion
-export const updatePublicacion = createAsyncThunk('publicaciones/update', async ({ idPublicacion, publicacionData, token }) => {
+export const updatePublicacion = createAsyncThunk('publicaciones/update', async ({ idPublicacion, publicacionData, token }, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.put(
+            `${URL}/api/publicaciones/${idPublicacion}`,
+            publicacionData,
+            { headers: {Authorization: `Bearer ${token}`} }
+        )
 
-    const { data } = await axios.put(
-        `${URL}/api/publicaciones/${idPublicacion}`,
-        publicacionData,
-        { headers: {Authorization: `Bearer ${token}`} }
-    )
-
-    return data
+        return data
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al actualizar publicación'
+        );
+    }
 })
 
 // Eliminar publicacion
-export const deletePublicacion = createAsyncThunk('publicaciones/delete', async ({ idPublicacion, token }) => {
+export const deletePublicacion = createAsyncThunk('publicaciones/delete', async ({ idPublicacion, token }, { rejectWithValue }) => {
+    try {
+        await axios.delete(
+            `${URL}/api/publicaciones/${idPublicacion}`,
+            { headers: {Authorization: `Bearer ${token}`} }
+        )
 
-    await axios.delete(
-        `${URL}/api/publicaciones/${idPublicacion}`,
-        { headers: {Authorization: `Bearer ${token}`} }
-    )
-
-    return idPublicacion
+        return idPublicacion
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al eliminar publicación'
+        );
+    }
 })
 
 // Actualizar estado de publicacion
-export const updateEstadoPublicacion = createAsyncThunk('publicaciones/updateEstado', async ({ idPublicacion, estado, token }) => {
+export const updateEstadoPublicacion = createAsyncThunk('publicaciones/updateEstado', async ({ idPublicacion, estado, token }, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.put(
+            `${URL}/api/publicaciones/${idPublicacion}/estado`,
+            { estado },
+            { headers: { Authorization: `Bearer ${token}` } }
+        )
 
-    const { data } = await axios.put(
-        `${URL}/api/publicaciones/${idPublicacion}/estado`,
-        { estado },
-        { headers: { Authorization: `Bearer ${token}` } }
-    )
-
-    return data
+        return data
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al actualizar estado de publicación'
+        );
+    }
 })
 
 // Actualizar foto principal
-export const updateFotoPrincipal = createAsyncThunk('publicaciones/updateFotoPrincipal', async ({ idPublicacion, idImg, token }) => {
+export const updateFotoPrincipal = createAsyncThunk('publicaciones/updateFotoPrincipal', async ({ idPublicacion, idImg, token }, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.put(
+            `${URL}/api/publicaciones/${idPublicacion}/fotos/${idImg}/principal`,
+            {},
+            { headers: { Authorization: `Bearer ${token}` } }
+        )
 
-    const { data } = await axios.put(
-        `${URL}/api/publicaciones/${idPublicacion}/fotos/${idImg}/principal`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-    )
-
-    return data
+        return data
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al actualizar foto principal'
+        );
+    }
 })
 
 // --------------- SLICE ---------------
@@ -168,21 +161,13 @@ const publicacionesSlice = createSlice({
     name: 'publicaciones',
     initialState: {
         items: [],
-        currentItem: null,
-        misPublicaciones: [],
+        itemsFiltrados: [],
         opcionesFiltro: null, // Opciones para filtros
         loading: false,
         error: null,
-        isFiltered: false, // Flag para saber si items esta filtrado o es todo
+        isFiltered: false, // Flag para saber si se aplicaron filtros
     },
-    reducers: {
-        clearError: (state) => {
-            state.error = null;
-        },
-        clearCurrentItem: (state) => {
-            state.currentItem = null;
-        }
-    },
+    reducers: {},
     extraReducers: (builder) => {
 
     // Fetch all publicaciones
@@ -194,26 +179,11 @@ const publicacionesSlice = createSlice({
         .addCase(fetchPublicaciones.fulfilled, (state, action) => {
             state.loading = false;
             state.items = action.payload;
-            state.isFiltered = false; // Tenemos TODAS las publicaciones
+            state.isFiltered = false;
         })
         .addCase(fetchPublicaciones.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message;
-        })
-
-    // Fetch publicaciones by usuario
-    builder
-        .addCase(fetchPublicacionesByUsuario.pending, (state) => {
-            state.loading = true;
-            state.error = null;
-        })
-        .addCase(fetchPublicacionesByUsuario.fulfilled, (state, action) => {
-            state.loading = false;
-            state.items = action.payload;
-        })
-        .addCase(fetchPublicacionesByUsuario.rejected, (state, action) => {
-            state.loading = false;
-            state.error = action.error.message;
+            state.error = action.payload;
         })
 
     // Filtrar publicaciones
@@ -224,13 +194,12 @@ const publicacionesSlice = createSlice({
         })
         .addCase(filtrarPublicaciones.fulfilled, (state, action) => {
             state.loading = false;
-            // Si viene paginado con .content
-            state.items = action.payload.content || action.payload;
-            state.isFiltered = true; // Tenemos resultado FILTRADO
+            state.itemsFiltrados = action.payload.content || action.payload;
+            state.isFiltered = true;
         })
         .addCase(filtrarPublicaciones.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message;
+            state.error = action.payload;
         })
 
     // Fetch publicacion by ID
@@ -241,26 +210,17 @@ const publicacionesSlice = createSlice({
         })
         .addCase(fetchPublicacionById.fulfilled, (state, action) => {
             state.loading = false;
-            state.currentItem = action.payload;
+            
+            const index = state.items.findIndex(p => p.idPublicacion === action.payload.idPublicacion);
+            if (index !== -1) {
+                state.items[index] = action.payload;
+            } else {
+                state.items = [...state.items, action.payload];
+            }
         })
         .addCase(fetchPublicacionById.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message;
-        })
-
-    // Fetch publicaciones del usuario
-    builder
-        .addCase(fetchPublicacionesUsuario.pending, (state) => {
-            state.loading = true;
-            state.error = null;
-        })
-        .addCase(fetchPublicacionesUsuario.fulfilled, (state, action) => {
-            state.loading = false;
-            state.misPublicaciones = action.payload;
-        })
-        .addCase(fetchPublicacionesUsuario.rejected, (state, action) => {
-            state.loading = false;
-            state.error = action.error.message;
+            state.error = action.payload;
         })
 
     // Create publicacion
@@ -272,11 +232,10 @@ const publicacionesSlice = createSlice({
         .addCase(createPublicacion.fulfilled, (state, action) => {
             state.loading = false;
             state.items = [...state.items, action.payload];
-            state.misPublicaciones = [...state.misPublicaciones, action.payload];
         })
         .addCase(createPublicacion.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message;
+            state.error = action.payload;
         })
 
     // Update publicacion
@@ -287,22 +246,14 @@ const publicacionesSlice = createSlice({
         })
         .addCase(updatePublicacion.fulfilled, (state, action) => {
             state.loading = false;
-            state.currentItem = action.payload;
-
-            // Update in items array
             const index = state.items.findIndex(p => p.idPublicacion === action.payload.idPublicacion);
             if (index !== -1) {
                 state.items[index] = action.payload;
             }
-            // Update in misPublicaciones
-            const indexPublicacionUsuario = state.misPublicaciones.findIndex(p => p.idPublicacion === action.payload.idPublicacion);
-            if (indexPublicacionUsuario !== -1) {
-                state.misPublicaciones[indexPublicacionUsuario] = action.payload;
-            }
         })
         .addCase(updatePublicacion.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message;
+            state.error = action.payload;
         })
 
     // Delete publicacion
@@ -314,19 +265,15 @@ const publicacionesSlice = createSlice({
         .addCase(deletePublicacion.fulfilled, (state, action) => {
             state.loading = false;
             state.items = state.items.filter(p => p.idPublicacion !== action.payload);
-            state.misPublicaciones = state.misPublicaciones.filter(p => p.idPublicacion !== action.payload);
         })
         .addCase(deletePublicacion.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message;
+            state.error = action.payload;
         })
 
     // Update estado
     builder
         .addCase(updateEstadoPublicacion.fulfilled, (state, action) => {
-            if (state.currentItem) {
-                state.currentItem.estado = action.payload.estado;
-            }
             const index = state.items.findIndex(p => p.idPublicacion === action.payload.idPublicacion);
             if (index !== -1) {
                 state.items[index].estado = action.payload.estado;
@@ -336,8 +283,9 @@ const publicacionesSlice = createSlice({
     // Update foto principal
     builder
         .addCase(updateFotoPrincipal.fulfilled, (state, action) => {
-            if (state.currentItem) {
-                state.currentItem.idFotoPrincipal = action.payload.idFotoPrincipal;
+            const index = state.items.findIndex(p => p.idPublicacion === action.payload.idPublicacion);
+            if (index !== -1) {
+                state.items[index].idFotoPrincipal = action.payload.idFotoPrincipal;
             }
         })
 
@@ -350,7 +298,7 @@ const publicacionesSlice = createSlice({
     
 });
 
-export const { clearError, clearCurrentItem } = publicacionesSlice.actions;
+
 
 export default publicacionesSlice.reducer;
 

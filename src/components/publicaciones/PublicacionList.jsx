@@ -1,13 +1,13 @@
 import { useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchPublicaciones, fetchPublicacionesByUsuario, filtrarPublicaciones } from "../../redux/slices/publicacionesSlice";
+import { fetchPublicaciones, filtrarPublicaciones } from "../../redux/slices/publicacionesSlice";
 import PublicacionCard from "./PublicacionCard";
 import PublicacionDestacada from "./PublicacionDestacada";
 
 const PublicacionList = () => {
     const dispatch = useDispatch();
-    const { items: publicaciones } = useSelector((state) => state.publicaciones);
+    const { items: publicaciones, itemsFiltrados, isFiltered } = useSelector((state) => state.publicaciones);
     const [searchParams] = useSearchParams();
     
     const consultaBusqueda = searchParams.get('q') || '';
@@ -22,18 +22,34 @@ const PublicacionList = () => {
         return params.toString().length > 0;
     }, [paramsString]);
 
+    // Determinar qué publicaciones mostrar
+    const publicacionesParaMostrar = useMemo(() => {
+        return (consultaBusqueda || hasFiltros) ? itemsFiltrados : publicaciones;
+    }, [consultaBusqueda, hasFiltros, itemsFiltrados, publicaciones]);
+
     // Asegurar que publicaciones sea siempre un array
-    const publicacionesArray = Array.isArray(publicaciones) ? publicaciones : [];
+    let publicacionesArray = publicacionesParaMostrar;
+    if (!publicacionesParaMostrar || !publicacionesParaMostrar.length === undefined) {
+        publicacionesArray = [];
+    }
+    
+    // Filtrar por userId si existe
+    const publicacionesPorUsuario = useMemo(() => {
+        if (userId) {
+            return publicacionesArray.filter(p => p.idUsuario === parseInt(userId));
+        }
+        return publicacionesArray;
+    }, [publicacionesArray, userId]);
     
     // Filtrar publicaciones para home (sin vendidas ni pausadas si no hay filtros)
     const publicacionesFiltradas = useMemo(() => {
         if (consultaBusqueda || userId || hasFiltros) {
             // Si hay filtros, búsqueda o userId, mostrar todas
-            return publicacionesArray;
+            return publicacionesPorUsuario;
         }
         // En home, solo mostrar disponibles (A)
-        return publicacionesArray.filter(p => p.estado === 'A');
-    }, [publicacionesArray, consultaBusqueda, userId, hasFiltros]);
+        return publicacionesPorUsuario.filter(p => p.estado === 'A');
+    }, [publicacionesPorUsuario, consultaBusqueda, userId, hasFiltros]);
     
     // Seleccionar publicación destacada aleatoria (solo de disponibles)
     const publicacionDestacada = useMemo(() => {
@@ -45,10 +61,7 @@ const PublicacionList = () => {
     const publicacionesRestantes = publicacionesFiltradas.filter(p => p.idPublicacion !== publicacionDestacada?.idPublicacion);
 
     useEffect(() => {
-        if (userId) {
-            dispatch(fetchPublicacionesByUsuario(userId));
-        } 
-        else if (consultaBusqueda.trim() !== '' || hasFiltros) {
+        if (consultaBusqueda.trim() !== '' || hasFiltros) {
             const params = {};
             
             if (consultaBusqueda.trim() !== '') {
@@ -77,11 +90,11 @@ const PublicacionList = () => {
             
             dispatch(filtrarPublicaciones(params));
         }
-        else {
-            // Fetch todas las publicaciones
+        else if (publicaciones.length === 0) {
+            // Solo hacer fetch si no hay publicaciones originales cargadas
             dispatch(fetchPublicaciones());
         }
-    }, [userId, consultaBusqueda, hasFiltros, paramsString]);
+    }, [paramsString, publicaciones.length, dispatch]);
 
     return (
         <div className="min-h-screen bg-gray-50">

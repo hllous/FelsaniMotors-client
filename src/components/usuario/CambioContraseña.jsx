@@ -41,7 +41,7 @@ const CambioContrasena = () => {
     if (!result.payload) {
       showModal({
         title: 'Error',
-        message: 'No se pudo cambiar la contraseña. Verifica que la contraseña actual sea correcta.',
+        message: result.error?.message || 'No se pudo cambiar la contraseña. Verifica que la contraseña actual sea correcta.',
         type: 'error'
       });
       return;

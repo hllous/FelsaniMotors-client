@@ -25,6 +25,17 @@ const LogInPopup = ({ close, openSignIn }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Validar campos vacíos
+    if (!email || !password) {
+      showModal({
+        type: 'warning',
+        title: 'Campos Incompletos',
+        message: 'Por favor, completa todos los campos',
+        showCancel: false
+      });
+      return;
+    }
+
     const emailFilter = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailFilter.test(email)) {
       showModal({
@@ -38,15 +49,15 @@ const LogInPopup = ({ close, openSignIn }) => {
 
     const result = await dispatch(login({ email, password }))
 
-    if (result.payload) {
-      
+    // Verificar si el login fue exitoso
+    if (result.type === 'auth/login/fulfilled') {
       handleClose();
     } else {
-
+      // Login falló
       showModal({
         type: 'error',
         title: 'Error al Iniciar Sesión',
-        message: 'Credenciales incorrectas o usuario inactivo. Verifica tus datos.',
+        message: 'Email o contraseña incorrectos. Por favor, verifica tus credenciales e intenta nuevamente.',
         showCancel: false
       });
     }
@@ -81,12 +92,11 @@ const LogInPopup = ({ close, openSignIn }) => {
                 Email
               </label>
               <input
-                type="email"
+                type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full border border-gray-300 bg-[#f2f5f6] rounded px-3 py-2 focus:outline-none"
                 placeholder="ejemplo@gmail.com"
-                required
               />
             </div>
 
@@ -100,7 +110,6 @@ const LogInPopup = ({ close, openSignIn }) => {
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full border border-gray-300 bg-[#f2f5f6] rounded px-3 py-2 focus:outline-none"
                 placeholder="contraseña"
-                required
               />
             </div>
 

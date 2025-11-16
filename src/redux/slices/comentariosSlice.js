@@ -6,58 +6,83 @@ const URL = 'http://localhost:4002';
 // --------------- THUNKS ---------------
 
 // Obtener comentarios de una publicación (público)
-export const fetchComentariosByPublicacion = createAsyncThunk('comentarios/fetchByPublicacion', async (idPublicacion) => {
+export const fetchComentariosByPublicacion = createAsyncThunk('comentarios/fetchByPublicacion', async (idPublicacion, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.get(`${URL}/api/publicaciones/${idPublicacion}/comentarios`)
 
-    const { data } = await axios.get(`${URL}/api/publicaciones/${idPublicacion}/comentarios`)
-
-    return { idPublicacion, comentarios: data }
+        return { idPublicacion, comentarios: data }
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al obtener comentarios'
+        );
+    }
 })
 
 // Crear comentario
-export const createComentario = createAsyncThunk('comentarios/create', async ({ idPublicacion, contenido, token }) => {
+export const createComentario = createAsyncThunk('comentarios/create', async ({ idPublicacion, contenido, token }, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.post(
+            `${URL}/api/publicaciones/${idPublicacion}/comentarios`,
+            { contenido },
+            { headers: {Authorization: `Bearer ${token}`} }
+        )
 
-    const { data } = await axios.post(
-        `${URL}/api/publicaciones/${idPublicacion}/comentarios`,
-        { contenido },
-        { headers: {Authorization: `Bearer ${token}`} }
-    )
-
-    return { idPublicacion, comentario: data }
+        return { idPublicacion, comentario: data }
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al crear comentario'
+        );
+    }
 })
 
 // Actualizar comentario
-export const updateComentario = createAsyncThunk('comentarios/update', async ({ idPublicacion, idComentario, contenido, token }) => {
+export const updateComentario = createAsyncThunk('comentarios/update', async ({ idPublicacion, idComentario, contenido, token }, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.put(
+            `${URL}/api/publicaciones/${idPublicacion}/comentarios/${idComentario}`,
+            { contenido },
+            { headers: {Authorization: `Bearer ${token}`} }
+        )
 
-    const { data } = await axios.put(
-        `${URL}/api/publicaciones/${idPublicacion}/comentarios/${idComentario}`,
-        { contenido },
-        { headers: {Authorization: `Bearer ${token}`} }
-    )
-
-    return { idPublicacion, comentario: data }
+        return { idPublicacion, comentario: data }
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al actualizar comentario'
+        );
+    }
 })
 
 // Eliminar comentario
-export const deleteComentario = createAsyncThunk('comentarios/delete', async ({ idPublicacion, idComentario, token }) => {
+export const deleteComentario = createAsyncThunk('comentarios/delete', async ({ idPublicacion, idComentario, token }, { rejectWithValue }) => {
+    try {
+        await axios.delete(
+            `${URL}/api/publicaciones/${idPublicacion}/comentarios/${idComentario}`,
+            { headers: {Authorization: `Bearer ${token}`} }
+        )
 
-    await axios.delete(
-        `${URL}/api/publicaciones/${idPublicacion}/comentarios/${idComentario}`,
-        { headers: {Authorization: `Bearer ${token}`} }
-    )
-
-    return { idPublicacion, idComentario }
+        return { idPublicacion, idComentario }
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al eliminar comentario'
+        );
+    }
 })
 
 // Crear respuesta a comentario
-export const createRespuesta = createAsyncThunk('comentarios/createRespuesta', async ({ idPublicacion, idComentario, contenido, token }) => {
+export const createRespuesta = createAsyncThunk('comentarios/createRespuesta', async ({ idPublicacion, idComentario, contenido, token }, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.post(
+            `${URL}/api/publicaciones/${idPublicacion}/comentarios/${idComentario}/respuestas`,
+            { contenido },
+            { headers: {Authorization: `Bearer ${token}`} }
+        )
 
-    const { data } = await axios.post(
-        `${URL}/api/publicaciones/${idPublicacion}/comentarios/${idComentario}/respuestas`,
-        { contenido },
-        { headers: {Authorization: `Bearer ${token}`} }
-    )
-
-    return { idPublicacion, idComentario, respuesta: data }
+        return { idPublicacion, idComentario, respuesta: data }
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al crear respuesta'
+        );
+    }
 })
 
 // --------------- SLICE ---------------
@@ -69,11 +94,7 @@ const comentariosSlice = createSlice({
         loading: false,
         error: null,
     },
-    reducers: {
-        clearError: (state) => {
-            state.error = null;
-        }
-    },
+    reducers: {},
     extraReducers: (builder) => {
 
     // Fetch comentarios by publicacion
@@ -88,7 +109,7 @@ const comentariosSlice = createSlice({
         })
         .addCase(fetchComentariosByPublicacion.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message;
+            state.error = action.payload;
         })
 
     // Create comentario
@@ -108,7 +129,7 @@ const comentariosSlice = createSlice({
         state.comentariosByPublicacion[idPublicacion] = [...state.comentariosByPublicacion[idPublicacion], comentario];        })
         .addCase(createComentario.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message;
+            state.error = action.payload;
         })
 
     // Update comentario
@@ -136,7 +157,7 @@ const comentariosSlice = createSlice({
         })
         .addCase(updateComentario.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message;
+            state.error = action.payload;
         })
 
     // Delete comentario
@@ -160,7 +181,7 @@ const comentariosSlice = createSlice({
         })
         .addCase(deleteComentario.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message;
+            state.error = action.payload;
         })
 
     // Create respuesta
@@ -190,12 +211,10 @@ const comentariosSlice = createSlice({
         })
         .addCase(createRespuesta.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message;
+            state.error = action.payload;
         })
     }
     
 });
-
-export const { clearError } = comentariosSlice.actions;
 
 export default comentariosSlice.reducer;

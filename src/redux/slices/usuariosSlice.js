@@ -6,68 +6,102 @@ const URL = 'http://localhost:4002';
 // --------------- THUNKS ---------------
 
 // Obtener todos los usuarios (ADMIN)
-export const fetchUsuarios = createAsyncThunk('usuarios/fetchAll', async (token) => {
-    const { data } = await axios.get(
-        `${URL}/api/usuarios`,
-        { headers: { Authorization: `Bearer ${token}` } }
-    )
+export const fetchUsuarios = createAsyncThunk('usuarios/fetchAll', async (token, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.get(
+            `${URL}/api/usuarios`,
+            { headers: { Authorization: `Bearer ${token}` } }
+        )
 
-    return data
+        return data
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al obtener usuarios'
+        );
+    }
 })
 
 // Obtener un usuario por ID
-export const fetchUsuarioById = createAsyncThunk('usuarios/fetchById', async ({ idUsuario, token }) => {
-    const { data } = await axios.get(
-        `${URL}/api/usuarios/${idUsuario}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-    )
+export const fetchUsuarioById = createAsyncThunk('usuarios/fetchById', async ({ idUsuario, token }, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.get(
+            `${URL}/api/usuarios/${idUsuario}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+        )
 
-    return data
+        return data
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al obtener usuario'
+        );
+    }
 })
 
 // Actualizar usuario
-export const updateUsuario = createAsyncThunk('usuarios/update', async ({ idUsuario, usuarioData, token }) => {
-    const { data } = await axios.put(
-        `${URL}/api/usuarios/${idUsuario}`,
-        usuarioData,
-        { headers: { Authorization: `Bearer ${token}` } }
-    )
+export const updateUsuario = createAsyncThunk('usuarios/update', async ({ idUsuario, usuarioData, token }, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.put(
+            `${URL}/api/usuarios/${idUsuario}`,
+            usuarioData,
+            { headers: { Authorization: `Bearer ${token}` } }
+        )
 
-    return data
+        return data
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al actualizar usuario'
+        );
+    }
 })
 
 // Desactivar usuario
-export const deleteUsuario = createAsyncThunk('usuarios/delete', async ({ idUsuario, token }) => {
+export const deleteUsuario = createAsyncThunk('usuarios/delete', async ({ idUsuario, token }, { rejectWithValue }) => {
+    try {
+        await axios.delete(
+            `${URL}/api/usuarios/${idUsuario}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+        )
 
-    await axios.delete(
-        `${URL}/api/usuarios/${idUsuario}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-    )
-
-    return idUsuario
+        return idUsuario
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al desactivar usuario'
+        );
+    }
 })
 
 // Activar usuario
-export const activateUsuario = createAsyncThunk('usuarios/activate', async ({ idUsuario, token }) => {
-    const { data } = await axios.patch(
-        `${URL}/api/usuarios/${idUsuario}/activar`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-    )
+export const activateUsuario = createAsyncThunk('usuarios/activate', async ({ idUsuario, token }, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.patch(
+            `${URL}/api/usuarios/${idUsuario}/activar`,
+            {},
+            { headers: { Authorization: `Bearer ${token}` } }
+        )
 
-    return data
+        return data
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al activar usuario'
+        );
+    }
 })
 
 // Cambiar contraseña
-export const cambiarContrasena = createAsyncThunk('usuarios/cambiarContrasena', async ({ idUsuario, contrasenaActual, contrasenaNueva, token }) => {
-    
-    const { data } = await axios.put(
-        `${URL}/api/usuarios/${idUsuario}/cambiar-contrasena`,
-        { contrasenaActual, contrasenaNueva },
-        { headers: { Authorization: `Bearer ${token}` } }
-    )
+export const cambiarContrasena = createAsyncThunk('usuarios/cambiarContrasena', async ({ idUsuario, contrasenaActual, contrasenaNueva, token }, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.put(
+            `${URL}/api/usuarios/${idUsuario}/cambiar-contrasena`,
+            { contrasenaActual, contrasenaNueva },
+            { headers: { Authorization: `Bearer ${token}` } }
+        )
 
-    return data
+        return data
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al cambiar contraseña'
+        );
+    }
 })
 
 // --------------- SLICE ---------------
@@ -81,9 +115,6 @@ const usuariosSlice = createSlice({
         error: null,
     },
     reducers: {
-        clearError: (state) => {
-            state.error = null;
-        },
         clearCurrentItem: (state) => {
             state.currentItem = null;
         }
@@ -102,7 +133,7 @@ const usuariosSlice = createSlice({
         })
         .addCase(fetchUsuarios.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message;
+            state.error = action.payload;
         })
 
     // Fetch usuario by ID
@@ -117,7 +148,7 @@ const usuariosSlice = createSlice({
         })
         .addCase(fetchUsuarioById.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message;
+            state.error = action.payload;
         })
 
     // Update usuario
@@ -137,7 +168,7 @@ const usuariosSlice = createSlice({
         })
         .addCase(updateUsuario.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message;
+            state.error = action.payload;
         })
 
     // Delete usuario
@@ -156,7 +187,7 @@ const usuariosSlice = createSlice({
         })
         .addCase(deleteUsuario.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message;
+            state.error = action.payload;
         })
 
     // Activate usuario
@@ -175,7 +206,7 @@ const usuariosSlice = createSlice({
         })
         .addCase(activateUsuario.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message;
+            state.error = action.payload;
         })
 
     // Cambiar contraseña
@@ -189,13 +220,13 @@ const usuariosSlice = createSlice({
         })
         .addCase(cambiarContrasena.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message;
+            state.error = action.payload;
         })
     }
     
 })
 
 
-export const { clearError, clearCurrentItem } = usuariosSlice.actions;
+export const { clearCurrentItem } = usuariosSlice.actions;
 
 export default usuariosSlice.reducer;

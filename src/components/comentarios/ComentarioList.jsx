@@ -26,7 +26,9 @@ const ComentarioList = ({ idPublicacion }) => {
 
     // GET comentarios
     useEffect(() => {
-        dispatch(fetchComentariosByPublicacion(idPublicacion));
+        if (!comentariosByPublicacion[idPublicacion]) {
+            dispatch(fetchComentariosByPublicacion(idPublicacion));
+        }
         setError(null);
     }, [idPublicacion]);
 
@@ -56,7 +58,7 @@ const ComentarioList = ({ idPublicacion }) => {
         showModal({
             type: 'error',
             title: 'Error al Comentar',
-            message: 'No se pudo crear el comentario. Intenta nuevamente.',
+            message: result.error?.message || 'No se pudo crear el comentario. Intenta nuevamente.',
             showCancel: false
         });
         return null;
@@ -88,7 +90,7 @@ const ComentarioList = ({ idPublicacion }) => {
         showModal({
             type: 'error',
             title: 'Error al Editar',
-            message: 'No se pudo editar el comentario. Intenta nuevamente.',
+            message: result.error?.message || 'No se pudo editar el comentario. Intenta nuevamente.',
             showCancel: false
         });
         return null;
@@ -115,7 +117,7 @@ const ComentarioList = ({ idPublicacion }) => {
         showModal({
             type: 'error',
             title: 'Error al Eliminar',
-            message: 'No se pudo eliminar el comentario. Intenta nuevamente.',
+            message: result.error?.message || 'No se pudo eliminar el comentario. Intenta nuevamente.',
             showCancel: false
         });
         return false;
@@ -147,7 +149,7 @@ const ComentarioList = ({ idPublicacion }) => {
         showModal({
             type: 'error',
             title: 'Error al Responder',
-            message: 'No se pudo crear la respuesta. Intenta nuevamente.',
+            message: result.error?.message || 'No se pudo crear la respuesta. Intenta nuevamente.',
             showCancel: false
         });
         return null;

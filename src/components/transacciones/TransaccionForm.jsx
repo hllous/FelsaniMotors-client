@@ -147,7 +147,7 @@ const TransaccionForm = () => {
             }));
             
             if (transaccionResult.payload) {
-                transaccionesCreadas.push(transaccionResult.payload);
+                transaccionesCreadas = [...transaccionesCreadas, transaccionResult.payload];
             } else {
                 // Si hay error en alguna transacción, mostrar mensaje
                 showModal({

@@ -103,23 +103,16 @@ const PublicacionCard = ({ idPublicacion, titulo, ubicacion, precio, estado, mar
         return estadosMap[estado];
     };
 
-    // Cargar fotos
+    // Cargar fotos solo si no están cargadas
     useEffect(() => {
-        if (!fotosByPublicacion[idPublicacion]) {
+        const fotosPublicacion = fotosByPublicacion[idPublicacion];
+        
+        if (!fotosPublicacion) {
             dispatch(fetchFotosByPublicacion(idPublicacion));
-        }
-    }, [idPublicacion])
-    
-    // Obtener foto principal
-    const fotosPublicacion = fotosByPublicacion[idPublicacion];
-    
-    useEffect(() => {
-        if (fotosPublicacion && fotosPublicacion.length > 0 && fotosPublicacion[0]?.file) {
+        } else if (fotosPublicacion.length > 0 && fotosPublicacion[0]?.file) {
             setImage(`data:image/jpeg;base64,${fotosPublicacion[0].file}`);
-        } else {
-            setImage('');
         }
-    }, [fotosPublicacion]);    
+    }, [idPublicacion, fotosByPublicacion])    
     return(
         <div 
             className="bg-white rounded-xl overflow-hidden cursor-pointer border border-paleta1-cream"
