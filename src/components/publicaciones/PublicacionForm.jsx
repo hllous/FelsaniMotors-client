@@ -226,8 +226,10 @@ const PublicacionForm = () => {
         const idAuto = autoResult.payload.idAuto;
         
         // PASO 2: Crear la publicacion
+        const publicacionPayload = { ...publicacionDataRequest, idAuto };
+        
         const publicacionResult = await dispatch(createPublicacion({
-            publicacionData: { ...publicacionDataRequest, idAuto },
+            publicacionData: publicacionPayload,
             token
         }));
         
