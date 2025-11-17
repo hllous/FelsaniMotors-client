@@ -8,7 +8,7 @@ const UsuarioTransacciones = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user, token } = useSelector((state) => state.auth);
-  const { misTransacciones: transacciones } = useSelector((state) => state.transacciones);
+  const { items: transacciones } = useSelector((state) => state.transacciones);
 
   useEffect(() => {
     if (user?.idUsuario) {

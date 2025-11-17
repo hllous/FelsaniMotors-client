@@ -26,6 +26,7 @@ const UsuariosAdmin = () => {
     }, [usuarios.length]);
 
     const handleDesactivarUsuario = async (idUsuario, nombreCompleto) => {
+
         showModal({
             type: 'warning',
             title: 'Confirmar Desactivación',
@@ -58,6 +59,7 @@ const UsuariosAdmin = () => {
     };
 
     const handleActivarUsuario = async (idUsuario, nombreCompleto) => {
+        
         showModal({
             type: 'info',
             title: 'Confirmar Activación',

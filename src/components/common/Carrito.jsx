@@ -29,11 +29,13 @@ const Carrito = ({ isOpen, onClose }) => {
 
   // Handle de eliminar una publicacion en el carrito
   const handleRemove = (idPublicacion) => {
+
     dispatch(removeFromCart(idPublicacion));
   };
 
   // Handle de eliminar todas las publicaciones del carrito
   const handleClear = () => {
+
     showModal({
       type: 'warning',
       title: 'Vaciar Carrito',
@@ -70,7 +72,7 @@ const Carrito = ({ isOpen, onClose }) => {
       return;
     }
 
-    // Validar que no esté comprando su propia publicacion
+    // Validar que no este comprando su propia publicacion
     if (idPublicacion) {
 
       const item = cartItems.find(i => i.idPublicacion === idPublicacion)
@@ -83,6 +85,7 @@ const Carrito = ({ isOpen, onClose }) => {
           message: 'No puedes comprar tu propia publicación.',
           showCancel: false
         })
+
         return
       }
     } else {
@@ -111,8 +114,8 @@ const Carrito = ({ isOpen, onClose }) => {
     }
 
     navigate('/comprar-carrito');
-    onClose();
-  };
+    onClose()
+  }
 
   if (!isOpen) return null;
 

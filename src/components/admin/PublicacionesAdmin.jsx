@@ -26,6 +26,7 @@ const PublicacionesAdmin = () => {
     }, [publicaciones.length]);
 
     const handleEliminarPublicacion = async (id, titulo) => {
+        
         showModal({
             type: 'warning',
             title: 'Confirmar Eliminación',

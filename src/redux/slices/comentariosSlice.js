@@ -5,10 +5,28 @@ const URL = 'http://localhost:4002';
 
 // --------------- THUNKS ---------------
 
-// Obtener comentarios de una publicación (público)
+// --------------- THUNKS ---------------
+
+// Obtener TODOS los comentarios (admin)
+export const fetchAllComentariosAdmin = createAsyncThunk('comentarios/fetchAllAdmin', async (token, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.get(
+            `${URL}/api/comentarios/admin/all`,
+            { headers: { Authorization: `Bearer ${token}` } }
+        )
+
+        return data // Array de todos los comentarios con estructura plana
+    } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || 'Error al obtener todos los comentarios'
+        );
+    }
+})
+
+// Obtener comentarios de una publicación (público - con jerarquía)- con jerarquía)
 export const fetchComentariosByPublicacion = createAsyncThunk('comentarios/fetchByPublicacion', async (idPublicacion, { rejectWithValue }) => {
     try {
-        const { data } = await axios.get(`${URL}/api/publicaciones/${idPublicacion}/comentarios`)
+        const { data } = await axios.get(`${URL}/api/publicaciones/${idPublicacion}/comentarios/jerarquicos`)
 
         return { idPublicacion, comentarios: data }
     } catch (error) {
@@ -19,11 +37,11 @@ export const fetchComentariosByPublicacion = createAsyncThunk('comentarios/fetch
 })
 
 // Crear comentario
-export const createComentario = createAsyncThunk('comentarios/create', async ({ idPublicacion, contenido, token }, { rejectWithValue }) => {
+export const createComentario = createAsyncThunk('comentarios/create', async ({ idPublicacion, idUsuario, texto, token }, { rejectWithValue }) => {
     try {
         const { data } = await axios.post(
             `${URL}/api/publicaciones/${idPublicacion}/comentarios`,
-            { contenido },
+            { idUsuario, texto },
             { headers: {Authorization: `Bearer ${token}`} }
         )
 
@@ -36,11 +54,11 @@ export const createComentario = createAsyncThunk('comentarios/create', async ({ 
 })
 
 // Actualizar comentario
-export const updateComentario = createAsyncThunk('comentarios/update', async ({ idPublicacion, idComentario, contenido, token }, { rejectWithValue }) => {
+export const updateComentario = createAsyncThunk('comentarios/update', async ({ idPublicacion, idComentario, texto, token }, { rejectWithValue }) => {
     try {
         const { data } = await axios.put(
-            `${URL}/api/publicaciones/${idPublicacion}/comentarios/${idComentario}`,
-            { contenido },
+            `${URL}/api/publicaciones/${idPublicacion}/comentarios/${idComentario}/texto`,
+            { texto },
             { headers: {Authorization: `Bearer ${token}`} }
         )
 
@@ -69,11 +87,11 @@ export const deleteComentario = createAsyncThunk('comentarios/delete', async ({ 
 })
 
 // Crear respuesta a comentario
-export const createRespuesta = createAsyncThunk('comentarios/createRespuesta', async ({ idPublicacion, idComentario, contenido, token }, { rejectWithValue }) => {
+export const createRespuesta = createAsyncThunk('comentarios/createRespuesta', async ({ idPublicacion, idComentario, idUsuario, texto, token }, { rejectWithValue }) => {
     try {
         const { data } = await axios.post(
             `${URL}/api/publicaciones/${idPublicacion}/comentarios/${idComentario}/respuestas`,
-            { contenido },
+            { idUsuario, texto },
             { headers: {Authorization: `Bearer ${token}`} }
         )
 
@@ -90,12 +108,28 @@ export const createRespuesta = createAsyncThunk('comentarios/createRespuesta', a
 const comentariosSlice = createSlice({
     name: 'comentarios',
     initialState: {
-        comentariosByPublicacion: {}, // { idPublicacion: [comentarios] }
+        comentariosByPublicacion: {}, // { idPublicacion: [comentarios] } ARBOL
+        allComentarios: [],            // Todos los comentarios (admin) PLANO
         loading: false,
         error: null,
     },
     reducers: {},
     extraReducers: (builder) => {
+
+    // Fetch ALL comentarios (admin)
+    builder
+        .addCase(fetchAllComentariosAdmin.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        })
+        .addCase(fetchAllComentariosAdmin.fulfilled, (state, action) => {
+            state.loading = false;
+            state.allComentarios = action.payload;
+        })
+        .addCase(fetchAllComentariosAdmin.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.payload;
+        })
 
     // Fetch comentarios by publicacion
     builder
@@ -118,15 +152,9 @@ const comentariosSlice = createSlice({
             state.loading = true;
             state.error = null;
         })
-    .addCase(createComentario.fulfilled, (state, action) => {
-
-        state.loading = false;
-
-        const { idPublicacion, comentario } = action.payload;
-        if (!state.comentariosByPublicacion[idPublicacion]) {
-            state.comentariosByPublicacion[idPublicacion] = [];
-        }
-        state.comentariosByPublicacion[idPublicacion] = [...state.comentariosByPublicacion[idPublicacion], comentario];        })
+        .addCase(createComentario.fulfilled, (state) => {
+            state.loading = false;
+        })
         .addCase(createComentario.rejected, (state, action) => {
             state.loading = false;
             state.error = action.payload;
@@ -138,22 +166,8 @@ const comentariosSlice = createSlice({
             state.loading = true;
             state.error = null;
         })
-        .addCase(updateComentario.fulfilled, (state, action) => {
-
+        .addCase(updateComentario.fulfilled, (state) => {
             state.loading = false;
-            const { idPublicacion, comentario } = action.payload;
-
-            const comentarios = state.comentariosByPublicacion[idPublicacion];
-            if (comentarios) {
-
-                const index = comentarios.findIndex(c => c.idComentario === comentario.idComentario);
-
-                if (index !== -1) {
-
-                    comentarios[index] = comentario;
-                }
-            }
-
         })
         .addCase(updateComentario.rejected, (state, action) => {
             state.loading = false;
@@ -166,18 +180,8 @@ const comentariosSlice = createSlice({
             state.loading = true;
             state.error = null;
         })
-        .addCase(deleteComentario.fulfilled, (state, action) => {
-
+        .addCase(deleteComentario.fulfilled, (state) => {
             state.loading = false;
-            const { idPublicacion, idComentario } = action.payload;
-
-            const comentarios = state.comentariosByPublicacion[idPublicacion];
-            if (comentarios) {
-
-                state.comentariosByPublicacion[idPublicacion] = comentarios.filter(
-                    c => c.idComentario !== idComentario
-                )
-            }
         })
         .addCase(deleteComentario.rejected, (state, action) => {
             state.loading = false;
@@ -190,24 +194,8 @@ const comentariosSlice = createSlice({
             state.loading = true;
             state.error = null;
         })
-        .addCase(createRespuesta.fulfilled, (state, action) => {
-
+        .addCase(createRespuesta.fulfilled, (state) => {
             state.loading = false;
-            const { idPublicacion, idComentario, respuesta } = action.payload;
-
-            const comentarios = state.comentariosByPublicacion[idPublicacion];
-            if (comentarios) {
-
-                const comentario = comentarios.find(c => c.idComentario === idComentario);
-
-                if (comentario) {
-                    
-                    if (!comentario.respuestas) {
-                        comentario.respuestas = [];
-                    }
-                    comentario.respuestas = [...comentario.respuestas, respuesta];
-                }
-            }
         })
         .addCase(createRespuesta.rejected, (state, action) => {
             state.loading = false;

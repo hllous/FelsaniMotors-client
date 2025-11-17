@@ -1,16 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchPublicaciones } from '../../redux/slices/publicacionesSlice';
-import { fetchComentariosByPublicacion, deleteComentario } from '../../redux/slices/comentariosSlice';
+import { fetchAllComentariosAdmin, deleteComentario } from '../../redux/slices/comentariosSlice';
 import Modal from '../common/Modal';
 
 const ComentariosAdmin = () => {
     const [modalConfig, setModalConfig] = useState({ isOpen: false });
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const { items: publicaciones } = useSelector((state) => state.publicaciones);
-    const { comentariosByPublicacion } = useSelector((state) => state.comentarios);
+    const { allComentarios: comentarios } = useSelector((state) => state.comentarios);
     const { token } = useSelector((state) => state.auth);
 
     const showModal = (config) => {
@@ -21,36 +19,9 @@ const ComentariosAdmin = () => {
         setModalConfig({ isOpen: false });
     };
 
-    // Combina todos los comentarios con la publicacion
-    let comentarios = [];
-    for (const publicacion of publicaciones) {
-        const comentariosPublicacion = comentariosByPublicacion[publicacion.idPublicacion] || [];
-        for (const comentario of comentariosPublicacion) {
-            comentarios = [...comentarios, {
-                ...comentario,
-                publicacion: {
-                    idPublicacion: publicacion.idPublicacion,
-                    titulo: publicacion.titulo
-                }
-            }];
-        }
-    }
-
     useEffect(() => {
-        if (publicaciones.length === 0) {
-            dispatch(fetchPublicaciones());
-        }
+        dispatch(fetchAllComentariosAdmin(token));
     }, []);
-
-    useEffect(() => {
-        if (publicaciones && publicaciones.length > 0) {
-            for (const p of publicaciones) {
-                if (!comentariosByPublicacion[p.idPublicacion]) {
-                    dispatch(fetchComentariosByPublicacion(p.idPublicacion));
-                }
-            }
-        }
-    }, [publicaciones.length]);
 
     const handleEliminarComentario = async (idComentario, usuario, idPublicacion) => {
         showModal({
@@ -62,6 +33,8 @@ const ComentariosAdmin = () => {
             onConfirm: async () => {
                 const result = await dispatch(deleteComentario({ idPublicacion, idComentario, token }));
                 if (result.payload) {
+                    // Refetch todos los comentarios
+                    dispatch(fetchAllComentariosAdmin(token));
                     showModal({
                         type: 'success',
                         title: 'Éxito',
@@ -87,7 +60,9 @@ const ComentariosAdmin = () => {
                 <div className="mb-6 flex justify-between items-center">
                     <div>
                         <h1 className="text-3xl font-bold text-gray-800 mb-2">Gestion Comentarios</h1>
-                        <p className="text-gray-600">Total: {comentarios.length} comentario(s)</p>
+                        <p className="text-gray-600">
+                            Total: {comentarios.length} comentario(s)
+                        </p>
                     </div>
                     <button
                         onClick={() => navigate('/admin')}
@@ -126,7 +101,7 @@ const ComentariosAdmin = () => {
                                     <div className="mb-3 flex items-center gap-2">
                                         <div className="font-semibold text-gray-700">Publicación:</div>
                                         <div className="text-gray-900">
-                                            {comentario.publicacion?.titulo || 'N/A'}
+                                            {comentario.publicacion?.titulo || 'Sin título'}
                                         </div>
                                     </div>
 
@@ -140,18 +115,24 @@ const ComentariosAdmin = () => {
                                         <div className="mt-2 flex items-center gap-2">
                                             <div className="text-sm font-semibold text-gray-700">Calificación:</div>
                                             <div className="flex items-center">
-                                                {[...Array(5)].map((_, i) => (
-                                                    <svg
-                                                        key={i}
-                                                        className={`w-5 h-5 ${
-                                                            i < comentario.calificacion ? 'text-yellow-400' : 'text-gray-300'
-                                                        }`}
-                                                        fill="currentColor"
-                                                        viewBox="0 0 20 20"
-                                                    >
-                                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                                    </svg>
-                                                ))}
+                                                {(() => {
+                                                    const estrellas = [];
+                                                    for (let i = 0; i < 5; i++) {
+                                                        estrellas.push(
+                                                            <svg
+                                                                key={i}
+                                                                className={`w-5 h-5 ${
+                                                                    i < comentario.calificacion ? 'text-yellow-400' : 'text-gray-300'
+                                                                }`}
+                                                                fill="currentColor"
+                                                                viewBox="0 0 20 20"
+                                                            >
+                                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                            </svg>
+                                                        );
+                                                    }
+                                                    return estrellas;
+                                                })()}
                                                 <div className="ml-2 text-sm text-gray-600">
                                                     ({comentario.calificacion}/5)
                                                 </div>

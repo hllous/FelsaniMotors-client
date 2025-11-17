@@ -37,6 +37,7 @@ const ComentarioItem = ({
     };
 
     const handleDeleteClick = () => {
+
         showModal({
             type: 'warning',
             title: 'Confirmar Eliminación',
@@ -55,8 +56,11 @@ const ComentarioItem = ({
     };
 
     const formatearFecha = (fecha) => {
+
         if (!fecha) return '';
+
         const date = new Date(fecha);
+        
         return date.toLocaleDateString('es-AR', { 
             year: 'numeric', 
             month: 'short', 

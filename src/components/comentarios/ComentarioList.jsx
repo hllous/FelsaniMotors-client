@@ -34,6 +34,7 @@ const ComentarioList = ({ idPublicacion }) => {
 
     // POST comentario
     const handleCrearComentario = async (texto) => {
+
         // Validaciones
         if (user?.activo === 0) {
             showModal({
@@ -46,12 +47,14 @@ const ComentarioList = ({ idPublicacion }) => {
         }
         
         const result = await dispatch(createComentario({ 
-            idPublicacion, 
-            contenido: texto,
+            idPublicacion,
+            idUsuario: user.idUsuario,
+            texto: texto,
             token 
         }));
         
         if (result.payload?.comentario) {
+            dispatch(fetchComentariosByPublicacion(idPublicacion));
             return result.payload.comentario;
         }
         
@@ -66,6 +69,7 @@ const ComentarioList = ({ idPublicacion }) => {
 
     // PUT comentario
     const handleEditarComentario = async (idComentario, nuevoTexto) => {
+
         if (user?.activo === 0) {
             showModal({
                 type: 'warning',
@@ -79,11 +83,12 @@ const ComentarioList = ({ idPublicacion }) => {
         const result = await dispatch(updateComentario({
             idPublicacion,
             idComentario,
-            contenido: nuevoTexto,
+            texto: nuevoTexto,
             token
         }));
         
         if (result.payload?.comentario) {
+            dispatch(fetchComentariosByPublicacion(idPublicacion));
             return result.payload.comentario;
         }
         
@@ -92,25 +97,29 @@ const ComentarioList = ({ idPublicacion }) => {
             title: 'Error al Editar',
             message: result.error?.message || 'No se pudo editar el comentario. Intenta nuevamente.',
             showCancel: false
-        });
+        })
+
         return null;
     };
 
     // DELETE comentario
     const handleEliminarComentario = async (idComentario) => {
+
         if (user?.activo === 0) {
             showModal({
                 type: 'warning',
                 title: 'Cuenta Inactiva',
                 message: 'Tu cuenta está inactiva. No puedes eliminar comentarios.',
                 showCancel: false
-            });
-            return false;
+            })
+            return false
         }
         
         const result = await dispatch(deleteComentario({ idPublicacion, idComentario, token }));
         
         if (result.payload) {
+            // Refetch para obtener comentarios actualizados
+            dispatch(fetchComentariosByPublicacion(idPublicacion));
             return true;
         }
         
@@ -120,7 +129,7 @@ const ComentarioList = ({ idPublicacion }) => {
             message: result.error?.message || 'No se pudo eliminar el comentario. Intenta nuevamente.',
             showCancel: false
         });
-        return false;
+        return false
     };
 
     // Responder comentario
@@ -138,11 +147,13 @@ const ComentarioList = ({ idPublicacion }) => {
         const result = await dispatch(createRespuesta({
             idPublicacion,
             idComentario: idComentarioPadre,
-            contenido: textoRespuesta,
+            idUsuario: user.idUsuario,
+            texto: textoRespuesta,
             token
-        }));
+        }))
         
         if (result.payload?.respuesta) {
+            dispatch(fetchComentariosByPublicacion(idPublicacion));
             return result.payload.respuesta;
         }
         
@@ -151,7 +162,8 @@ const ComentarioList = ({ idPublicacion }) => {
             title: 'Error al Responder',
             message: result.error?.message || 'No se pudo crear la respuesta. Intenta nuevamente.',
             showCancel: false
-        });
+        })
+
         return null;
     };
 
@@ -177,8 +189,8 @@ const ComentarioList = ({ idPublicacion }) => {
                     </div>
                 )}
             </div>
-        );
-    };
+        )
+    }
 
     if (error) {
         return (

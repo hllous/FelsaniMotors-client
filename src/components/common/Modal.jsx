@@ -1,4 +1,5 @@
-const Modal = ({ isOpen, onClose, title, message, type = 'info', confirmText = 'Aceptar', cancelText = 'Cerrar', onConfirm, showCancel = true }) => {
+const Modal = ({ isOpen, onClose, title, message, type = 'info', confirmText = 'Aceptar', 
+                 cancelText = 'Cerrar', onConfirm, showCancel = true }) => {
   if (!isOpen) return null;
 
   const typeStyles = {
