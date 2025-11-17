@@ -14,7 +14,8 @@ const MetodoPagoForm = ({ onMetodoPagoChange }) => {
         codigoSeguridad: ""
     });
 
-    // Algoritmo de Luhn para validar numero de tarjeta
+    // Algoritmo de Luhn para validar numero de tarjeta, verifica que sea correcto
+    
     const validarLuhn = (numero) => {
         const digits = numero.replace(/\s/g, '').split('').map(Number);
         let sum = 0;
@@ -37,7 +38,7 @@ const MetodoPagoForm = ({ onMetodoPagoChange }) => {
         return sum % 10 === 0;
     };
 
-    // Formateo numero de tarjeta (agregar espacios cada 4 dígitos)
+    // Formateo numero de tarjeta, agregar espacios cada 4 digitos
     const formatearNumeroTarjeta = (value) => {
         const cleaned = value.replace(/\s/g, '');
         const match = cleaned.match(/.{1,4}/g);
@@ -57,7 +58,6 @@ const MetodoPagoForm = ({ onMetodoPagoChange }) => {
         const anioNum = parseInt(anio);
         const mesNum = parseInt(mes);
 
-        // Verificar que no esté vencida
         if (anioNum < anioActual) return false;
         if (anioNum === anioActual && mesNum < mesActual) return false;
 
@@ -81,12 +81,12 @@ const MetodoPagoForm = ({ onMetodoPagoChange }) => {
         // Validaciones
         if (name === "numeroTarjeta") {
 
-            // Solo permitir números
+            // Solo permitir numeros
             const cleaned = value.replace(/\D/g, '');
             if (cleaned.length <= 16) {
                 newValue = formatearNumeroTarjeta(cleaned);
                 
-                // Validar con Luhn si tiene 16 dígitos
+                // Validar con Luhn si tiene 16 digitos
                 if (cleaned.length === 16) {
                     if (!validarLuhn(cleaned)) {
 

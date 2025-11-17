@@ -13,7 +13,6 @@ const TransaccionCard = ({ transaccion }) => {
     
     if (!idPublicacion) return;
     
-    // Solo fetch fotos si no están en caché
     if (!fotosByPublicacion?.[idPublicacion]) {
       dispatch(fetchFotosByPublicacion(idPublicacion));
     }

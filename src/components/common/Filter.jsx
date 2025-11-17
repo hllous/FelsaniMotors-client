@@ -170,7 +170,7 @@ const Filter = () => {
       params.append('q', textoBusqueda);
     }
     
-    // Enviar múltiples parámetros con el mismo nombre para cada valor (arrays)
+    // Enviar parametros
     for (const key in filters) {
       if (key === 'precioMin' || key === 'precioMax') {
         // Precio: enviar solo si tiene valor
@@ -359,7 +359,6 @@ const Filter = () => {
                       </div>
 
                       {/* DROPDOWN */}
-                      {/* Se conecta visualmente con el botón principal sin espacios */}
                       {openDropdowns[filterKey] && (
                         <div className="overflow-hidden">
                           <div className="bg-white border-l border-r border-b border-paleta1-blue-light rounded-b-lg">

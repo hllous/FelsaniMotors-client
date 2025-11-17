@@ -25,7 +25,7 @@ const LogInPopup = ({ close, openSignIn }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validar campos vacíos
+    // Validaciones
     if (!email || !password) {
       showModal({
         type: 'warning',
@@ -53,7 +53,7 @@ const LogInPopup = ({ close, openSignIn }) => {
     if (result.type === 'auth/login/fulfilled') {
       handleClose();
     } else {
-      // Login falló
+      // Falla login
       showModal({
         type: 'error',
         title: 'Error al Iniciar Sesión',

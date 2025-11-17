@@ -103,7 +103,7 @@ const PublicacionCard = ({ idPublicacion, titulo, ubicacion, precio, estado, mar
         return estadosMap[estado];
     };
 
-    // Cargar fotos solo si no están cargadas
+    // Cargar fotos solo si no estan cargadas
     useEffect(() => {
         const fotosPublicacion = fotosByPublicacion[idPublicacion];
         

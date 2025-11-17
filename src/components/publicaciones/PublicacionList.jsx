@@ -22,12 +22,11 @@ const PublicacionList = () => {
         return params.toString().length > 0;
     }, [paramsString]);
 
-    // Determinar qué publicaciones mostrar
+    // Determinar que publicaciones mostramos
     const publicacionesParaMostrar = useMemo(() => {
         return (consultaBusqueda || hasFiltros) ? itemsFiltrados : publicaciones;
     }, [consultaBusqueda, hasFiltros, itemsFiltrados, publicaciones]);
 
-    // Asegurar que publicaciones sea siempre un array
     let publicacionesArray = publicacionesParaMostrar;
     if (!publicacionesParaMostrar || !publicacionesParaMostrar.length === undefined) {
         publicacionesArray = [];
@@ -41,22 +40,26 @@ const PublicacionList = () => {
         return publicacionesArray;
     }, [publicacionesArray, userId]);
     
-    // Filtrar publicaciones para home (sin vendidas ni pausadas si no hay filtros)
+    // Filtrar publicaciones para home (sin filtros)
     const publicacionesFiltradas = useMemo(() => {
         if (consultaBusqueda || userId || hasFiltros) {
-            // Si hay filtros, búsqueda o userId, mostrar todas
             return publicacionesPorUsuario;
         }
+
         // En home, solo mostrar disponibles (A)
         return publicacionesPorUsuario.filter(p => p.estado === 'A');
+
     }, [publicacionesPorUsuario, consultaBusqueda, userId, hasFiltros]);
     
-    // Seleccionar publicación destacada aleatoria (solo de disponibles)
+    // Seleccionar publicacion destacada aleatoria
     const publicacionDestacada = useMemo(() => {
+
         if (publicacionesFiltradas.length === 0) return null;
         const randomIndex = Math.floor(Math.random() * publicacionesFiltradas.length);
+
         return publicacionesFiltradas[randomIndex];
-    }, [publicacionesFiltradas.length]); // Solo recalcula cuando cambia el tamaño del array
+
+    }, [publicacionesFiltradas.length])
     
     const publicacionesRestantes = publicacionesFiltradas.filter(p => p.idPublicacion !== publicacionDestacada?.idPublicacion);
 
@@ -74,14 +77,16 @@ const PublicacionList = () => {
                 filtros.delete('q');
                 filtros.delete('userId');
                 
-                // Agrupar valores múltiples en arrays
+                // Agrupar valores
                 const filterKeys = new Set(filtros.keys());
                 filterKeys.forEach(key => {
                     const values = filtros.getAll(key);
                     if (values.length > 1) {
+                        
                         // Múltiples valores: guardar como array
                         params[key] = values;
                     } else if (values.length === 1) {
+
                         // Un solo valor: guardar como string
                         params[key] = values[0];
                     }
@@ -91,6 +96,7 @@ const PublicacionList = () => {
             dispatch(filtrarPublicaciones(params));
         }
         else if (publicaciones.length === 0) {
+            
             // Solo hacer fetch si no hay publicaciones originales cargadas
             dispatch(fetchPublicaciones());
         }

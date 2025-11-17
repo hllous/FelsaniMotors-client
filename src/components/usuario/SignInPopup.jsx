@@ -37,7 +37,7 @@ const SignInPopup = ({ close, openLogIn }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validar campos vacíos primero
+    // Validar campos vacios primero
     if (!formData.nombre || !formData.apellido || !formData.email || !formData.password || !formData.telefono) {
       showModal({
         type: 'warning',
@@ -71,7 +71,7 @@ const SignInPopup = ({ close, openLogIn }) => {
       return;
     }
 
-    // Validar que teléfono solo contenga números
+    // Validar que telefono solo contenga números
     if (!/^\d+$/.test(formData.telefono)) {
       showModal({
         type: 'warning',
