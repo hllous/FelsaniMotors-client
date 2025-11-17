@@ -56,18 +56,24 @@ export const register = createAsyncThunk('auth/register', async ({ email, passwo
         // Guardo el token que devuelve al registrar
         const { access_token } = authData;
 
+        const { data: userData } = await axios.get(
+            `${URL}/api/usuarios/me`,
+            { headers: {Authorization: `Bearer ${access_token}`} }
+        )
+
         return {
             token: access_token,
             user: {
-                idUsuario: authData.idUsuario,
-                email,
-                nombre,
-                apellido,
-                telefono,
-                rol,
-                activo: 1,
+                idUsuario: userData.idUsuario,
+                email: userData.email,
+                nombre: userData.nombre,
+                apellido: userData.apellido,
+                telefono: userData.telefono,
+                rol: userData.rol,
+                activo: userData.activo,
             }
         }
+        
     } catch (error) {
         return rejectWithValue(
             error.response?.data?.message || 'Error al registrarse'
