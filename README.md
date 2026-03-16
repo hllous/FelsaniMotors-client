@@ -1,4 +1,12 @@
-### Felsani Motors - Sección Backend
+### Felsani Motors - Sección FrontEnd
+
+## Ecommerce de venta de Autos
+
+### Tecnoligias utilizadas
+- React
+- Vite
+- Redux
+- Tailwind
 
 ### Integrantes:
 - Iriarte, Facundo https://github.com/FacuIria
